@@ -802,5 +802,5 @@ function copyCommandToClipboard() {
 
 function handleDownload(e) {
   // Let the link work naturally (opens GitHub release download)
-  showToast('Downloading... Extract and run install.bat', 'success');
+  showToast('Downloading installer... Run it when complete', 'success');
 }
