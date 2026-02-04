@@ -1,0 +1,70 @@
+{
+  "manifest_version": 3,
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA63Qs6Duh8RKimTHrMY6foVDIZFfbILm0CU+p6iiAEEOzKzNfraSYx7JeaNOHh/Q9nTtj5Pgq7n2yw89Vb0WyDfs5IABvv8fLVuu4uXyCqOukQ5osadFiwZbeGKE/WcIrDbVaUaJYxTxg2uxWMylthP/Qx3C+dq/Qbg8dSG0zrwTZrP6LyDbymn2MtF0OhCWphrOrwzFXKQVTWSR0oXakqXIAlIqdOB2y3W9IYwzHFbdq7wxuhYWf/0fYMj7AUR2vrhfJ8Vyg/pATyeurDoGKoknqogkVf3XkYeIwU/8o9DxW0wnSvmeYsZ5mYMmP+XRfqX9xIuY6jQd9ATROla13PwIDAQAB",
+  "name": "BulkListingPro - Etsy Bulk Upload Tool",
+  "version": "0.1.0",
+  "description": "Bulk upload digital product listings to Etsy from a spreadsheet. Save hours on listing creation.",
+
+  "permissions": [
+    "storage",
+    "identity",
+    "sidePanel",
+    "activeTab",
+    "scripting",
+    "tabs",
+    "nativeMessaging"
+  ],
+
+  "host_permissions": [
+    "https://*.etsy.com/*",
+    "https://business-search-api-815700675676.us-central1.run.app/*",
+    "https://www.googleapis.com/*"
+  ],
+
+  "oauth2": {
+    "client_id": "384411888340-gtj1ahs6voluf2gqnpsesjcvg5cm3qde.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/userinfo.email",
+      "https://www.googleapis.com/auth/userinfo.profile"
+    ]
+  },
+
+  "background": {
+    "service_worker": "background/service-worker.js",
+    "type": "module"
+  },
+
+  "side_panel": {
+    "default_path": "sidepanel/sidepanel.html"
+  },
+
+  "action": {
+    "default_icon": {
+      "16": "assets/icons/icon16.png",
+      "48": "assets/icons/icon48.png",
+      "128": "assets/icons/icon128.png"
+    },
+    "default_title": "BulkListingPro"
+  },
+
+  "icons": {
+    "16": "assets/icons/icon16.png",
+    "48": "assets/icons/icon48.png",
+    "128": "assets/icons/icon128.png"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["https://*.etsy.com/*"],
+      "js": ["content/etsy.js"],
+      "run_at": "document_idle"
+    }
+  ],
+
+  "web_accessible_resources": [
+    {
+      "resources": ["assets/*"],
+      "matches": ["https://*.etsy.com/*"]
+    }
+  ]
+}

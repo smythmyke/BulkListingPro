@@ -1,0 +1,9 @@
+{
+  "name": "com.bulklistingpro.host",
+  "description": "BulkListingPro Native Host for Etsy automation",
+  "path": "C:\\Projects\\BulkListingPro-extension\\native-host\\host.bat",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://fejjolabponaaklodpnlgikkolkckpjl/"
+  ]
+}

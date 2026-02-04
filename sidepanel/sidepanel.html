@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BulkListingPro</title>
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header class="header">
+      <h1>BulkListingPro</h1>
+      <div id="credit-balance" class="credit-balance">
+        <span class="credits">--</span> credits
+      </div>
+    </header>
+
+    <!-- Page Status -->
+    <div id="page-status" class="page-status disconnected">
+      <span class="status-dot"></span>
+      <span id="status-text">Not on Etsy</span>
+    </div>
+
+    <!-- Setup Section (shown when setup incomplete) -->
+    <div id="setup-section" class="section hidden">
+      <h2>Setup Required</h2>
+      <p class="setup-intro">Complete these steps to start uploading:</p>
+
+      <div class="setup-steps">
+        <!-- Step 1: Native Host -->
+        <div class="setup-step" id="step-native">
+          <div class="step-header">
+            <span class="step-number">1</span>
+            <span class="step-title">Install Helper App</span>
+            <span class="step-status" id="native-status">Not installed</span>
+          </div>
+          <div class="step-content">
+            <p>Download and run the installer for your system:</p>
+            <div class="step-actions">
+              <a href="#" id="download-windows" class="btn btn-primary btn-small">Download for Windows</a>
+            </div>
+            <details class="install-help">
+              <summary>Installation instructions</summary>
+              <ol>
+                <li>Download the installer above</li>
+                <li>Extract the zip file</li>
+                <li>Run <code>install-windows.bat</code> as Administrator</li>
+                <li>Click "Check Again" below</li>
+              </ol>
+            </details>
+          </div>
+        </div>
+
+        <!-- Step 2: Chrome Debug -->
+        <div class="setup-step" id="step-chrome">
+          <div class="step-header">
+            <span class="step-number">2</span>
+            <span class="step-title">Launch Chrome with Debug Mode</span>
+            <span class="step-status" id="chrome-status">Not connected</span>
+          </div>
+          <div class="step-content">
+            <p>Chrome must be launched with a special flag:</p>
+            <div class="code-block">
+              <code id="chrome-command">"C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222</code>
+              <button id="copy-command" class="btn btn-small">Copy</button>
+            </div>
+            <details class="install-help">
+              <summary>How to do this</summary>
+              <ol>
+                <li>Close ALL Chrome windows completely</li>
+                <li>Open Command Prompt (cmd)</li>
+                <li>Paste and run the command above</li>
+                <li>Chrome will open - click "Check Again" below</li>
+              </ol>
+              <p><strong>Tip:</strong> Create a desktop shortcut with this command for easy access.</p>
+            </details>
+          </div>
+        </div>
+
+        <!-- Step 3: Etsy Login -->
+        <div class="setup-step" id="step-etsy">
+          <div class="step-header">
+            <span class="step-number">3</span>
+            <span class="step-title">Log into Etsy</span>
+            <span class="step-status" id="etsy-status">Not logged in</span>
+          </div>
+          <div class="step-content">
+            <p>Log into your Etsy seller account in this browser.</p>
+            <div class="step-actions">
+              <a href="https://www.etsy.com/signin" target="_blank" class="btn btn-secondary btn-small">Open Etsy Login</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="setup-actions">
+        <button id="check-setup-btn" class="btn btn-primary">Check Again</button>
+      </div>
+    </div>
+
+    <!-- Auth Section (shown when setup complete but logged out) -->
+    <div id="auth-section" class="section hidden">
+      <p>Sign in to start uploading listings</p>
+      <button id="sign-in-btn" class="btn btn-primary">
+        Sign in with Google
+      </button>
+    </div>
+
+    <!-- Main Section (shown when logged in) -->
+    <div id="main-section" class="section hidden">
+      <!-- User info -->
+      <div id="user-info" class="user-info">
+        <img id="user-avatar" src="" alt="Avatar" class="avatar">
+        <span id="user-email"></span>
+        <button id="sign-out-btn" class="btn btn-small">Sign out</button>
+      </div>
+
+      <!-- Credits Info -->
+      <div class="credits-info">
+        Each listing uses <strong>2 credits</strong>
+      </div>
+
+      <!-- Upload Options -->
+      <div class="upload-options">
+        <h2>Upload Listings</h2>
+
+        <!-- Spreadsheet Upload -->
+        <div class="upload-zone" id="drop-zone">
+          <p>Drag & drop spreadsheet here</p>
+          <p class="small">or</p>
+          <input type="file" id="file-input" accept=".xlsx,.xls,.csv" hidden>
+          <button id="browse-btn" class="btn">Browse Files</button>
+        </div>
+
+        <!-- Single Listing Form (collapsed by default) -->
+        <details class="single-listing">
+          <summary>Or create single listing</summary>
+          <form id="single-listing-form">
+            <div class="form-group">
+              <label for="title">Title</label>
+              <input type="text" id="title" name="title" maxlength="140" required>
+            </div>
+            <div class="form-group">
+              <label for="category">Category</label>
+              <select id="category" name="category">
+                <option value="Digital Prints">Digital Prints</option>
+                <option value="Guides & How Tos">Guides & How Tos</option>
+                <option value="Drawing & Illustration">Drawing & Illustration</option>
+                <option value="Digital Patterns">Digital Patterns</option>
+                <option value="Planners & Templates">Planners & Templates</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="description">Description</label>
+              <textarea id="description" name="description" rows="4"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="price">Price ($)</label>
+              <input type="number" id="price" name="price" step="0.01" min="0.20" required>
+            </div>
+            <div class="form-group">
+              <label for="tags">Tags (comma separated)</label>
+              <input type="text" id="tags" name="tags" placeholder="tag1, tag2, tag3">
+            </div>
+            <button type="submit" class="btn btn-primary">Add to Queue</button>
+          </form>
+        </details>
+      </div>
+
+      <!-- Upload Queue -->
+      <div id="queue-section" class="queue-section hidden">
+        <h2>Upload Queue (<span id="queue-count">0</span>)</h2>
+        <div id="queue-list" class="queue-list">
+          <!-- Queue items will be inserted here -->
+        </div>
+        <div class="queue-actions">
+          <button id="start-upload-btn" class="btn btn-primary" disabled>
+            Start Upload
+          </button>
+          <button id="clear-queue-btn" class="btn btn-secondary">
+            Clear Queue
+          </button>
+        </div>
+      </div>
+
+      <!-- Progress Section -->
+      <div id="progress-section" class="progress-section hidden">
+        <h2>Uploading...</h2>
+        <div class="progress-bar">
+          <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
+        </div>
+        <p id="progress-text">0 of 0 listings</p>
+        <p id="current-listing" class="current-listing"></p>
+        <div class="progress-actions">
+          <button id="pause-btn" class="btn btn-secondary">Pause</button>
+          <button id="skip-btn" class="btn btn-secondary" disabled>Skip</button>
+          <button id="cancel-btn" class="btn btn-danger">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Buy Credits Modal -->
+    <div id="credits-modal" class="modal hidden">
+      <div class="modal-content">
+        <h2>Buy Credits</h2>
+        <p class="modal-subtitle">Select a credit pack to continue uploading</p>
+        <div id="credit-packs" class="credit-packs">
+          <!-- Packs loaded dynamically -->
+          <div class="skeleton skeleton-text" style="height: 60px; margin-bottom: 8px;"></div>
+          <div class="skeleton skeleton-text" style="height: 60px; margin-bottom: 8px;"></div>
+          <div class="skeleton skeleton-text" style="height: 60px; margin-bottom: 8px;"></div>
+        </div>
+        <div class="modal-actions">
+          <button id="buy-credits-btn" class="btn btn-primary">Buy Now</button>
+          <button id="close-modal-btn" class="btn btn-secondary">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast"></div>
+  </div>
+
+  <script src="lib/xlsx.full.min.js"></script>
+  <script src="lib/papaparse.min.js"></script>
+  <script src="sidepanel.js" type="module"></script>
+</body>
+</html>

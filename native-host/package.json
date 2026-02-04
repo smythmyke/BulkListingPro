@@ -1,0 +1,13 @@
+{
+  "name": "bulklistingpro-native-host",
+  "version": "1.0.0",
+  "description": "Native Host for BulkListingPro Chrome Extension",
+  "main": "host.js",
+  "scripts": {
+    "start": "node host.js"
+  },
+  "dependencies": {
+    "chrome-remote-interface": "^0.33.0",
+    "xlsx": "^0.18.5"
+  }
+}

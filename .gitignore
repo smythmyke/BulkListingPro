@@ -1,0 +1,22 @@
+# Private key - NEVER commit
+extension.pem
+*.pem
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+*.zip
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
