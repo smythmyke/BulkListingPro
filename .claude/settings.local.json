@@ -4,7 +4,8 @@
       "Bash(powershell.exe -Command \"Test-NetConnection -ComputerName localhost -Port 9222\")",
       "Bash(git init:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git push)"
     ]
   }
 }

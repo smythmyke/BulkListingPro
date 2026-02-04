@@ -801,6 +801,6 @@ function copyCommandToClipboard() {
 }
 
 function handleDownload(e) {
-  e.preventDefault();
-  showToast('Download link coming soon - use install-windows.bat for now', 'success');
+  // Let the link work naturally (opens GitHub release download)
+  showToast('Downloading... Extract and run install.bat', 'success');
 }
