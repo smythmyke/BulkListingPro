@@ -4,6 +4,6 @@
   "path": "C:\\Projects\\BulkListingPro-extension\\native-host\\host.bat",
   "type": "stdio",
   "allowed_origins": [
-    "chrome-extension://edkeecpdgpgleapojccbgkljofmmnghj/"
+    "chrome-extension://gmmjdkdgejglelaemhpdekcmeaaccnab/"
   ]
 }

@@ -233,9 +233,30 @@ class EtsyAutomationService {
     for (const img of images) {
       if (img.data.startsWith('data:')) {
         await this.uploadBase64Image(img.data, `image_${img.index}`);
+      } else if (img.data.startsWith('http://') || img.data.startsWith('https://')) {
+        try {
+          const base64 = await this.fetchImageAsBase64(img.data);
+          await this.uploadBase64Image(base64, `image_${img.index}`);
+        } catch (err) {
+          console.warn(`Failed to fetch image from URL: ${err.message}`);
+        }
       }
     }
     await this.interruptibleDelay(3000);
+  }
+
+  async fetchImageAsBase64(url) {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
   }
 
   async uploadBase64Image(dataUrl, name) {
@@ -271,8 +292,17 @@ class EtsyAutomationService {
   }
 
   async uploadDigitalFile(listing) {
-    const digitalFile = listing.digital_file_1;
+    let digitalFile = listing.digital_file_1;
     if (!digitalFile) return;
+
+    if (digitalFile.startsWith('http://') || digitalFile.startsWith('https://')) {
+      try {
+        digitalFile = await this.fetchImageAsBase64(digitalFile);
+      } catch (err) {
+        console.warn(`Failed to fetch digital file from URL: ${err.message}`);
+        return;
+      }
+    }
 
     if (digitalFile.startsWith('data:')) {
       await cdpService.evaluate(`
