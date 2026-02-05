@@ -8,7 +8,8 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "generate-template": "node scripts/generate-template.js"
+    "generate-template": "node scripts/generate-template.js",
+    "generate-seller-kit": "node scripts/generate-seller-kit.js"
   },
   "keywords": [],
   "author": "",
