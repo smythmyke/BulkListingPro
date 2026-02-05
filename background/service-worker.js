@@ -331,6 +331,17 @@ async function handleNativeUpload(payload, sendResponse) {
       }).catch(() => {});
     });
 
+    nativeHostService.on('VERIFICATION_REQUIRED', (msg) => {
+      chrome.runtime.sendMessage({
+        type: 'UPLOAD_PROGRESS',
+        index: msg.index,
+        total: msg.total,
+        title: msg.title,
+        status: 'verification_required',
+        verificationType: msg.verificationType
+      }).catch(() => {});
+    });
+
     const results = await nativeHostService.startUpload(listings);
     sendResponse({ success: true, results });
   } catch (error) {

@@ -1153,3 +1153,66 @@ body {
 .queue-item.deselected {
   opacity: 0.5;
 }
+
+/* Resume Dialog */
+.resume-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.resume-dialog {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 320px;
+  width: 90%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  animation: modalIn 0.3s ease-out;
+}
+
+.resume-dialog h3 {
+  margin: 0 0 12px 0;
+  color: #333;
+  font-size: 18px;
+}
+
+.resume-dialog p {
+  margin: 0 0 12px 0;
+  color: #666;
+}
+
+.resume-dialog ul {
+  margin: 0 0 20px 0;
+  padding-left: 20px;
+  color: #333;
+}
+
+.resume-dialog li {
+  margin-bottom: 4px;
+}
+
+.resume-dialog-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.resume-dialog-buttons .btn {
+  flex: 1;
+}
+
+.resume-dialog-buttons .btn-secondary {
+  background: #6c757d;
+}
+
+.resume-dialog-buttons .btn-secondary:hover {
+  background: #5a6268;
+}

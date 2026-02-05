@@ -125,6 +125,8 @@
 ## Phase 2: Polish & Launch
 
 ### 2.1 Error Handling
+- [x] Captcha/verification detection and pause
+- [x] Progress persistence (resume after crash)
 - [ ] Retry logic with backoff
 - [ ] Credit refund on failure
 - [ ] Clear error messages

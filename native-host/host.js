@@ -194,7 +194,17 @@ async function handleStartUpload(payload) {
     });
 
     try {
-      const result = await createListing(cdpClient, listing);
+      const onVerificationRequired = (verificationType) => {
+        sendMessage({
+          type: 'VERIFICATION_REQUIRED',
+          index: i,
+          total: listings.length,
+          title: listing.title,
+          verificationType
+        });
+      };
+
+      const result = await createListing(cdpClient, listing, { onVerificationRequired });
 
       if (result.success) {
         results.success++;
@@ -210,6 +220,23 @@ async function handleStartUpload(payload) {
           total: listings.length,
           title: listing.title,
           success: true
+        });
+      } else if (result.verificationRequired) {
+        results.failed++;
+        results.details.push({
+          index: i,
+          title: listing.title,
+          status: 'verification_timeout',
+          error: result.error
+        });
+
+        sendMessage({
+          type: 'LISTING_ERROR',
+          index: i,
+          total: listings.length,
+          title: listing.title,
+          error: result.error,
+          verificationRequired: true
         });
       } else {
         results.failed++;

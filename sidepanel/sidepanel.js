@@ -1,4 +1,9 @@
 const CREDITS_PER_LISTING = 2;
+const STORAGE_KEYS = {
+  QUEUE: 'bulklistingpro_queue',
+  UPLOAD_STATE: 'bulklistingpro_upload_state',
+  UPLOAD_RESULTS: 'bulklistingpro_upload_results'
+};
 
 let user = null;
 let credits = { available: 0, used: 0 };
@@ -11,6 +16,7 @@ let isPaused = false;
 let nativeConnected = false;
 let listingImages = [];
 let digitalFile = null;
+let currentUploadIndex = 0;
 
 let setupState = {
   nativeHost: false,
@@ -102,6 +108,135 @@ async function init() {
     await loadCredits(true);
     window.history.replaceState({}, '', window.location.pathname);
   }
+
+  await checkForInterruptedUpload();
+}
+
+async function saveQueueToStorage() {
+  try {
+    await chrome.storage.local.set({ [STORAGE_KEYS.QUEUE]: uploadQueue });
+  } catch (err) {
+    console.warn('Failed to save queue:', err);
+  }
+}
+
+async function saveUploadState() {
+  try {
+    const state = {
+      isUploading,
+      isPaused,
+      currentIndex: currentUploadIndex,
+      totalListings: uploadQueue.filter(item => item.selected).length,
+      timestamp: Date.now()
+    };
+    await chrome.storage.local.set({
+      [STORAGE_KEYS.UPLOAD_STATE]: state,
+      [STORAGE_KEYS.UPLOAD_RESULTS]: uploadResults
+    });
+  } catch (err) {
+    console.warn('Failed to save upload state:', err);
+  }
+}
+
+async function clearUploadState() {
+  try {
+    await chrome.storage.local.remove([
+      STORAGE_KEYS.QUEUE,
+      STORAGE_KEYS.UPLOAD_STATE,
+      STORAGE_KEYS.UPLOAD_RESULTS
+    ]);
+  } catch (err) {
+    console.warn('Failed to clear upload state:', err);
+  }
+}
+
+async function checkForInterruptedUpload() {
+  try {
+    const data = await chrome.storage.local.get([
+      STORAGE_KEYS.QUEUE,
+      STORAGE_KEYS.UPLOAD_STATE,
+      STORAGE_KEYS.UPLOAD_RESULTS
+    ]);
+
+    const savedQueue = data[STORAGE_KEYS.QUEUE];
+    const savedState = data[STORAGE_KEYS.UPLOAD_STATE];
+    const savedResults = data[STORAGE_KEYS.UPLOAD_RESULTS];
+
+    if (!savedQueue || savedQueue.length === 0) {
+      return;
+    }
+
+    const staleThreshold = 24 * 60 * 60 * 1000;
+    if (savedState?.timestamp && (Date.now() - savedState.timestamp) > staleThreshold) {
+      await clearUploadState();
+      return;
+    }
+
+    if (savedState?.isUploading) {
+      const resumeChoice = await showResumeDialog(savedState, savedResults);
+
+      if (resumeChoice === 'resume') {
+        uploadQueue = savedQueue;
+        uploadResults = savedResults || [];
+        currentUploadIndex = savedState.currentIndex || 0;
+
+        const remainingItems = uploadQueue.filter(item => item.selected);
+        for (let i = 0; i < currentUploadIndex && i < remainingItems.length; i++) {
+          remainingItems[i].selected = false;
+          remainingItems[i].status = 'completed';
+        }
+
+        renderQueue();
+        showToast(`Restored ${uploadQueue.length} listings. ${currentUploadIndex} already processed.`, 'success');
+      } else {
+        await clearUploadState();
+        showToast('Previous session cleared', 'success');
+      }
+    } else if (savedQueue.length > 0) {
+      uploadQueue = savedQueue;
+      renderQueue();
+      showToast(`Restored ${uploadQueue.length} queued listings`, 'success');
+    }
+  } catch (err) {
+    console.warn('Error checking for interrupted upload:', err);
+  }
+}
+
+function showResumeDialog(savedState, savedResults) {
+  return new Promise((resolve) => {
+    const completed = savedResults?.length || 0;
+    const total = savedState.totalListings || 0;
+    const remaining = total - completed;
+
+    const dialog = document.createElement('div');
+    dialog.className = 'resume-dialog-overlay';
+    dialog.innerHTML = `
+      <div class="resume-dialog">
+        <h3>Resume Interrupted Upload?</h3>
+        <p>Found an interrupted upload session:</p>
+        <ul>
+          <li><strong>${completed}</strong> listings completed</li>
+          <li><strong>${remaining}</strong> listings remaining</li>
+        </ul>
+        <div class="resume-dialog-buttons">
+          <button class="btn btn-primary" id="resume-btn">Resume Upload</button>
+          <button class="btn btn-secondary" id="clear-btn">Start Fresh</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(dialog);
+
+    dialog.querySelector('#resume-btn').addEventListener('click', () => {
+      dialog.remove();
+      resolve('resume');
+    });
+
+    dialog.querySelector('#clear-btn').addEventListener('click', () => {
+      dialog.remove();
+      resolve('clear');
+    });
+  });
 }
 
 function setupEventListeners() {
@@ -508,6 +643,7 @@ async function processSpreadsheet(file) {
     }
 
     renderQueue();
+    await saveQueueToStorage();
 
     if (allWarnings.length > 0) {
       console.warn(`BulkListingPro: ${allWarnings.length} sanitization warning(s):`);
@@ -591,6 +727,7 @@ function handleSingleListing(e) {
 
   uploadQueue.push(listing);
   renderQueue();
+  saveQueueToStorage();
   e.target.reset();
   listingImages = [];
   renderImagePreviews();
@@ -721,6 +858,7 @@ function renderQueue() {
       e.target.closest('.queue-item').classList.toggle('deselected', !e.target.checked);
       syncSelectAll();
       updateStartButton();
+      saveQueueToStorage();
     });
   });
 }
@@ -728,6 +866,7 @@ function renderQueue() {
 function clearQueue() {
   uploadQueue = [];
   renderQueue();
+  clearUploadState();
   showToast('Queue cleared', 'success');
 }
 
@@ -735,6 +874,7 @@ function toggleSelectAll() {
   const checked = elements.selectAllCheckbox.checked;
   uploadQueue.forEach(item => item.selected = checked);
   renderQueue();
+  saveQueueToStorage();
 }
 
 function syncSelectAll() {
@@ -755,6 +895,7 @@ async function startUpload() {
   isUploading = true;
   isPaused = false;
   uploadResults = [];
+  currentUploadIndex = 0;
   elements.queueSection.classList.add('hidden');
   elements.progressSection.classList.remove('hidden');
   elements.pauseBtn.textContent = 'Pause';
@@ -762,6 +903,7 @@ async function startUpload() {
   const total = selectedItems.length;
   elements.currentListing.textContent = 'Connecting to native host...';
   updateProgress(0, total);
+  await saveUploadState();
 
   try {
     const connectResponse = await chrome.runtime.sendMessage({ type: 'NATIVE_CONNECT' });
@@ -903,6 +1045,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       } else if (message.status === 'complete') {
         elements.currentListing.textContent = `Completed: ${message.title}`;
         uploadResults.push({ title: message.title, status: 'success' });
+        currentUploadIndex = message.index + 1;
+        saveUploadState();
         if (message.creditsRemaining !== undefined) {
           const oldCreds = credits.available;
           credits.available = message.creditsRemaining;
@@ -911,9 +1055,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       } else if (message.status === 'error') {
         elements.currentListing.textContent = `Failed: ${message.title} - ${message.error}`;
         uploadResults.push({ title: message.title, status: 'error', error: message.error });
+        currentUploadIndex = message.index + 1;
+        saveUploadState();
       } else if (message.status === 'skipped') {
         elements.currentListing.textContent = `Skipped: ${message.title}`;
         uploadResults.push({ title: message.title, status: 'skipped' });
+        currentUploadIndex = message.index + 1;
+        saveUploadState();
+      } else if (message.status === 'verification_required') {
+        elements.currentListing.textContent = 'Etsy verification required - complete it in browser';
+        isPaused = true;
+        elements.pauseBtn.textContent = 'Resume';
+        showToast('Etsy requires verification. Complete it in the browser, then click Resume.', 'error');
       }
       updateProgress(message.index + 1, message.total);
       break;
@@ -941,6 +1094,7 @@ function showResults() {
   elements.resultsSkipped.textContent = skippedCount;
 
   renderResultsList();
+  clearUploadState();
 }
 
 function renderResultsList() {
@@ -963,7 +1117,9 @@ function resetToQueue() {
   elements.resultsSection.classList.add('hidden');
   uploadResults = [];
   uploadQueue = [];
+  currentUploadIndex = 0;
   renderQueue();
+  clearUploadState();
 }
 
 async function checkSetup() {

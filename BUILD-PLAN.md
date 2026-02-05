@@ -78,22 +78,22 @@ Before making architectural changes, document what works and what doesn't.
 
 These can be done without changing the core architecture.
 
-### A.1 Progress Persistence
+### A.1 Progress Persistence ✅ COMPLETE
 **Priority:** High
 **Risk:** Low
 
 Save upload state to `chrome.storage.local` so recovery is possible after crash/close.
 
 **Tasks:**
-- [ ] Save queue state on every queue change
-- [ ] Save upload progress (current index, results so far)
-- [ ] On sidepanel load, check for interrupted upload
-- [ ] Prompt user: "Resume interrupted upload?" or "Clear and start fresh"
-- [ ] Clear saved state on successful completion
+- [x] Save queue state on every queue change
+- [x] Save upload progress (current index, results so far)
+- [x] On sidepanel load, check for interrupted upload
+- [x] Prompt user: "Resume interrupted upload?" or "Clear and start fresh"
+- [x] Clear saved state on successful completion
 
-**Files to modify:**
-- `sidepanel/sidepanel.js` - Add save/restore logic
-- `services/storage.js` - Add queue-specific methods (optional)
+**Files modified:**
+- `sidepanel/sidepanel.js` - Added save/restore logic, resume dialog
+- `sidepanel/sidepanel.css` - Added resume dialog styles
 
 ### A.2 Listing Templates
 **Priority:** Medium
@@ -144,24 +144,24 @@ Find and replace text across all queued listings.
 - `sidepanel/sidepanel.html` - Modal UI
 - `sidepanel/sidepanel.js` - Search/replace logic
 
-### A.4 Captcha/Verification Detection
+### A.4 Captcha/Verification Detection ✅ COMPLETE
 **Priority:** High
 **Risk:** Low
 
 Pause upload if Etsy shows verification prompt.
 
 **Tasks:**
-- [ ] In `listing.js`, before each action check for captcha selectors
-- [ ] Known selectors: `[data-captcha]`, `.captcha-container`, verification modal
-- [ ] If detected, send `VERIFICATION_REQUIRED` message
-- [ ] Sidepanel shows alert: "Etsy requires verification. Complete it and click Resume."
-- [ ] Pause automatically, wait for user to resume
+- [x] In `listing.js`, before each action check for captcha selectors
+- [x] Known selectors: `[data-captcha]`, `.captcha-container`, verification modal
+- [x] If detected, send `VERIFICATION_REQUIRED` message
+- [x] Sidepanel shows alert: "Etsy requires verification. Complete it and click Resume."
+- [x] Pause automatically, wait for user to resume
 
-**Files to modify:**
-- `native-host/src/listing.js` - Add captcha checks
-- `native-host/host.js` - New message type
-- `services/nativeHost.js` - Handle new message
-- `sidepanel/sidepanel.js` - Show verification alert
+**Files modified:**
+- `native-host/src/listing.js` - Added checkForVerification(), waitForVerificationCleared(), VerificationRequiredError
+- `native-host/host.js` - Added VERIFICATION_REQUIRED message handling, onVerificationRequired callback
+- `background/service-worker.js` - Added VERIFICATION_REQUIRED listener
+- `sidepanel/sidepanel.js` - Handle verification_required status in UPLOAD_PROGRESS
 
 ---
 

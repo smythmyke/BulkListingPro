@@ -5,8 +5,90 @@ const http = require('http');
 const config = require('../config/default');
 const { interruptibleDelay: delay, checkAbort } = require('./abort');
 
+class VerificationRequiredError extends Error {
+  constructor(message = 'Etsy verification required') {
+    super(message);
+    this.name = 'VerificationRequiredError';
+    this.isVerificationRequired = true;
+  }
+}
+
+async function checkForVerification(cdp) {
+  try {
+    const hasVerification = await cdp.evaluate(`
+      (() => {
+        const selectors = [
+          '[data-captcha]',
+          '.captcha-container',
+          '#captcha',
+          'iframe[src*="captcha"]',
+          'iframe[src*="recaptcha"]',
+          'iframe[src*="hcaptcha"]',
+          '[class*="captcha"]',
+          '[id*="captcha"]',
+          '[data-testid*="captcha"]',
+          '.g-recaptcha',
+          '.h-captcha'
+        ];
+
+        for (const selector of selectors) {
+          const el = document.querySelector(selector);
+          if (el && el.offsetParent !== null) {
+            return { found: true, type: 'captcha' };
+          }
+        }
+
+        const verifyTexts = [
+          'verify you are human',
+          'verify you\\'re human',
+          'are you a robot',
+          'security check',
+          'complete the captcha',
+          'prove you\\'re not a robot'
+        ];
+
+        const bodyText = document.body?.innerText?.toLowerCase() || '';
+        for (const text of verifyTexts) {
+          if (bodyText.includes(text)) {
+            return { found: true, type: 'text-detection' };
+          }
+        }
+
+        const modal = document.querySelector('[role="dialog"], .modal, [class*="modal"]');
+        if (modal && modal.offsetParent !== null) {
+          const modalText = modal.innerText?.toLowerCase() || '';
+          if (modalText.includes('verify') || modalText.includes('security') || modalText.includes('robot')) {
+            return { found: true, type: 'modal' };
+          }
+        }
+
+        return { found: false };
+      })()
+    `);
+
+    return hasVerification;
+  } catch (err) {
+    console.warn('Error checking for verification:', err.message);
+    return { found: false };
+  }
+}
+
+async function waitForVerificationCleared(cdp, checkInterval = 2000, maxWait = 300000) {
+  const startTime = Date.now();
+
+  while (Date.now() - startTime < maxWait) {
+    const check = await checkForVerification(cdp);
+    if (!check.found) {
+      return true;
+    }
+    await delay(checkInterval);
+  }
+
+  return false;
+}
+
 async function createListing(cdp, product, options = {}) {
-  const { dryRun = false } = options;
+  const { dryRun = false, onVerificationRequired = null } = options;
 
   console.log(`Creating listing: ${product.title?.substring(0, 50)}...`);
 
@@ -18,8 +100,35 @@ async function createListing(cdp, product, options = {}) {
     await cdp.navigate(config.etsy.newListing);
     await delay(2000);
 
+    let verifyCheck = await checkForVerification(cdp);
+    if (verifyCheck.found) {
+      console.log(`Verification detected (${verifyCheck.type}) - waiting for user...`);
+      if (onVerificationRequired) {
+        onVerificationRequired(verifyCheck.type);
+      }
+      const cleared = await waitForVerificationCleared(cdp);
+      if (!cleared) {
+        throw new VerificationRequiredError('Verification not completed within timeout');
+      }
+      console.log('Verification cleared, continuing...');
+      await delay(1000);
+    }
+
     const category = product.category || config.listingDefaults.defaultCategory;
     await selectCategory(cdp, category);
+
+    verifyCheck = await checkForVerification(cdp);
+    if (verifyCheck.found) {
+      console.log(`Verification detected after category (${verifyCheck.type}) - waiting...`);
+      if (onVerificationRequired) {
+        onVerificationRequired(verifyCheck.type);
+      }
+      const cleared = await waitForVerificationCleared(cdp);
+      if (!cleared) {
+        throw new VerificationRequiredError('Verification not completed within timeout');
+      }
+      await delay(1000);
+    }
 
     await fillItemDetails(cdp, product);
 
@@ -34,6 +143,9 @@ async function createListing(cdp, product, options = {}) {
     return { success: true, title: product.title };
 
   } catch (error) {
+    if (error.isVerificationRequired) {
+      return { success: false, error: error.message, title: product.title, verificationRequired: true };
+    }
     console.error(`Failed to create listing: ${error.message}`);
     return { success: false, error: error.message, title: product.title };
   }
@@ -467,4 +579,4 @@ function downloadFile(url, destPath) {
   });
 }
 
-module.exports = { createListing };
+module.exports = { createListing, checkForVerification, VerificationRequiredError };
