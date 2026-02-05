@@ -411,6 +411,18 @@ function convertDropboxUrl(url) {
 async function resolveFilePath(filePathOrUrl, tempDir, filename) {
   if (!filePathOrUrl) return null;
 
+  if (filePathOrUrl.startsWith('data:')) {
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir, { recursive: true });
+    }
+    const matches = filePathOrUrl.match(/^data:[^;]+;base64,(.+)$/);
+    if (!matches) return null;
+    const buffer = Buffer.from(matches[1], 'base64');
+    const localPath = path.join(tempDir, filename);
+    fs.writeFileSync(localPath, buffer);
+    return localPath;
+  }
+
   if (isLocalFile(filePathOrUrl)) {
     return filePathOrUrl;
   }

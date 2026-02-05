@@ -365,6 +365,19 @@ body {
   color: #999;
 }
 
+.template-link {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 12px;
+  color: #F56400;
+  text-decoration: none;
+}
+
+.template-link:hover {
+  text-decoration: underline;
+  color: #d45500;
+}
+
 /* Single Listing Form */
 .single-listing {
   margin-top: 16px;
@@ -885,7 +898,258 @@ body {
   font-size: 11px;
 }
 
+.smartscreen-note {
+  margin-top: 12px;
+  padding: 8px 10px;
+  background: #fff8e6;
+  border-left: 3px solid #ffc107;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.smartscreen-note strong {
+  color: #856404;
+}
+
 .setup-actions {
   margin-top: 16px;
   text-align: center;
+}
+
+/* Results Section */
+.results-section {
+  animation: fadeInUp 0.4s ease-out;
+}
+
+.results-section h2 {
+  font-size: 16px;
+  margin-bottom: 12px;
+}
+
+.results-summary {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.results-summary .stat {
+  flex: 1;
+  text-align: center;
+  padding: 10px 8px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.results-summary .stat span {
+  display: block;
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.results-summary .stat.success {
+  background: #d4edda;
+  color: #155724;
+}
+
+.results-summary .stat.failed {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.results-summary .stat.skipped {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.results-list {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 12px;
+}
+
+.result-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  background: #f9f9f9;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  animation: slideIn 0.3s ease-out both;
+  transition: all 0.2s ease;
+  flex-wrap: wrap;
+}
+
+.result-item:hover {
+  background: #f0f0f0;
+  transform: translateX(4px);
+}
+
+.result-item .title {
+  flex: 1;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.result-item .status {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.result-item .status.success {
+  background: #d4edda;
+  color: #155724;
+}
+
+.result-item .status.success::before {
+  content: '\2713 ';
+}
+
+.result-item .status.error {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.result-item .status.skipped {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.result-item .error-detail {
+  width: 100%;
+  margin-top: 6px;
+  padding: 6px 8px;
+  background: #fff0f0;
+  border-left: 3px solid #dc3545;
+  border-radius: 3px;
+  font-size: 12px;
+  color: #721c24;
+}
+
+.results-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Image Drop Zone */
+.image-drop-zone {
+  border: 2px dashed #ccc;
+  border-radius: 6px;
+  padding: 12px;
+  transition: all 0.3s ease;
+  min-height: 80px;
+}
+
+.image-drop-zone.drag-over {
+  border-color: #F56400;
+  background: #fff8f5;
+}
+
+.image-drop-prompt {
+  text-align: center;
+  color: #999;
+  font-size: 12px;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: #F56400;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.image-previews {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.image-preview {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border-radius: 4px;
+  overflow: hidden;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.image-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-preview .remove-image {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 18px;
+  height: 18px;
+  background: rgba(0,0,0,0.6);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
+}
+
+.digital-file-zone {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 8px 12px;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.digital-file-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.digital-file-name {
+  font-size: 13px;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.queue-select-all {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 4px;
+  cursor: pointer;
+}
+
+.queue-select-all input {
+  accent-color: #F56400;
+}
+
+.queue-item input[type="checkbox"] {
+  accent-color: #F56400;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.queue-item.deselected {
+  opacity: 0.5;
 }

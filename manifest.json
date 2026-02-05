@@ -18,7 +18,8 @@
   "host_permissions": [
     "https://*.etsy.com/*",
     "https://business-search-api-815700675676.us-central1.run.app/*",
-    "https://www.googleapis.com/*"
+    "https://www.googleapis.com/*",
+    "http://localhost:9222/*"
   ],
 
   "oauth2": {

@@ -3,7 +3,7 @@
 
 Option Explicit
 
-Dim WshShell, fso, chromePath, isRunning
+Dim WshShell, fso, chromePath, isRunning, userDataDir
 
 Set WshShell = CreateObject("WScript.Shell")
 Set fso = CreateObject("Scripting.FileSystemObject")
@@ -39,14 +39,23 @@ If isRunning Then
     If result = vbYes Then
         ' Kill all Chrome processes
         WshShell.Run "taskkill /F /IM chrome.exe /T", 0, True
-        WScript.Sleep 1000
+        WScript.Sleep 3000
     Else
         WScript.Quit
     End If
 End If
 
-' Launch Chrome with debug port
-WshShell.Run chromePath & " --remote-debugging-port=9222", 1, False
+' Use dedicated Chrome profile for BulkListingPro (required by Chrome 139+)
+userDataDir = WshShell.ExpandEnvironmentStrings("%LOCALAPPDATA%") & "\BulkListingPro\ChromeProfile"
+
+' Create directory if it doesn't exist
+If Not fso.FolderExists(userDataDir) Then
+    fso.CreateFolder WshShell.ExpandEnvironmentStrings("%LOCALAPPDATA%") & "\BulkListingPro"
+    fso.CreateFolder userDataDir
+End If
+
+' Launch Chrome with debug port and dedicated profile
+WshShell.Run chromePath & " --remote-debugging-port=9222 --remote-allow-origins=* ""--user-data-dir=" & userDataDir & """", 1, False
 
 Set WshShell = Nothing
 Set fso = Nothing

@@ -1,6 +1,6 @@
 # BulkListingPro Master Checklist
 
-> **Last Updated:** February 3, 2026
+> **Last Updated:** February 5, 2026
 > **Status:** Phase 1 - Foundation
 
 ---
@@ -25,14 +25,14 @@
 - [x] Show connection status in sidepanel
 - [x] Create extension icons
 - [x] Test extension loads in Chrome
-- [ ] Set up package.json with build tools
+- [x] Set up package.json with build tools
 
 ### 1.2 Sidepanel UI
 - [x] Setup screen (native host installation prompt)
 - [x] Listing form (single listing entry)
   - [x] Title, description, price fields
   - [x] Category dropdown
-  - [ ] Image drag/drop zone (up to 5 images)
+  - [x] Image drag/drop zone (up to 5 images)
   - [ ] Digital file path input with browse button
   - [x] Tag input (comma separated)
   - [x] Add to Queue button
@@ -53,10 +53,10 @@
   - [x] X of Y listings complete
   - [x] Pause/Resume button
   - [x] Cancel button
-- [ ] Results view
-  - [ ] Summary (X success, Y failed)
-  - [ ] List with status per listing
-  - [ ] Error details for failed listings
+- [x] Results view
+  - [x] Summary (X success, Y failed)
+  - [x] List with status per listing
+  - [x] Error details for failed listings
 
 ### 1.3 Native Host
 - [x] Create native-host directory structure
@@ -68,7 +68,6 @@
 - [x] Create Native Messaging manifest (com.bulklistingpro.host.json)
 - [x] Test Native Messaging communication
 - [x] Create Windows installer (install-windows.bat)
-- [ ] Create Mac installer (pkg)
 - [x] Test full flow: extension → native host → CDP → Etsy
 
 ### 1.4 Extension ↔ Native Host Communication
@@ -97,8 +96,8 @@
 - [x] Using /api/auth/google endpoint (existing)
 - [x] Using /api/user/credits endpoint (existing)
 - [x] Using /api/user/credits/use endpoint (existing)
-- [ ] Add BulkListingPro to Firebase collection (separate credit pool)
-- [ ] Test API endpoints work with BulkListingPro
+- [x] Add BulkListingPro to Firebase collection (shared credit pool, no overlap)
+- [x] Test API endpoints work with BulkListingPro
 
 ### 1.7 Credit System
 - [x] Display credit balance in sidepanel (with animations)
@@ -143,9 +142,13 @@
 ### 2.3 Chrome Web Store Submission
 - [ ] Create 5 screenshots
 - [ ] Create promotional video (optional)
-- [ ] Write store description
-- [ ] Create privacy policy
-- [ ] Create terms of service
+- [x] Write store description → `store-listing/description.md`
+- [x] Create privacy policy → `store-listing/privacy-policy.html`
+- [x] Create terms of service → `store-listing/terms-of-service.html`
+- [x] Create packaging script → `create-zip.ps1`
+- [ ] Host legal pages on GitHub Pages
+  - URL: `https://smythmyke.github.io/BulkListingPro/store-listing/privacy-policy.html`
+  - URL: `https://smythmyke.github.io/BulkListingPro/store-listing/terms-of-service.html`
 - [ ] Set up developer account ($5 fee)
 - [ ] Submit for review
 - [ ] Respond to any review feedback
@@ -224,6 +227,8 @@
 | 2026-02-04 | Interrupt-based pause/skip/cancel implemented |
 | 2026-02-04 | Etsy save confirmation detection added |
 | 2026-02-04 | Setup/onboarding screen implemented |
+| 2026-02-05 | Debug browser detection (CDP tab comparison + warning banner) |
+| 2026-02-05 | Chrome Web Store submission prep (store listing, legal pages, packaging script) |
 | | |
 
 ---

@@ -142,11 +142,41 @@ class NativeHostService {
   async connectToChrome(options = {}) {
     const { host = 'localhost', port = 9222 } = options;
 
-    return this.sendAndWait(
-      { type: 'CONNECT', payload: { host, port } },
-      'CONNECTED',
-      10000
-    );
+    return new Promise((resolve, reject) => {
+      let settled = false;
+
+      const cleanup = () => {
+        this.off('CONNECTED', onConnected);
+        this.off('CONNECTION_ERROR', onError);
+        clearTimeout(timer);
+      };
+
+      const onConnected = (response) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        resolve(response);
+      };
+
+      const onError = (response) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        reject(new Error(response.error || 'CDP connection failed'));
+      };
+
+      const timer = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        reject(new Error('Timeout connecting to Chrome debug port. Is Chrome running with --remote-debugging-port=9222?'));
+      }, 10000);
+
+      this.on('CONNECTED', onConnected);
+      this.on('CONNECTION_ERROR', onError);
+
+      this.send({ type: 'CONNECT', payload: { host, port } });
+    });
   }
 
   async startUpload(listings) {

@@ -31,6 +31,11 @@ PrivilegesRequired=lowest
 WizardStyle=modern
 ; License (optional - uncomment if you have one)
 ; LicenseFile=..\LICENSE.txt
+; Disable the "ready to install" page for cleaner flow
+DisableReadyPage=yes
+
+[Messages]
+FinishedLabel=Setup has installed [name] on your computer.%n%nNext steps:%n1. Use the "Chrome (BulkListingPro)" shortcut on your desktop%n2. Log into Etsy in the browser that opens%n3. Click the BulkListingPro extension icon to start uploading
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -63,8 +68,8 @@ Root: HKCU; Subkey: "Software\Google\Chrome\NativeMessagingHosts\com.bulklisting
 [Run]
 ; Install npm dependencies after install (if node_modules not bundled)
 Filename: "cmd.exe"; Parameters: "/c npm install --production"; WorkingDir: "{app}"; StatusMsg: "Installing dependencies..."; Flags: runhidden; Check: not DirExists(ExpandConstant('{app}\node_modules'))
-; Open extension page after install
-Filename: "cmd.exe"; Parameters: "/c start https://github.com/smythmyke/BulkListingPro#installation"; Description: "View installation instructions"; Flags: postinstall shellexec skipifsilent nowait
+; Launch Chrome with debug mode after install (optional checkbox)
+Filename: "{app}\LaunchChrome.vbs"; Description: "Launch Chrome with BulkListingPro support"; Flags: postinstall nowait skipifsilent unchecked
 
 [Code]
 var

@@ -5,9 +5,12 @@ let credits = { available: 0, used: 0 };
 let creditPacks = [];
 let selectedPackId = 'standard';
 let uploadQueue = [];
+let uploadResults = [];
 let isUploading = false;
 let isPaused = false;
 let nativeConnected = false;
+let listingImages = [];
+let digitalFile = null;
 
 let setupState = {
   nativeHost: false,
@@ -56,7 +59,26 @@ const elements = {
   creditPacksContainer: document.getElementById('credit-packs'),
   buyCreditsBtn: document.getElementById('buy-credits-btn'),
   closeModalBtn: document.getElementById('close-modal-btn'),
-  toast: document.getElementById('toast')
+  resultsSection: document.getElementById('results-section'),
+  resultsSuccess: document.getElementById('results-success'),
+  resultsFailed: document.getElementById('results-failed'),
+  resultsSkipped: document.getElementById('results-skipped'),
+  resultsList: document.getElementById('results-list'),
+  newUploadBtn: document.getElementById('new-upload-btn'),
+  toast: document.getElementById('toast'),
+  imageDropZone: document.getElementById('image-drop-zone'),
+  imagePreviews: document.getElementById('image-previews'),
+  imageDropPrompt: document.getElementById('image-drop-prompt'),
+  imageBrowseBtn: document.getElementById('image-browse-btn'),
+  imageFileInput: document.getElementById('image-file-input'),
+  digitalFileZone: document.getElementById('digital-file-zone'),
+  digitalFileInfo: document.getElementById('digital-file-info'),
+  digitalFileName: document.getElementById('digital-file-name'),
+  digitalFileRemove: document.getElementById('digital-file-remove'),
+  digitalFileBrowseBtn: document.getElementById('digital-file-browse-btn'),
+  digitalFileInput: document.getElementById('digital-file-input'),
+  digitalFilePrompt: document.getElementById('digital-file-prompt'),
+  selectAllCheckbox: document.getElementById('select-all-checkbox')
 };
 
 document.addEventListener('DOMContentLoaded', init);
@@ -105,6 +127,16 @@ function setupEventListeners() {
   elements.pauseBtn.addEventListener('click', pauseUpload);
   elements.skipBtn.addEventListener('click', skipListing);
   elements.cancelBtn.addEventListener('click', cancelUpload);
+  elements.newUploadBtn.addEventListener('click', resetToQueue);
+  elements.imageDropZone.addEventListener('dragover', handleImageDragOver);
+  elements.imageDropZone.addEventListener('dragleave', handleImageDragLeave);
+  elements.imageDropZone.addEventListener('drop', handleImageDrop);
+  elements.imageBrowseBtn.addEventListener('click', () => elements.imageFileInput.click());
+  elements.imageFileInput.addEventListener('change', handleImageFileSelect);
+  elements.digitalFileBrowseBtn.addEventListener('click', () => elements.digitalFileInput.click());
+  elements.digitalFileInput.addEventListener('change', handleDigitalFileSelect);
+  elements.digitalFileRemove.addEventListener('click', clearDigitalFile);
+  elements.selectAllCheckbox.addEventListener('change', toggleSelectAll);
 }
 
 const ETSY_PATTERNS = [
@@ -263,10 +295,11 @@ function updateCreditsDisplay(oldValue) {
 }
 
 function updateStartButton() {
-  const requiredCredits = uploadQueue.length * CREDITS_PER_LISTING;
-  elements.startUploadBtn.disabled = uploadQueue.length === 0 || credits.available < requiredCredits;
+  const selectedCount = uploadQueue.filter(item => item.selected).length;
+  const requiredCredits = selectedCount * CREDITS_PER_LISTING;
+  elements.startUploadBtn.disabled = selectedCount === 0 || credits.available < requiredCredits;
 
-  if (uploadQueue.length > 0 && credits.available < requiredCredits) {
+  if (selectedCount > 0 && credits.available < requiredCredits) {
     elements.startUploadBtn.textContent = `Need ${requiredCredits - credits.available} more credits`;
   } else {
     elements.startUploadBtn.textContent = `Start Upload (${requiredCredits} credits)`;
@@ -386,6 +419,67 @@ function handleFileSelect(e) {
   }
 }
 
+function sanitizeListing(row, rowIndex) {
+  const warnings = [];
+
+  let title = (row.title || row.Title || '').toString().trim();
+  if (!title) {
+    warnings.push(`Row ${rowIndex}: empty title, skipping`);
+    return { listing: null, warnings };
+  }
+  if (title.length > 140) {
+    warnings.push(`Row ${rowIndex}: title truncated from ${title.length} to 140 chars`);
+    title = title.substring(0, 140);
+  }
+
+  let priceRaw = (row.price || row.Price || '').toString().replace(/[$,\s]/g, '');
+  let price = parseFloat(priceRaw);
+  if (isNaN(price) || price < 0.20) {
+    warnings.push(`Row ${rowIndex}: invalid price "${row.price || row.Price || ''}", skipping`);
+    return { listing: null, warnings };
+  }
+
+  let category = (row.category || row.Category || '').toString().trim();
+  if (!category) {
+    category = 'Digital Prints';
+  }
+
+  let tags = extractTags(row);
+  const seenTags = new Set();
+  const dedupedTags = [];
+  for (const tag of tags) {
+    const lower = tag.toLowerCase().trim();
+    if (!lower || seenTags.has(lower)) continue;
+    seenTags.add(lower);
+    let t = tag.trim();
+    if (t.length > 20) {
+      warnings.push(`Row ${rowIndex}: tag "${t}" truncated to 20 chars`);
+      t = t.substring(0, 20);
+    }
+    dedupedTags.push(t);
+  }
+  tags = dedupedTags.slice(0, 13);
+
+  const listing = {
+    id: String(Date.now() + rowIndex),
+    title,
+    description: (row.description || row.Description || '').toString(),
+    price,
+    category,
+    tags,
+    image_1: row.image_1 || row.Image1 || row['Image 1'] || '',
+    image_2: row.image_2 || row.Image2 || row['Image 2'] || '',
+    image_3: row.image_3 || row.Image3 || row['Image 3'] || '',
+    image_4: row.image_4 || row.Image4 || row['Image 4'] || '',
+    image_5: row.image_5 || row.Image5 || row['Image 5'] || '',
+    digital_file_1: row.digital_file_1 || row.DigitalFile || row['Digital File'] || '',
+    status: 'pending',
+    selected: true
+  };
+
+  return { listing, warnings };
+}
+
 async function processSpreadsheet(file) {
   console.log('Processing spreadsheet:', file.name);
   showToast(`Processing ${file.name}...`, 'success');
@@ -397,27 +491,31 @@ async function processSpreadsheet(file) {
       return;
     }
 
-    uploadQueue = data.map((row, index) => ({
-      id: String(Date.now() + index),
-      title: row.title || row.Title || '',
-      description: row.description || row.Description || '',
-      price: parseFloat(row.price || row.Price || 0),
-      category: row.category || row.Category || 'Digital Prints',
-      tags: extractTags(row),
-      image_1: row.image_1 || row.Image1 || row['Image 1'] || '',
-      image_2: row.image_2 || row.Image2 || row['Image 2'] || '',
-      image_3: row.image_3 || row.Image3 || row['Image 3'] || '',
-      digital_file_1: row.digital_file_1 || row.DigitalFile || row['Digital File'] || '',
-      status: 'pending'
-    })).filter(item => item.title);
+    const allWarnings = [];
+    const listings = [];
+
+    data.forEach((row, index) => {
+      const { listing, warnings } = sanitizeListing(row, index + 2);
+      allWarnings.push(...warnings);
+      if (listing) listings.push(listing);
+    });
+
+    uploadQueue = listings;
 
     if (uploadQueue.length === 0) {
-      showToast('No valid listings found (title required)', 'error');
+      showToast('No valid listings found (title and valid price required)', 'error');
       return;
     }
 
     renderQueue();
-    showToast(`Loaded ${uploadQueue.length} listings`, 'success');
+
+    if (allWarnings.length > 0) {
+      console.warn(`BulkListingPro: ${allWarnings.length} sanitization warning(s):`);
+      allWarnings.forEach(w => console.warn('  ' + w));
+      showToast(`Loaded ${uploadQueue.length} listings (${allWarnings.length} warnings — check console)`, 'success');
+    } else {
+      showToast(`Loaded ${uploadQueue.length} listings`, 'success');
+    }
   } catch (error) {
     console.error('Spreadsheet error:', error);
     showToast('Failed to parse spreadsheet: ' + error.message, 'error');
@@ -479,13 +577,123 @@ function handleSingleListing(e) {
     description: formData.get('description'),
     price: parseFloat(formData.get('price')),
     tags: formData.get('tags').split(',').map(t => t.trim()).filter(t => t),
-    status: 'pending'
+    status: 'pending',
+    selected: true
   };
+
+  listingImages.forEach((img, i) => {
+    listing[`image_${i + 1}`] = img.dataUrl;
+  });
+
+  if (digitalFile) {
+    listing.digital_file_1 = digitalFile.dataUrl;
+  }
 
   uploadQueue.push(listing);
   renderQueue();
   e.target.reset();
+  listingImages = [];
+  renderImagePreviews();
+  digitalFile = null;
+  clearDigitalFile();
   showToast('Listing added to queue', 'success');
+}
+
+function handleImageDragOver(e) {
+  e.preventDefault();
+  elements.imageDropZone.classList.add('drag-over');
+}
+
+function handleImageDragLeave(e) {
+  e.preventDefault();
+  elements.imageDropZone.classList.remove('drag-over');
+}
+
+function handleImageDrop(e) {
+  e.preventDefault();
+  elements.imageDropZone.classList.remove('drag-over');
+  addImages(e.dataTransfer.files);
+}
+
+function handleImageFileSelect(e) {
+  addImages(e.target.files);
+  e.target.value = '';
+}
+
+function addImages(files) {
+  const remaining = 5 - listingImages.length;
+  if (remaining <= 0) {
+    showToast('Maximum 5 images allowed', 'error');
+    return;
+  }
+
+  const validFiles = [...files].filter(f => f.type.startsWith('image/'));
+  if (validFiles.length === 0) {
+    showToast('Please select image files', 'error');
+    return;
+  }
+
+  const toAdd = validFiles.slice(0, remaining);
+  if (validFiles.length > remaining) {
+    showToast(`Only ${remaining} more image(s) allowed, extras ignored`, 'error');
+  }
+
+  let loaded = 0;
+  toAdd.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      listingImages.push({ file, dataUrl: e.target.result });
+      loaded++;
+      if (loaded === toAdd.length) {
+        renderImagePreviews();
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderImagePreviews() {
+  elements.imagePreviews.innerHTML = listingImages.map((img, i) => `
+    <div class="image-preview">
+      <img src="${img.dataUrl}" alt="Image ${i + 1}">
+      <button type="button" class="remove-image" data-index="${i}">&times;</button>
+    </div>
+  `).join('');
+
+  elements.imagePreviews.querySelectorAll('.remove-image').forEach(btn => {
+    btn.addEventListener('click', () => removeImage(parseInt(btn.dataset.index)));
+  });
+
+  if (listingImages.length >= 5) {
+    elements.imageDropPrompt.classList.add('hidden');
+  } else {
+    elements.imageDropPrompt.classList.remove('hidden');
+  }
+}
+
+function removeImage(index) {
+  listingImages.splice(index, 1);
+  renderImagePreviews();
+}
+
+function handleDigitalFileSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    digitalFile = { file, dataUrl: ev.target.result, name: file.name };
+    elements.digitalFileName.textContent = file.name;
+    elements.digitalFileInfo.classList.remove('hidden');
+    elements.digitalFilePrompt.classList.add('hidden');
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+}
+
+function clearDigitalFile() {
+  digitalFile = null;
+  elements.digitalFileInfo.classList.add('hidden');
+  elements.digitalFilePrompt.classList.remove('hidden');
 }
 
 function renderQueue() {
@@ -499,11 +707,22 @@ function renderQueue() {
   updateStartButton();
 
   elements.queueList.innerHTML = uploadQueue.map((item, index) => `
-    <div class="queue-item" data-id="${item.id}" style="animation-delay: ${index * 0.05}s">
+    <div class="queue-item${item.selected ? '' : ' deselected'}" data-id="${item.id}" style="animation-delay: ${index * 0.05}s">
+      <input type="checkbox" ${item.selected ? 'checked' : ''} data-index="${index}">
       <span class="title">${item.title}</span>
       <span class="status ${item.status}">${item.status}</span>
     </div>
   `).join('');
+
+  elements.queueList.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+    cb.addEventListener('change', (e) => {
+      const idx = parseInt(e.target.dataset.index);
+      uploadQueue[idx].selected = e.target.checked;
+      e.target.closest('.queue-item').classList.toggle('deselected', !e.target.checked);
+      syncSelectAll();
+      updateStartButton();
+    });
+  });
 }
 
 function clearQueue() {
@@ -512,10 +731,22 @@ function clearQueue() {
   showToast('Queue cleared', 'success');
 }
 
-async function startUpload() {
-  const requiredCredits = uploadQueue.length * CREDITS_PER_LISTING;
+function toggleSelectAll() {
+  const checked = elements.selectAllCheckbox.checked;
+  uploadQueue.forEach(item => item.selected = checked);
+  renderQueue();
+}
 
-  if (uploadQueue.length === 0) return;
+function syncSelectAll() {
+  const allSelected = uploadQueue.length > 0 && uploadQueue.every(item => item.selected);
+  elements.selectAllCheckbox.checked = allSelected;
+}
+
+async function startUpload() {
+  const selectedItems = uploadQueue.filter(item => item.selected);
+  const requiredCredits = selectedItems.length * CREDITS_PER_LISTING;
+
+  if (selectedItems.length === 0) return;
   if (credits.available < requiredCredits) {
     showCreditsModal();
     return;
@@ -523,11 +754,12 @@ async function startUpload() {
 
   isUploading = true;
   isPaused = false;
+  uploadResults = [];
   elements.queueSection.classList.add('hidden');
   elements.progressSection.classList.remove('hidden');
   elements.pauseBtn.textContent = 'Pause';
 
-  const total = uploadQueue.length;
+  const total = selectedItems.length;
   elements.currentListing.textContent = 'Connecting to native host...';
   updateProgress(0, total);
 
@@ -540,7 +772,7 @@ async function startUpload() {
 
     elements.currentListing.textContent = 'Starting upload...';
 
-    const listings = uploadQueue.map(item => ({
+    const listings = selectedItems.map(item => ({
       title: item.title,
       description: item.description || '',
       price: String(item.price),
@@ -549,6 +781,8 @@ async function startUpload() {
       image_1: item.image_1 || '',
       image_2: item.image_2 || '',
       image_3: item.image_3 || '',
+      image_4: item.image_4 || '',
+      image_5: item.image_5 || '',
       digital_file_1: item.digital_file_1 || '',
       tag_1: item.tags?.[0],
       tag_2: item.tags?.[1],
@@ -571,9 +805,7 @@ async function startUpload() {
     });
 
     if (response.success) {
-      const results = response.results || { success: 0, failed: 0 };
-      showToast(`Upload complete: ${results.success} succeeded, ${results.failed} failed`,
-        results.failed === 0 ? 'success' : 'error');
+      showResults();
     } else {
       throw new Error(response.error || 'Upload failed');
     }
@@ -581,6 +813,12 @@ async function startUpload() {
   } catch (error) {
     console.error('Upload error:', error);
     showToast('Upload failed: ' + error.message, 'error');
+    if (uploadResults.length > 0) {
+      showResults();
+    } else {
+      elements.progressSection.classList.add('hidden');
+      elements.queueSection.classList.remove('hidden');
+    }
   }
 
   isUploading = false;
@@ -621,8 +859,13 @@ async function cancelUpload() {
   await chrome.runtime.sendMessage({ type: 'NATIVE_CANCEL' });
   isUploading = false;
   isPaused = false;
-  elements.progressSection.classList.add('hidden');
-  elements.queueSection.classList.remove('hidden');
+
+  if (uploadResults.length > 0) {
+    showResults();
+  } else {
+    elements.progressSection.classList.add('hidden');
+    elements.queueSection.classList.remove('hidden');
+  }
   showToast('Upload cancelled', 'success');
   await loadCredits(true);
 }
@@ -659,6 +902,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         elements.currentListing.textContent = `Uploading: ${message.title}`;
       } else if (message.status === 'complete') {
         elements.currentListing.textContent = `Completed: ${message.title}`;
+        uploadResults.push({ title: message.title, status: 'success' });
         if (message.creditsRemaining !== undefined) {
           const oldCreds = credits.available;
           credits.available = message.creditsRemaining;
@@ -666,8 +910,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
       } else if (message.status === 'error') {
         elements.currentListing.textContent = `Failed: ${message.title} - ${message.error}`;
+        uploadResults.push({ title: message.title, status: 'error', error: message.error });
       } else if (message.status === 'skipped') {
         elements.currentListing.textContent = `Skipped: ${message.title}`;
+        uploadResults.push({ title: message.title, status: 'skipped' });
       }
       updateProgress(message.index + 1, message.total);
       break;
@@ -681,6 +927,44 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
     updateCreditsDisplay(oldCredits);
   }
 });
+
+function showResults() {
+  elements.progressSection.classList.add('hidden');
+  elements.resultsSection.classList.remove('hidden');
+
+  const successCount = uploadResults.filter(r => r.status === 'success').length;
+  const failedCount = uploadResults.filter(r => r.status === 'error').length;
+  const skippedCount = uploadResults.filter(r => r.status === 'skipped').length;
+
+  elements.resultsSuccess.textContent = successCount;
+  elements.resultsFailed.textContent = failedCount;
+  elements.resultsSkipped.textContent = skippedCount;
+
+  renderResultsList();
+}
+
+function renderResultsList() {
+  elements.resultsList.innerHTML = uploadResults.map((item, index) => {
+    const statusLabel = item.status === 'error' ? 'failed' : item.status;
+    const errorHtml = item.error
+      ? `<div class="error-detail">${item.error}</div>`
+      : '';
+    return `
+      <div class="result-item" style="animation-delay: ${index * 0.05}s">
+        <span class="title">${item.title}</span>
+        <span class="status ${item.status}">${statusLabel}</span>
+        ${errorHtml}
+      </div>
+    `;
+  }).join('');
+}
+
+function resetToQueue() {
+  elements.resultsSection.classList.add('hidden');
+  uploadResults = [];
+  uploadQueue = [];
+  renderQueue();
+}
 
 async function checkSetup() {
   setupState.nativeHost = await checkNativeHost();
@@ -710,11 +994,15 @@ async function checkChromeDebug() {
   try {
     const response = await Promise.race([
       chrome.runtime.sendMessage({ type: 'NATIVE_CONNECT' }),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000))
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 15000))
     ]);
     nativeConnected = response.success;
+    if (!response.success && response.error) {
+      console.log('Chrome debug check failed:', response.error);
+    }
     return response.success;
   } catch (err) {
+    console.log('Chrome debug check error:', err.message);
     return false;
   }
 }

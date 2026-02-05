@@ -270,6 +270,7 @@ async function handleNativeConnect(sendResponse) {
     sendResponse({ success: true });
   } catch (error) {
     console.error('handleNativeConnect: error', error.message);
+    nativeHostService.disconnect();
     sendResponse({ success: false, error: error.message });
   }
 }

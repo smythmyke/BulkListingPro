@@ -44,10 +44,11 @@
               <summary>Installation instructions</summary>
               <ol>
                 <li>Download the installer above</li>
-                <li>Extract the zip file</li>
-                <li>Run <code>install-windows.bat</code> as Administrator</li>
+                <li>Run the installer (see note about Windows warning below)</li>
+                <li>Follow the setup wizard</li>
                 <li>Click "Check Again" below</li>
               </ol>
+              <p class="smartscreen-note"><strong>Windows SmartScreen:</strong> You may see "Windows protected your PC". Click <em>"More info"</em> then <em>"Run anyway"</em>. This is normal for new software.</p>
             </details>
           </div>
         </div>
@@ -62,7 +63,7 @@
           <div class="step-content">
             <p>Chrome must be launched with a special flag:</p>
             <div class="code-block">
-              <code id="chrome-command">"C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222</code>
+              <code id="chrome-command">"C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222 --remote-allow-origins=* "--user-data-dir=%LOCALAPPDATA%\BulkListingPro\ChromeProfile"</code>
               <button id="copy-command" class="btn btn-small">Copy</button>
             </div>
             <details class="install-help">
@@ -131,6 +132,9 @@
           <p class="small">or</p>
           <input type="file" id="file-input" accept=".xlsx,.xls,.csv" hidden>
           <button id="browse-btn" class="btn">Browse Files</button>
+          <a href="../templates/BulkListingPro-template.xlsx" download class="template-link">
+            Download spreadsheet template
+          </a>
         </div>
 
         <!-- Single Listing Form (collapsed by default) -->
@@ -163,6 +167,29 @@
               <label for="tags">Tags (comma separated)</label>
               <input type="text" id="tags" name="tags" placeholder="tag1, tag2, tag3">
             </div>
+            <div class="form-group">
+              <label>Images (up to 5)</label>
+              <div id="image-drop-zone" class="image-drop-zone">
+                <div id="image-previews" class="image-previews"></div>
+                <div id="image-drop-prompt" class="image-drop-prompt">
+                  <p>Drop images here or <button type="button" id="image-browse-btn" class="btn-link">browse</button></p>
+                </div>
+                <input type="file" id="image-file-input" accept="image/*" multiple hidden>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Digital File</label>
+              <div id="digital-file-zone" class="digital-file-zone">
+                <div id="digital-file-info" class="digital-file-info hidden">
+                  <span id="digital-file-name" class="digital-file-name"></span>
+                  <button type="button" id="digital-file-remove" class="remove-image">&times;</button>
+                </div>
+                <div id="digital-file-prompt">
+                  <button type="button" id="digital-file-browse-btn" class="btn btn-small">Choose File</button>
+                </div>
+                <input type="file" id="digital-file-input" hidden>
+              </div>
+            </div>
             <button type="submit" class="btn btn-primary">Add to Queue</button>
           </form>
         </details>
@@ -170,7 +197,12 @@
 
       <!-- Upload Queue -->
       <div id="queue-section" class="queue-section hidden">
-        <h2>Upload Queue (<span id="queue-count">0</span>)</h2>
+        <h2>
+          <label class="queue-select-all">
+            <input type="checkbox" id="select-all-checkbox" checked>
+          </label>
+          Upload Queue (<span id="queue-count">0</span>)
+        </h2>
         <div id="queue-list" class="queue-list">
           <!-- Queue items will be inserted here -->
         </div>
@@ -196,6 +228,20 @@
           <button id="pause-btn" class="btn btn-secondary">Pause</button>
           <button id="skip-btn" class="btn btn-secondary" disabled>Skip</button>
           <button id="cancel-btn" class="btn btn-danger">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Results Section -->
+      <div id="results-section" class="results-section hidden">
+        <h2>Upload Complete</h2>
+        <div class="results-summary">
+          <div class="stat success"><span id="results-success">0</span> Succeeded</div>
+          <div class="stat failed"><span id="results-failed">0</span> Failed</div>
+          <div class="stat skipped"><span id="results-skipped">0</span> Skipped</div>
+        </div>
+        <div id="results-list" class="results-list"></div>
+        <div class="results-actions">
+          <button id="new-upload-btn" class="btn btn-primary">Upload More</button>
         </div>
       </div>
     </div>
