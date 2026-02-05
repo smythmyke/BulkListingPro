@@ -1,6 +1,8 @@
 import { authService } from '../services/auth.js';
 import { creditsService } from '../services/credits.js';
 import { nativeHostService } from '../services/nativeHost.js';
+import { cdpService } from '../services/cdp.js';
+import { etsyAutomationService, AbortError } from '../services/etsyAutomation.js';
 
 console.log('BulkListingPro service worker loaded');
 
@@ -137,6 +139,34 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case 'NATIVE_SKIP':
       nativeHostService.skip();
       sendResponse({ success: true });
+      return true;
+
+    case 'DIRECT_UPLOAD':
+      handleDirectUpload(message.payload, sendResponse);
+      return true;
+
+    case 'DIRECT_PAUSE':
+      etsyAutomationService.pause();
+      sendResponse({ success: true });
+      return true;
+
+    case 'DIRECT_RESUME':
+      etsyAutomationService.resume();
+      sendResponse({ success: true });
+      return true;
+
+    case 'DIRECT_CANCEL':
+      etsyAutomationService.cancel();
+      sendResponse({ success: true });
+      return true;
+
+    case 'DIRECT_SKIP':
+      etsyAutomationService.skip();
+      sendResponse({ success: true });
+      return true;
+
+    case 'CHECK_DEBUGGER':
+      handleCheckDebugger(sendResponse);
       return true;
 
     default:
@@ -346,5 +376,140 @@ async function handleNativeUpload(payload, sendResponse) {
     sendResponse({ success: true, results });
   } catch (error) {
     sendResponse({ success: false, error: error.message });
+  }
+}
+
+async function handleCheckDebugger(sendResponse) {
+  sendResponse({ success: true, available: true });
+}
+
+async function handleDirectUpload(payload, sendResponse) {
+  const { listings, tabId } = payload;
+
+  if (!listings || !Array.isArray(listings) || listings.length === 0) {
+    sendResponse({ success: false, error: 'No listings provided' });
+    return;
+  }
+
+  etsyAutomationService.reset();
+
+  const results = {
+    total: listings.length,
+    success: 0,
+    failed: 0,
+    skipped: 0,
+    details: []
+  };
+
+  try {
+    await cdpService.attach(tabId);
+
+    cdpService.onDetach((reason) => {
+      chrome.runtime.sendMessage({
+        type: 'UPLOAD_PROGRESS',
+        status: 'debugger_detached',
+        reason
+      }).catch(() => {});
+    });
+
+    etsyAutomationService.onVerification((type) => {
+      chrome.runtime.sendMessage({
+        type: 'UPLOAD_PROGRESS',
+        status: 'verification_required',
+        verificationType: type
+      }).catch(() => {});
+    });
+
+    for (let i = 0; i < listings.length; i++) {
+      const listing = listings[i];
+
+      chrome.runtime.sendMessage({
+        type: 'UPLOAD_PROGRESS',
+        index: i,
+        total: listings.length,
+        title: listing.title,
+        status: 'started'
+      }).catch(() => {});
+
+      try {
+        const result = await etsyAutomationService.createListing(listing);
+
+        if (result.success) {
+          results.success++;
+          results.details.push({ index: i, title: listing.title, status: 'success' });
+
+          const creditResult = await creditsService.useCredits(CREDITS_PER_LISTING, 'etsy_listing');
+          chrome.runtime.sendMessage({
+            type: 'UPLOAD_PROGRESS',
+            index: i,
+            total: listings.length,
+            title: listing.title,
+            status: 'complete',
+            creditsRemaining: creditResult.creditsRemaining
+          }).catch(() => {});
+        } else {
+          results.failed++;
+          results.details.push({ index: i, title: listing.title, status: 'failed', error: result.error });
+
+          chrome.runtime.sendMessage({
+            type: 'UPLOAD_PROGRESS',
+            index: i,
+            total: listings.length,
+            title: listing.title,
+            status: 'error',
+            error: result.error
+          }).catch(() => {});
+        }
+      } catch (err) {
+        if (err instanceof AbortError) {
+          if (err.reason === 'skip') {
+            results.skipped++;
+            results.details.push({ index: i, title: listing.title, status: 'skipped' });
+            chrome.runtime.sendMessage({
+              type: 'UPLOAD_PROGRESS',
+              index: i,
+              total: listings.length,
+              title: listing.title,
+              status: 'skipped'
+            }).catch(() => {});
+            continue;
+          } else if (err.reason === 'cancel') {
+            chrome.runtime.sendMessage({
+              type: 'UPLOAD_PROGRESS',
+              status: 'cancelled'
+            }).catch(() => {});
+            break;
+          }
+        }
+
+        results.failed++;
+        results.details.push({ index: i, title: listing.title, status: 'failed', error: err.message });
+        chrome.runtime.sendMessage({
+          type: 'UPLOAD_PROGRESS',
+          index: i,
+          total: listings.length,
+          title: listing.title,
+          status: 'error',
+          error: err.message
+        }).catch(() => {});
+      }
+
+      if (i < listings.length - 1 && !etsyAutomationService.isCancelled) {
+        const jitter = Math.random() * 2000;
+        try {
+          await etsyAutomationService.interruptibleDelay(4000 + jitter);
+        } catch (abortErr) {
+          if (abortErr instanceof AbortError && abortErr.reason === 'cancel') {
+            break;
+          }
+        }
+      }
+    }
+
+    await cdpService.detach();
+    sendResponse({ success: true, results });
+  } catch (error) {
+    await cdpService.detach();
+    sendResponse({ success: false, error: error.message, results });
   }
 }

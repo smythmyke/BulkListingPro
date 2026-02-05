@@ -165,7 +165,7 @@ Pause upload if Etsy shows verification prompt.
 
 ---
 
-## Phase B: chrome.debugger Migration
+## Phase B: chrome.debugger Migration ✅ COMPLETE
 
 **Goal:** Eliminate `--remote-debugging-port=9222` requirement
 
@@ -183,63 +183,57 @@ Sidepanel → Background Worker → chrome.debugger API → Etsy Tab
         Native Host (file reading only, when needed)
 ```
 
-### B.2 Add debugger Permission
+### B.2 Add debugger Permission ✅ COMPLETE
 **Risk:** Low
 
 **Tasks:**
-- [ ] Add `"debugger"` to permissions in `manifest.json`
-- [ ] Test that extension still loads
-- [ ] Document: User will see "debugging" banner during uploads
+- [x] Add `"debugger"` to permissions in `manifest.json`
+- [x] Test that extension still loads
+- [x] Document: User will see "debugging" banner during uploads
 
-**Files to modify:**
+**Files modified:**
 - `manifest.json`
 
-### B.3 Create CDP Service in Extension
+### B.3 Create CDP Service in Extension ✅ COMPLETE
 **Risk:** Medium
 
 Port CDP logic from Native Host to background service worker.
 
 **Tasks:**
-- [ ] Create `services/cdp.js` - Chrome debugger wrapper
-- [ ] Implement `attach(tabId)` - Attach debugger to tab
-- [ ] Implement `detach(tabId)` - Detach debugger
-- [ ] Implement `sendCommand(method, params)` - Send CDP command
-- [ ] Implement `evaluate(expression)` - Run JS in page
-- [ ] Implement `waitForSelector(selector)` - Poll for element
-- [ ] Implement `click(selector)` - Click element (use Input.dispatchMouseEvent for trusted events)
-- [ ] Implement `type(selector, text)` - Type into input
-- [ ] Implement `setFileInput(selector, files)` - Set file input (base64)
-- [ ] Handle debugger detach events (user closed banner)
+- [x] Create `services/cdp.js` - Chrome debugger wrapper
+- [x] Implement `attach(tabId)` - Attach debugger to tab
+- [x] Implement `detach(tabId)` - Detach debugger
+- [x] Implement `sendCommand(method, params)` - Send CDP command
+- [x] Implement `evaluate(expression)` - Run JS in page
+- [x] Implement `waitForSelector(selector)` - Poll for element
+- [x] Implement `click(selector)` - Click element (use Input.dispatchMouseEvent for trusted events)
+- [x] Implement `type(selector, text)` - Type into input
+- [x] Implement `setFileInputFromBase64(selector, files)` - Set file input (base64 via DataTransfer)
+- [x] Handle debugger detach events (user closed banner)
 
-**Files to create:**
+**Files created:**
 - `services/cdp.js`
 
-**Reference:**
-- `native-host/src/cdp.js` - Port this logic
-
-### B.4 Create Listing Service in Extension
+### B.4 Create Listing Service in Extension ✅ COMPLETE
 **Risk:** Medium
 
 Port listing automation from Native Host to extension.
 
 **Tasks:**
-- [ ] Create `services/etsyAutomation.js`
-- [ ] Port `selectCategory()` from `listing.js`
-- [ ] Port `fillItemDetails()` from `listing.js`
-- [ ] Port `fillAboutTab()` from `listing.js`
-- [ ] Port `fillPriceTab()` from `listing.js`
-- [ ] Port `fillTags()` from `listing.js`
-- [ ] Port `saveListing()` from `listing.js`
-- [ ] Adapt file upload to use base64 data instead of file paths
-- [ ] Add abort/pause/skip support
+- [x] Create `services/etsyAutomation.js`
+- [x] Port `selectCategory()` from `listing.js`
+- [x] Port `fillItemDetails()` from `listing.js`
+- [x] Port `fillAboutTab()` from `listing.js`
+- [x] Port `fillPriceTab()` from `listing.js`
+- [x] Port `fillTags()` from `listing.js`
+- [x] Port `saveListing()` from `listing.js`
+- [x] Adapt file upload to use base64 data (DataTransfer API)
+- [x] Add abort/pause/skip support
 
-**Files to create:**
+**Files created:**
 - `services/etsyAutomation.js`
 
-**Reference:**
-- `native-host/src/listing.js` - Port this logic
-
-### B.5 Update Background Service Worker
+### B.5 Update Background Service Worker ✅ COMPLETE
 **Risk:** Medium
 
 Add upload orchestration to background worker.
@@ -248,30 +242,29 @@ Add upload orchestration to background worker.
 - [ ] Import new CDP and automation services
 - [ ] Add `START_UPLOAD_DIRECT` message handler (no native host)
 - [ ] Implement upload loop with progress messages
-- [ ] Handle pause/resume/cancel
-- [ ] Send progress to sidepanel via `chrome.runtime.sendMessage`
+- [x] Handle pause/resume/cancel
+- [x] Send progress to sidepanel via `chrome.runtime.sendMessage`
 
-**Files to modify:**
+**Files modified:**
 - `background/service-worker.js`
 
-### B.6 Update Sidepanel for Direct Upload
+### B.6 Update Sidepanel for Direct Upload ✅ COMPLETE
 **Risk:** Low
 
 Add "Lite Mode" that doesn't require Native Host.
 
 **Tasks:**
-- [ ] Detect if Native Host is available
-- [ ] If available: Show full setup, enable spreadsheet mode
-- [ ] If not available: Show simplified setup, enable form-only mode
-- [ ] For form mode: Read dropped images as base64 (not file paths)
-- [ ] Store image data in listing object
-- [ ] Route upload to direct mode (chrome.debugger) or native mode
+- [x] Detect if Native Host is available
+- [x] If available: Show full setup, enable spreadsheet mode
+- [x] If not available: Show simplified setup, enable form-only mode
+- [x] For form mode: Read dropped images as base64 (not file paths)
+- [x] Store image data in listing object
+- [x] Route upload to direct mode (chrome.debugger) or native mode
 
-**Files to modify:**
+**Files modified:**
 - `sidepanel/sidepanel.js`
-- `sidepanel/sidepanel.html` - Update setup instructions
 
-### B.7 Update Setup Flow
+### B.7 Update Setup Flow ✅ COMPLETE
 **Risk:** Low
 
 Simplify setup for users without Native Host.
@@ -288,14 +281,13 @@ Simplify setup for users without Native Host.
 3. Ready to upload!
 
 **Tasks:**
-- [ ] Remove debug port check from required setup
-- [ ] Make Native Host optional in setup screen
-- [ ] Show "Lite Mode" vs "Power Mode" based on native host availability
-- [ ] Update setup instructions text
+- [x] Remove debug port check from required setup
+- [x] Make Native Host optional in setup screen
+- [x] Show "Lite Mode" vs "Power Mode" based on native host availability
+- [x] Update setup instructions text
 
-**Files to modify:**
+**Files modified:**
 - `sidepanel/sidepanel.js` - `checkSetup()` function
-- `sidepanel/sidepanel.html` - Setup section
 
 ---
 

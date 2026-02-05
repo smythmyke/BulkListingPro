@@ -24,6 +24,8 @@ let setupState = {
   etsyLoggedIn: false
 };
 
+let uploadMode = 'direct';
+
 const elements = {
   setupSection: document.getElementById('setup-section'),
   authSection: document.getElementById('auth-section'),
@@ -901,9 +903,48 @@ async function startUpload() {
   elements.pauseBtn.textContent = 'Pause';
 
   const total = selectedItems.length;
-  elements.currentListing.textContent = 'Connecting to native host...';
   updateProgress(0, total);
   await saveUploadState();
+
+  const listings = selectedItems.map(item => ({
+    title: item.title,
+    description: item.description || '',
+    price: String(item.price),
+    category: item.category || 'Digital Prints',
+    listing_state: 'draft',
+    image_1: item.image_1 || '',
+    image_2: item.image_2 || '',
+    image_3: item.image_3 || '',
+    image_4: item.image_4 || '',
+    image_5: item.image_5 || '',
+    digital_file_1: item.digital_file_1 || '',
+    tag_1: item.tags?.[0],
+    tag_2: item.tags?.[1],
+    tag_3: item.tags?.[2],
+    tag_4: item.tags?.[3],
+    tag_5: item.tags?.[4],
+    tag_6: item.tags?.[5],
+    tag_7: item.tags?.[6],
+    tag_8: item.tags?.[7],
+    tag_9: item.tags?.[8],
+    tag_10: item.tags?.[9],
+    tag_11: item.tags?.[10],
+    tag_12: item.tags?.[11],
+    tag_13: item.tags?.[12]
+  }));
+
+  if (uploadMode === 'native') {
+    await startNativeUpload(listings);
+  } else {
+    await startDirectUpload(listings);
+  }
+
+  isUploading = false;
+  await loadCredits(true);
+}
+
+async function startNativeUpload(listings) {
+  elements.currentListing.textContent = 'Connecting to native host...';
 
   try {
     const connectResponse = await chrome.runtime.sendMessage({ type: 'NATIVE_CONNECT' });
@@ -913,33 +954,6 @@ async function startUpload() {
     nativeConnected = true;
 
     elements.currentListing.textContent = 'Starting upload...';
-
-    const listings = selectedItems.map(item => ({
-      title: item.title,
-      description: item.description || '',
-      price: String(item.price),
-      category: item.category || 'Digital Prints',
-      listing_state: 'draft',
-      image_1: item.image_1 || '',
-      image_2: item.image_2 || '',
-      image_3: item.image_3 || '',
-      image_4: item.image_4 || '',
-      image_5: item.image_5 || '',
-      digital_file_1: item.digital_file_1 || '',
-      tag_1: item.tags?.[0],
-      tag_2: item.tags?.[1],
-      tag_3: item.tags?.[2],
-      tag_4: item.tags?.[3],
-      tag_5: item.tags?.[4],
-      tag_6: item.tags?.[5],
-      tag_7: item.tags?.[6],
-      tag_8: item.tags?.[7],
-      tag_9: item.tags?.[8],
-      tag_10: item.tags?.[9],
-      tag_11: item.tags?.[10],
-      tag_12: item.tags?.[11],
-      tag_13: item.tags?.[12]
-    }));
 
     const response = await chrome.runtime.sendMessage({
       type: 'NATIVE_UPLOAD',
@@ -951,7 +965,6 @@ async function startUpload() {
     } else {
       throw new Error(response.error || 'Upload failed');
     }
-
   } catch (error) {
     console.error('Upload error:', error);
     showToast('Upload failed: ' + error.message, 'error');
@@ -962,22 +975,55 @@ async function startUpload() {
       elements.queueSection.classList.remove('hidden');
     }
   }
+}
 
-  isUploading = false;
-  await loadCredits(true);
+async function startDirectUpload(listings) {
+  elements.currentListing.textContent = 'Attaching to browser...';
+
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab || !tab.url?.includes('etsy.com')) {
+      throw new Error('Please navigate to Etsy first');
+    }
+
+    elements.currentListing.textContent = 'Starting upload...';
+
+    const response = await chrome.runtime.sendMessage({
+      type: 'DIRECT_UPLOAD',
+      payload: { listings, tabId: tab.id }
+    });
+
+    if (response.success) {
+      showResults();
+    } else {
+      throw new Error(response.error || 'Upload failed');
+    }
+  } catch (error) {
+    console.error('Upload error:', error);
+    showToast('Upload failed: ' + error.message, 'error');
+    if (uploadResults.length > 0) {
+      showResults();
+    } else {
+      elements.progressSection.classList.add('hidden');
+      elements.queueSection.classList.remove('hidden');
+    }
+  }
 }
 
 async function pauseUpload() {
   if (!isUploading) return;
 
+  const pauseMsg = uploadMode === 'native' ? 'NATIVE_PAUSE' : 'DIRECT_PAUSE';
+  const resumeMsg = uploadMode === 'native' ? 'NATIVE_RESUME' : 'DIRECT_RESUME';
+
   if (!isPaused) {
-    await chrome.runtime.sendMessage({ type: 'NATIVE_PAUSE' });
+    await chrome.runtime.sendMessage({ type: pauseMsg });
     isPaused = true;
     elements.pauseBtn.textContent = 'Resume';
     elements.skipBtn.disabled = false;
     showToast('Upload paused', 'success');
   } else {
-    await chrome.runtime.sendMessage({ type: 'NATIVE_RESUME' });
+    await chrome.runtime.sendMessage({ type: resumeMsg });
     isPaused = false;
     elements.pauseBtn.textContent = 'Pause';
     elements.skipBtn.disabled = true;
@@ -988,7 +1034,8 @@ async function pauseUpload() {
 async function skipListing() {
   if (!isUploading || !isPaused) return;
 
-  await chrome.runtime.sendMessage({ type: 'NATIVE_SKIP' });
+  const skipMsg = uploadMode === 'native' ? 'NATIVE_SKIP' : 'DIRECT_SKIP';
+  await chrome.runtime.sendMessage({ type: skipMsg });
   elements.skipBtn.disabled = true;
   elements.pauseBtn.textContent = 'Pause';
   isPaused = false;
@@ -998,7 +1045,8 @@ async function skipListing() {
 async function cancelUpload() {
   if (!isUploading) return;
 
-  await chrome.runtime.sendMessage({ type: 'NATIVE_CANCEL' });
+  const cancelMsg = uploadMode === 'native' ? 'NATIVE_CANCEL' : 'DIRECT_CANCEL';
+  await chrome.runtime.sendMessage({ type: cancelMsg });
   isUploading = false;
   isPaused = false;
 
@@ -1067,8 +1115,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         isPaused = true;
         elements.pauseBtn.textContent = 'Resume';
         showToast('Etsy requires verification. Complete it in the browser, then click Resume.', 'error');
+      } else if (message.status === 'debugger_detached') {
+        elements.currentListing.textContent = 'Browser debugging stopped';
+        showToast('Debugging was stopped. Upload paused.', 'error');
+        isPaused = true;
+        elements.pauseBtn.textContent = 'Resume';
+      } else if (message.status === 'cancelled') {
+        showResults();
       }
-      updateProgress(message.index + 1, message.total);
+      if (message.index !== undefined) {
+        updateProgress(message.index + 1, message.total);
+      }
       break;
   }
 });
@@ -1124,12 +1181,23 @@ function resetToQueue() {
 
 async function checkSetup() {
   setupState.nativeHost = await checkNativeHost();
-  setupState.chromeDebug = await checkChromeDebug();
   setupState.etsyLoggedIn = await checkEtsyLoggedIn();
+
+  if (setupState.nativeHost) {
+    setupState.chromeDebug = await checkChromeDebug();
+    if (setupState.chromeDebug) {
+      uploadMode = 'native';
+    } else {
+      uploadMode = 'direct';
+    }
+  } else {
+    setupState.chromeDebug = false;
+    uploadMode = 'direct';
+  }
 
   updateSetupUI();
 
-  return setupState.nativeHost && setupState.chromeDebug && setupState.etsyLoggedIn;
+  return setupState.etsyLoggedIn;
 }
 
 async function checkNativeHost() {
@@ -1185,18 +1253,21 @@ async function checkEtsyLoggedIn() {
 function updateSetupUI() {
   if (setupState.nativeHost) {
     elements.stepNative.classList.add('complete');
-    elements.nativeStatus.textContent = 'Installed';
+    elements.nativeStatus.textContent = 'Installed (Power Mode)';
   } else {
     elements.stepNative.classList.remove('complete');
-    elements.nativeStatus.textContent = 'Not installed';
+    elements.nativeStatus.textContent = 'Optional - Skip for Lite Mode';
   }
 
   if (setupState.chromeDebug) {
     elements.stepChrome.classList.add('complete');
     elements.chromeStatus.textContent = 'Connected';
-  } else {
+  } else if (setupState.nativeHost) {
     elements.stepChrome.classList.remove('complete');
     elements.chromeStatus.textContent = 'Not connected';
+  } else {
+    elements.stepChrome.classList.add('complete');
+    elements.chromeStatus.textContent = 'Not needed (Lite Mode)';
   }
 
   if (setupState.etsyLoggedIn) {
@@ -1224,14 +1295,13 @@ async function recheckSetup() {
   elements.checkSetupBtn.disabled = false;
 
   if (setupComplete) {
-    showToast('Setup complete!', 'success');
+    const modeText = uploadMode === 'native' ? 'Power Mode' : 'Lite Mode';
+    showToast(`Setup complete! (${modeText})`, 'success');
     await checkAuth();
   } else {
-    const missing = [];
-    if (!setupState.nativeHost) missing.push('helper app');
-    if (!setupState.chromeDebug) missing.push('debug mode');
-    if (!setupState.etsyLoggedIn) missing.push('Etsy login');
-    showToast(`Still need: ${missing.join(', ')}`, 'error');
+    if (!setupState.etsyLoggedIn) {
+      showToast('Please log into Etsy first', 'error');
+    }
   }
 }
 

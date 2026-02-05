@@ -12,7 +12,8 @@
     "activeTab",
     "scripting",
     "tabs",
-    "nativeMessaging"
+    "nativeMessaging",
+    "debugger"
   ],
 
   "host_permissions": [
