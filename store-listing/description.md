@@ -37,8 +37,8 @@ WHAT YOU NEED
 • An Etsy seller account
 
 PRICING
-Each listing upload costs 2 credits. New users get 5 free credits to try
-it out. Credit packs start at $1.99 for 50 credits (~25 listings).
+Each listing upload costs 2 credits. Credit packs start at $1.99 for 50
+credits (~25 listings).
 
 SUPPORT
 Report issues: https://github.com/smythmyke/BulkListingPro/issues

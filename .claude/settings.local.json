@@ -5,7 +5,10 @@
       "Bash(git init:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push)"
+      "Bash(git push)",
+      "Bash(tasklist:*)",
+      "Bash(powershell.exe -Command \"Stop-Process -Name chrome -Force -ErrorAction SilentlyContinue; Start-Sleep -Seconds 2; \\(Get-Process chrome -ErrorAction SilentlyContinue\\).Count\")",
+      "Bash(powershell.exe -Command \"\\(Get-CimInstance Win32_Process -Filter \"\"Name=''chrome.exe''\"\" | Select-Object -First 1\\).CommandLine\")"
     ]
   }
 }
