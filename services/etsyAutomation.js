@@ -103,7 +103,8 @@ class EtsyAutomationService {
 
     try {
       await cdpService.navigate(ETSY_URLS.newListing);
-      await this.interruptibleDelay(2000);
+      await this.interruptibleDelay(1000);
+      await this.waitForCategoryInput();
 
       let verifyCheck = await this.checkForVerification();
       if (verifyCheck.found) {
@@ -117,6 +118,7 @@ class EtsyAutomationService {
       await this.fillItemDetails(listing);
       await this.fillAboutTab(listing);
       await this.fillPriceTab(listing);
+      await this.fillCategoryAttributes(listing);
       await this.fillTags(listing);
       await this.saveListing(listing.listing_state !== 'active');
 
@@ -124,13 +126,42 @@ class EtsyAutomationService {
     } catch (error) {
       if (error instanceof AbortError) throw error;
       console.error(`Failed to create listing: ${error.message}`);
-      return { success: false, error: error.message, title: listing.title };
+      const errorCategory = this.categorizeError(error.message);
+      return { success: false, error: error.message, errorCategory, title: listing.title };
     }
   }
 
-  async selectCategory(categoryName) {
-    await this.interruptibleDelay(DELAYS.medium);
+  categorizeError(message) {
+    const msg = message.toLowerCase();
+    if (msg.includes('verification') || msg.includes('captcha')) {
+      return 'verification';
+    } else if (msg.includes('save confirmation') || msg.includes('not detected')) {
+      return 'timeout';
+    } else if (msg.includes('http') || msg.includes('network') || msg.includes('fetch')) {
+      return 'network';
+    } else if (msg.includes('not found') || msg.includes('selector') || msg.includes('element')) {
+      return 'dom';
+    }
+    return 'unknown';
+  }
 
+  async waitForCategoryInput(maxWait = 3000) {
+    const startTime = Date.now();
+    while (Date.now() - startTime < maxWait) {
+      const found = await cdpService.evaluate(`
+        (() => {
+          const input = document.querySelector('#wt-portals #category-field-search') ||
+                        document.querySelector('input[placeholder*="Search for a category"]');
+          return !!input;
+        })()
+      `);
+      if (found) return true;
+      await this.delay(300);
+    }
+    return false;
+  }
+
+  async selectCategory(categoryName) {
     await cdpService.evaluate(`
       (() => {
         const input = document.querySelector('#wt-portals #category-field-search') ||
@@ -141,18 +172,127 @@ class EtsyAutomationService {
     await this.interruptibleDelay(200);
 
     await cdpService.type(categoryName, DELAYS.typing);
+    await this.interruptibleDelay(DELAYS.long);
+
+    const maxRetries = 3;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      const clicked = await cdpService.evaluate(`
+        (() => {
+          const categoryName = ${JSON.stringify(categoryName.toLowerCase())};
+          const options = document.querySelectorAll('#wt-portals li[role="option"]');
+          for (const option of options) {
+            const text = option.textContent.toLowerCase();
+            if (text.includes(categoryName)) {
+              option.scrollIntoView({ block: 'center' });
+              option.click();
+              return { success: true, text: option.textContent.trim() };
+            }
+          }
+          if (options.length > 0) {
+            options[0].scrollIntoView({ block: 'center' });
+            options[0].click();
+            return { success: true, text: options[0].textContent.trim(), fallback: true };
+          }
+          return { success: false, optionCount: options.length };
+        })()
+      `);
+
+      if (clicked?.success) {
+        console.log(`Category selected: ${clicked.text}${clicked.fallback ? ' (fallback)' : ''}`);
+        break;
+      }
+
+      if (attempt < maxRetries) {
+        console.log(`Category selection attempt ${attempt} failed, retrying...`);
+        await this.interruptibleDelay(DELAYS.medium);
+      } else {
+        console.warn(`Failed to select category after ${maxRetries} attempts`);
+      }
+    }
+
     await this.interruptibleDelay(DELAYS.medium);
-
-    await cdpService.evaluate(`
-      (() => {
-        const option = document.querySelector('#wt-portals li[role="option"]');
-        if (option) option.click();
-      })()
-    `);
-    await this.interruptibleDelay(200);
-
     await this.clickByText('Continue', '#wt-portals');
     await this.interruptibleDelay(DELAYS.medium);
+  }
+
+  async fillCategoryAttributes(listing) {
+    const category = listing.category || 'Digital Prints';
+    const categoriesWithCraftType = ['Clip Art & Image Files', 'Fonts'];
+
+    if (categoriesWithCraftType.includes(category)) {
+      const craftType = listing.craft_type || 'Scrapbooking';
+
+      await cdpService.evaluate(`
+        (() => {
+          const attributesHeader = [...document.querySelectorAll('h2, h3, p, div')].find(el =>
+            el.textContent.trim() === 'Attributes' || el.textContent.includes('Craft type')
+          );
+          if (attributesHeader) {
+            attributesHeader.scrollIntoView({ block: 'center' });
+          }
+        })()
+      `);
+      await this.interruptibleDelay(DELAYS.medium);
+
+      const opened = await cdpService.evaluate(`
+        (() => {
+          const craftTypeSection = [...document.querySelectorAll('[data-attribute-wrapper="true"]')].find(wrapper => {
+            const label = wrapper.querySelector('label');
+            return label && label.textContent.toLowerCase().includes('craft type');
+          });
+          if (!craftTypeSection) return { found: false, reason: 'no craft type section' };
+
+          craftTypeSection.scrollIntoView({ block: 'center' });
+
+          const trigger = craftTypeSection.querySelector('input[placeholder="Type to search…"]') ||
+                          craftTypeSection.querySelector('input.wt-input');
+          if (!trigger) return { found: false, reason: 'no trigger input' };
+
+          trigger.scrollIntoView({ block: 'center' });
+          trigger.click();
+          trigger.focus();
+          return { found: true };
+        })()
+      `);
+
+      if (opened?.found) {
+        await this.interruptibleDelay(DELAYS.medium);
+
+        const selected = await cdpService.evaluate(`
+          (() => {
+            const craftTypeValue = ${JSON.stringify(craftType.toLowerCase())};
+            const checkboxes = document.querySelectorAll('input[type="checkbox"][role="checkbox"]');
+            for (const cb of checkboxes) {
+              const label = document.querySelector(\`label[for="\${cb.id}"]\`);
+              if (label && label.textContent.toLowerCase().includes(craftTypeValue)) {
+                if (!cb.checked) {
+                  label.click();
+                }
+                return { selected: true, value: label.textContent.trim() };
+              }
+            }
+            return { selected: false };
+          })()
+        `);
+
+        if (selected?.selected) {
+          console.log(`Craft type selected: ${selected.value}`);
+        } else {
+          console.warn('Could not select craft type checkbox');
+        }
+
+        await this.interruptibleDelay(DELAYS.short);
+
+        await cdpService.evaluate(`
+          (() => {
+            document.body.click();
+          })()
+        `);
+        await this.interruptibleDelay(DELAYS.short);
+      } else {
+        console.warn(`Craft type dropdown not found: ${opened?.reason}`);
+      }
+    }
   }
 
   async fillItemDetails(listing) {

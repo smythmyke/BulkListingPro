@@ -24,76 +24,65 @@
 
     <!-- Setup Section (shown when setup incomplete) -->
     <div id="setup-section" class="section hidden">
-      <h2>Setup Required</h2>
-      <p class="setup-intro">Complete these steps to start uploading:</p>
+      <h2>Get Started</h2>
+      <p class="setup-intro">Just one step to start uploading:</p>
 
       <div class="setup-steps">
-        <!-- Step 1: Native Host -->
-        <div class="setup-step" id="step-native">
-          <div class="step-header">
-            <span class="step-number">1</span>
-            <span class="step-title">Install Helper App</span>
-            <span class="step-status" id="native-status">Not installed</span>
-          </div>
-          <div class="step-content">
-            <p>Download and run the installer for your system:</p>
-            <div class="step-actions">
-              <a href="https://github.com/smythmyke/BulkListingPro/releases/download/v0.1.0/BulkListingPro-Setup-v0.1.0.exe" id="download-windows" class="btn btn-primary btn-small" target="_blank">Download for Windows</a>
-            </div>
-            <details class="install-help">
-              <summary>Installation instructions</summary>
-              <ol>
-                <li>Download the installer above</li>
-                <li>Run the installer (see note about Windows warning below)</li>
-                <li>Follow the setup wizard</li>
-                <li>Click "Check Again" below</li>
-              </ol>
-              <p class="smartscreen-note"><strong>Windows SmartScreen:</strong> You may see "Windows protected your PC". Click <em>"More info"</em> then <em>"Run anyway"</em>. This is normal for new software.</p>
-            </details>
-          </div>
-        </div>
-
-        <!-- Step 2: Chrome Debug -->
-        <div class="setup-step" id="step-chrome">
-          <div class="step-header">
-            <span class="step-number">2</span>
-            <span class="step-title">Launch Chrome with Debug Mode</span>
-            <span class="step-status" id="chrome-status">Not connected</span>
-          </div>
-          <div class="step-content">
-            <p>Chrome must be launched with a special flag:</p>
-            <div class="code-block">
-              <code id="chrome-command">"C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222 --remote-allow-origins=* "--user-data-dir=%LOCALAPPDATA%\BulkListingPro\ChromeProfile"</code>
-              <button id="copy-command" class="btn btn-small">Copy</button>
-            </div>
-            <details class="install-help">
-              <summary>How to do this</summary>
-              <ol>
-                <li>Close ALL Chrome windows completely</li>
-                <li>Open Command Prompt (cmd)</li>
-                <li>Paste and run the command above</li>
-                <li>Chrome will open - click "Check Again" below</li>
-              </ol>
-              <p><strong>Tip:</strong> Create a desktop shortcut with this command for easy access.</p>
-            </details>
-          </div>
-        </div>
-
-        <!-- Step 3: Etsy Login -->
+        <!-- Primary Step: Etsy Login -->
         <div class="setup-step" id="step-etsy">
           <div class="step-header">
-            <span class="step-number">3</span>
+            <span class="step-number">1</span>
             <span class="step-title">Log into Etsy</span>
             <span class="step-status" id="etsy-status">Not logged in</span>
           </div>
           <div class="step-content">
             <p>Log into your Etsy seller account in this browser.</p>
             <div class="step-actions">
-              <a href="https://www.etsy.com/signin" target="_blank" class="btn btn-secondary btn-small">Open Etsy Login</a>
+              <a href="https://www.etsy.com/signin" target="_blank" class="btn btn-primary" id="open-etsy-btn">Open Etsy Login</a>
             </div>
+            <p class="auto-detect-hint">We'll automatically detect when you're logged in.</p>
           </div>
         </div>
       </div>
+
+      <!-- Power Mode Section (Advanced) -->
+      <details id="power-mode-section" class="power-mode-section">
+        <summary class="power-mode-header">
+          <span class="power-mode-title">Advanced: Enable Power Mode</span>
+          <span class="power-mode-badge" id="power-mode-badge">Optional</span>
+        </summary>
+        <div class="power-mode-content">
+          <p class="power-mode-intro">Power Mode enables spreadsheet imports with local file paths (e.g., C:\Products\image.jpg). Most users don't need this.</p>
+          <p id="power-mode-status" class="power-mode-status hidden"></p>
+
+          <div class="setup-steps">
+            <!-- Power Step: Native Host -->
+            <div class="setup-step" id="step-native">
+              <div class="step-header">
+                <span class="step-number">1</span>
+                <span class="step-title">Install Helper App</span>
+                <span class="step-status" id="native-status">Not installed</span>
+              </div>
+              <div class="step-content">
+                <p>Download and run the installer for your system:</p>
+                <div class="step-actions">
+                  <a href="https://github.com/smythmyke/BulkListingPro/releases/download/v0.1.0/BulkListingPro-Setup-v0.1.0.exe" id="download-windows" class="btn btn-primary btn-small" target="_blank">Download for Windows</a>
+                </div>
+                <details class="install-help">
+                  <summary>Installation instructions</summary>
+                  <ol>
+                    <li>Download the installer above</li>
+                    <li>Run the installer (see note about Windows warning below)</li>
+                    <li>Follow the setup wizard</li>
+                    <li>Click "Check Again" below</li>
+                  </ol>
+                  <p class="smartscreen-note"><strong>Windows SmartScreen:</strong> You may see "Windows protected your PC". Click <em>"More info"</em> then <em>"Run anyway"</em>. This is normal for new software.</p>
+                </details>
+              </div>
+            </div>
+          </div>
+        </div>
+      </details>
 
       <div class="setup-actions">
         <button id="check-setup-btn" class="btn btn-primary">Check Again</button>
@@ -153,6 +142,34 @@
                 <option value="Drawing & Illustration">Drawing & Illustration</option>
                 <option value="Digital Patterns">Digital Patterns</option>
                 <option value="Planners & Templates">Planners & Templates</option>
+                <option value="Clip Art & Image Files">Clip Art & Image Files</option>
+                <option value="Cutting Machine Files">Cutting Machine Files (SVG)</option>
+                <option value="Embroidery Machine Files">Embroidery Machine Files</option>
+                <option value="3D Printer Files">3D Printer Files</option>
+                <option value="Knitting Machine Files">Knitting Machine Files</option>
+                <option value="Social Media Templates">Social Media Templates</option>
+                <option value="Resume Templates">Resume Templates</option>
+                <option value="Greeting Card Templates">Greeting Card Templates</option>
+                <option value="Menu Templates">Menu Templates</option>
+                <option value="Event Program Templates">Event Program Templates</option>
+                <option value="Newsletter Templates">Newsletter Templates</option>
+                <option value="Personal Finance Templates">Personal Finance Templates</option>
+                <option value="Bookkeeping Templates">Bookkeeping Templates</option>
+                <option value="Contract & Agreement Templates">Contract & Agreement Templates</option>
+                <option value="Flashcards">Flashcards</option>
+                <option value="Study Guides">Study Guides</option>
+                <option value="Worksheets">Worksheets</option>
+                <option value="Fonts">Fonts</option>
+                <option value="Photography">Photography</option>
+              </select>
+            </div>
+            <div class="form-group hidden" id="craft-type-group">
+              <label for="craft-type">Craft Type</label>
+              <select id="craft-type" name="craft_type">
+                <option value="Scrapbooking">Scrapbooking (default)</option>
+                <option value="Card making & stationery">Card making & stationery</option>
+                <option value="Collage">Collage</option>
+                <option value="Kids' crafts">Kids' crafts</option>
               </select>
             </div>
             <div class="form-group">
@@ -206,6 +223,13 @@
         <div id="queue-list" class="queue-list">
           <!-- Queue items will be inserted here -->
         </div>
+        <div class="queue-options">
+          <label for="listing-state-select">Save as:</label>
+          <select id="listing-state-select" class="listing-state-select">
+            <option value="draft" selected>Draft (recommended)</option>
+            <option value="active">Published</option>
+          </select>
+        </div>
         <div class="queue-actions">
           <button id="start-upload-btn" class="btn btn-primary" disabled>
             Start Upload
@@ -241,6 +265,7 @@
         </div>
         <div id="results-list" class="results-list"></div>
         <div class="results-actions">
+          <button id="retry-failed-btn" class="btn btn-secondary hidden">Retry Failed</button>
           <button id="new-upload-btn" class="btn btn-primary">Upload More</button>
         </div>
       </div>

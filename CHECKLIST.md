@@ -181,6 +181,11 @@
 - [ ] Fix reported bugs
 
 ### 3.2 Feature Ideas (Prioritize Later)
+- [ ] **Retry failed listings** - Auto-retry or manual "Retry Failed" button after upload completes
+- [ ] **Publish vs Draft toggle** - Let users choose to publish immediately or save as draft (default: draft)
+  - UI: Toggle button or dropdown in queue section before starting upload
+  - Spreadsheet: Optional `listing_state` column (values: `draft` or `active`)
+- [ ] **Optional category attributes** - Support Craft Type, Occasion, Holiday for enhanced discoverability
 - [ ] Listing templates (save & reuse)
 - [ ] Scheduled uploads
 - [ ] Analytics dashboard
@@ -231,6 +236,11 @@
 | 2026-02-04 | Setup/onboarding screen implemented |
 | 2026-02-05 | Debug browser detection (CDP tab comparison + warning banner) |
 | 2026-02-05 | Chrome Web Store submission prep (store listing, legal pages, packaging script) |
+| 2026-02-05 | Native Host simplified to file-server only (v2.0.0) |
+| 2026-02-05 | Setup screen redesigned (Lite Mode + optional Power Mode) |
+| 2026-02-05 | Auto-detection for Etsy login status |
+| 2026-02-05 | Extension v0.2.0 uploaded to Chrome Web Store |
+| 2026-02-05 | Category-specific attributes support (Clip Art & Image Files + Craft Type) |
 | | |
 
 ---

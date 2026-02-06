@@ -5,7 +5,7 @@ class NativeHostService {
     this.port = null;
     this.connected = false;
     this.listeners = new Map();
-    this.messageQueue = [];
+    this.requestId = 0;
   }
 
   static getInstance() {
@@ -83,16 +83,38 @@ class NativeHostService {
     this.port.postMessage(message);
   }
 
-  sendAndWait(message, responseType, timeout = 30000) {
+  sendAndWait(message, responseType, errorType, timeout = 30000) {
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
+        this.off(responseType, onResponse);
+        if (errorType) this.off(errorType, onError);
         reject(new Error(`Timeout waiting for ${responseType}`));
       }, timeout);
 
-      this.once(responseType, (response) => {
+      const cleanup = () => {
         clearTimeout(timer);
+        this.off(responseType, onResponse);
+        if (errorType) this.off(errorType, onError);
+      };
+
+      const onResponse = (response) => {
+        if (message.payload?.requestId && response.requestId !== message.payload.requestId) {
+          return;
+        }
+        cleanup();
         resolve(response);
-      });
+      };
+
+      const onError = (response) => {
+        if (message.payload?.requestId && response.requestId !== message.payload.requestId) {
+          return;
+        }
+        cleanup();
+        reject(new Error(response.error || 'Operation failed'));
+      };
+
+      this.on(responseType, onResponse);
+      if (errorType) this.on(errorType, onError);
 
       this.send(message);
     });
@@ -139,100 +161,57 @@ class NativeHostService {
     this.listeners.set(type, remaining);
   }
 
-  async connectToChrome(options = {}) {
-    const { host = 'localhost', port = 9222 } = options;
-
-    return new Promise((resolve, reject) => {
-      let settled = false;
-
-      const cleanup = () => {
-        this.off('CONNECTED', onConnected);
-        this.off('CONNECTION_ERROR', onError);
-        clearTimeout(timer);
-      };
-
-      const onConnected = (response) => {
-        if (settled) return;
-        settled = true;
-        cleanup();
-        resolve(response);
-      };
-
-      const onError = (response) => {
-        if (settled) return;
-        settled = true;
-        cleanup();
-        reject(new Error(response.error || 'CDP connection failed'));
-      };
-
-      const timer = setTimeout(() => {
-        if (settled) return;
-        settled = true;
-        cleanup();
-        reject(new Error('Timeout connecting to Chrome debug port. Is Chrome running with --remote-debugging-port=9222?'));
-      }, 10000);
-
-      this.on('CONNECTED', onConnected);
-      this.on('CONNECTION_ERROR', onError);
-
-      this.send({ type: 'CONNECT', payload: { host, port } });
-    });
+  getNextRequestId() {
+    return ++this.requestId;
   }
 
-  async startUpload(listings) {
-    return new Promise((resolve, reject) => {
-      const results = {
-        total: listings.length,
-        success: 0,
-        failed: 0,
-        details: []
-      };
-
-      this.on('LISTING_COMPLETE', (msg) => {
-        results.success++;
-        results.details.push({
-          index: msg.index,
-          title: msg.title,
-          status: 'success'
-        });
-      });
-
-      this.on('LISTING_ERROR', (msg) => {
-        results.failed++;
-        results.details.push({
-          index: msg.index,
-          title: msg.title,
-          status: 'failed',
-          error: msg.error
-        });
-      });
-
-      this.once('UPLOAD_COMPLETE', (msg) => {
-        resolve(msg.results);
-      });
-
-      this.once('UPLOAD_CANCELLED', (msg) => {
-        resolve(msg.results);
-      });
-
-      this.send({ type: 'START_UPLOAD', payload: { listings } });
-    });
+  async readFile(filePath) {
+    const requestId = this.getNextRequestId();
+    const response = await this.sendAndWait(
+      { type: 'READ_FILE', payload: { path: filePath, requestId } },
+      'FILE_DATA',
+      'FILE_ERROR',
+      30000
+    );
+    return {
+      path: response.path,
+      data: response.data,
+      mimeType: response.mimeType,
+      size: response.size
+    };
   }
 
-  pause() {
-    this.send({ type: 'PAUSE' });
+  async readFiles(paths) {
+    const requestId = this.getNextRequestId();
+    const response = await this.sendAndWait(
+      { type: 'READ_FILES', payload: { paths, requestId } },
+      'FILES_DATA',
+      'FILES_ERROR',
+      60000
+    );
+    return response.results;
   }
 
-  resume() {
-    this.send({ type: 'RESUME' });
+  async readSpreadsheet(filePath) {
+    const requestId = this.getNextRequestId();
+    const response = await this.sendAndWait(
+      { type: 'READ_SPREADSHEET', payload: { path: filePath, requestId } },
+      'SPREADSHEET_DATA',
+      'SPREADSHEET_ERROR',
+      30000
+    );
+    return response.rows;
   }
 
-  cancel() {
-    this.send({ type: 'CANCEL' });
-  }
-
-  skip() {
-    this.send({ type: 'SKIP' });
+  async listDirectory(dirPath, filter = null) {
+    const requestId = this.getNextRequestId();
+    const response = await this.sendAndWait(
+      { type: 'LIST_DIRECTORY', payload: { path: dirPath, filter, requestId } },
+      'DIRECTORY_DATA',
+      'DIRECTORY_ERROR',
+      30000
+    );
+    return response.files;
   }
 
   isConnected() {

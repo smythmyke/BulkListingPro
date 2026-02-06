@@ -101,10 +101,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       handleListingError(message.payload, sendResponse);
       return true;
 
-    case 'NATIVE_CONNECT':
-      handleNativeConnect(sendResponse);
-      return true;
-
     case 'NATIVE_CHECK':
       handleNativeCheck(sendResponse);
       return true;
@@ -117,28 +113,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       sendResponse({ connected: nativeHostService.isConnected() });
       return true;
 
-    case 'NATIVE_UPLOAD':
-      handleNativeUpload(message.payload, sendResponse);
+    case 'NATIVE_READ_FILE':
+      handleNativeReadFile(message.payload, sendResponse);
       return true;
 
-    case 'NATIVE_PAUSE':
-      nativeHostService.pause();
-      sendResponse({ success: true });
-      return true;
-
-    case 'NATIVE_RESUME':
-      nativeHostService.resume();
-      sendResponse({ success: true });
-      return true;
-
-    case 'NATIVE_CANCEL':
-      nativeHostService.cancel();
-      sendResponse({ success: true });
-      return true;
-
-    case 'NATIVE_SKIP':
-      nativeHostService.skip();
-      sendResponse({ success: true });
+    case 'NATIVE_READ_FILES':
+      handleNativeReadFiles(message.payload, sendResponse);
       return true;
 
     case 'DIRECT_UPLOAD':
@@ -286,25 +266,6 @@ async function handleNativeCheck(sendResponse) {
   }
 }
 
-async function handleNativeConnect(sendResponse) {
-  console.log('handleNativeConnect: starting');
-  try {
-    console.log('handleNativeConnect: connecting to native host...');
-    const connectResult = await nativeHostService.connect();
-    console.log('handleNativeConnect: native host connected', connectResult);
-
-    console.log('handleNativeConnect: connecting to Chrome CDP...');
-    const cdpResult = await nativeHostService.connectToChrome({ port: 9222 });
-    console.log('handleNativeConnect: CDP connected', cdpResult);
-
-    sendResponse({ success: true });
-  } catch (error) {
-    console.error('handleNativeConnect: error', error.message);
-    nativeHostService.disconnect();
-    sendResponse({ success: false, error: error.message });
-  }
-}
-
 async function handleNativeDisconnect(sendResponse) {
   try {
     nativeHostService.disconnect();
@@ -314,65 +275,24 @@ async function handleNativeDisconnect(sendResponse) {
   }
 }
 
-async function handleNativeUpload(payload, sendResponse) {
+async function handleNativeReadFile(payload, sendResponse) {
   try {
-    const { listings } = payload;
+    if (!nativeHostService.isConnected()) {
+      await nativeHostService.connect();
+    }
+    const result = await nativeHostService.readFile(payload.path);
+    sendResponse({ success: true, ...result });
+  } catch (error) {
+    sendResponse({ success: false, error: error.message });
+  }
+}
 
-    nativeHostService.on('LISTING_STARTED', (msg) => {
-      chrome.runtime.sendMessage({
-        type: 'UPLOAD_PROGRESS',
-        index: msg.index,
-        total: msg.total,
-        title: msg.title,
-        status: 'started'
-      }).catch(() => {});
-    });
-
-    nativeHostService.on('LISTING_COMPLETE', async (msg) => {
-      const result = await creditsService.useCredits(CREDITS_PER_LISTING, 'etsy_listing');
-      chrome.runtime.sendMessage({
-        type: 'UPLOAD_PROGRESS',
-        index: msg.index,
-        total: msg.total,
-        title: msg.title,
-        status: 'complete',
-        creditsRemaining: result.creditsRemaining
-      }).catch(() => {});
-    });
-
-    nativeHostService.on('LISTING_ERROR', (msg) => {
-      chrome.runtime.sendMessage({
-        type: 'UPLOAD_PROGRESS',
-        index: msg.index,
-        total: msg.total,
-        title: msg.title,
-        status: 'error',
-        error: msg.error
-      }).catch(() => {});
-    });
-
-    nativeHostService.on('LISTING_SKIPPED', (msg) => {
-      chrome.runtime.sendMessage({
-        type: 'UPLOAD_PROGRESS',
-        index: msg.index,
-        total: msg.total,
-        title: msg.title,
-        status: 'skipped'
-      }).catch(() => {});
-    });
-
-    nativeHostService.on('VERIFICATION_REQUIRED', (msg) => {
-      chrome.runtime.sendMessage({
-        type: 'UPLOAD_PROGRESS',
-        index: msg.index,
-        total: msg.total,
-        title: msg.title,
-        status: 'verification_required',
-        verificationType: msg.verificationType
-      }).catch(() => {});
-    });
-
-    const results = await nativeHostService.startUpload(listings);
+async function handleNativeReadFiles(payload, sendResponse) {
+  try {
+    if (!nativeHostService.isConnected()) {
+      await nativeHostService.connect();
+    }
+    const results = await nativeHostService.readFiles(payload.paths);
     sendResponse({ success: true, results });
   } catch (error) {
     sendResponse({ success: false, error: error.message });
@@ -449,7 +369,7 @@ async function handleDirectUpload(payload, sendResponse) {
           }).catch(() => {});
         } else {
           results.failed++;
-          results.details.push({ index: i, title: listing.title, status: 'failed', error: result.error });
+          results.details.push({ index: i, title: listing.title, status: 'failed', error: result.error, errorCategory: result.errorCategory });
 
           chrome.runtime.sendMessage({
             type: 'UPLOAD_PROGRESS',
@@ -457,7 +377,8 @@ async function handleDirectUpload(payload, sendResponse) {
             total: listings.length,
             title: listing.title,
             status: 'error',
-            error: result.error
+            error: result.error,
+            errorCategory: result.errorCategory
           }).catch(() => {});
         }
       } catch (err) {

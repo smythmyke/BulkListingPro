@@ -291,7 +291,7 @@ Simplify setup for users without Native Host.
 
 ---
 
-## Phase C: Native Host Simplification
+## Phase C: Native Host Simplification ✅ COMPLETE
 
 **Goal:** Native Host becomes a file server only
 
@@ -301,12 +301,12 @@ Simplify setup for users without Native Host.
 Remove CDP/automation code, keep only file reading.
 
 **Tasks:**
-- [ ] Remove CDP connection code from `host.js`
-- [ ] Remove listing automation code
-- [ ] Keep message handling for file operations
-- [ ] Add `READ_FILE` message type - returns base64
-- [ ] Add `READ_SPREADSHEET` message type - returns parsed data
-- [ ] Add `LIST_DIRECTORY` message type - returns file list (for image folder selection)
+- [x] Remove CDP connection code from `host.js`
+- [x] Remove listing automation code
+- [x] Keep message handling for file operations
+- [x] Add `READ_FILE` message type - returns base64
+- [x] Add `READ_SPREADSHEET` message type - returns parsed data
+- [x] Add `LIST_DIRECTORY` message type - returns file list (for image folder selection)
 
 **New message types:**
 ```javascript
@@ -330,12 +330,12 @@ Remove CDP/automation code, keep only file reading.
 Update extension service to use new message types.
 
 **Tasks:**
-- [ ] Add `readFile(path)` method - returns base64
-- [ ] Add `readSpreadsheet(path)` method - returns parsed rows
-- [ ] Remove CDP-related methods
-- [ ] Keep connection management
+- [x] Add `readFile(path)` method - returns base64
+- [x] Add `readSpreadsheet(path)` method - returns parsed rows
+- [x] Remove CDP-related methods
+- [x] Keep connection management
 
-**Files to modify:**
+**Files modified:**
 - `services/nativeHost.js`
 
 ### C.3 Spreadsheet Import with Native Host
@@ -347,18 +347,18 @@ For power users: Import spreadsheet, resolve file paths via Native Host.
 1. User drops spreadsheet in sidepanel
 2. Sidepanel parses spreadsheet (already works)
 3. For each listing with image paths:
-   - Send `READ_FILE` to Native Host
+   - Send `READ_FILES` to Native Host
    - Receive base64 data
    - Store in listing object
 4. Upload via chrome.debugger (same as lite mode)
 
 **Tasks:**
-- [ ] After spreadsheet parse, identify listings with file paths
-- [ ] Batch request files from Native Host
-- [ ] Convert paths to base64 data in listing objects
-- [ ] Proceed with normal upload flow
+- [x] After spreadsheet parse, identify listings with file paths
+- [x] Batch request files from Native Host
+- [x] Convert paths to base64 data in listing objects
+- [x] Proceed with normal upload flow
 
-**Files to modify:**
+**Files modified:**
 - `sidepanel/sidepanel.js` - `processSpreadsheet()` function
 
 ---
@@ -497,3 +497,47 @@ If new architecture has critical issues:
 - [ ] Setup reduced from 3 steps to 1 step (for lite mode)
 - [ ] "Debugging" banner is only friction (acceptable)
 - [ ] Clear messaging about lite vs power mode capabilities
+
+---
+
+## Phase E: Polish Features (February 5, 2026 - Evening)
+
+### E.1 Retry Failed Listings
+- [ ] Add "Retry Failed" button in results section
+- [ ] Button visible only when failures > 0
+- [ ] On click: filter failed listings, re-queue, restart upload
+- [ ] Clear previous results before retry
+
+**Files:** `sidepanel.html`, `sidepanel.js`
+
+### E.2 Publish vs Draft Toggle
+- [ ] Add toggle in queue section (above Start Upload)
+- [ ] Options: "Save as Draft" (default), "Publish"
+- [ ] Store selection, apply to all listings in batch
+- [ ] Pass `listing_state` to automation
+
+**Files:** `sidepanel.html`, `sidepanel.js`
+
+### E.3 Error Handling Improvements
+- [ ] Categorize errors (network, DOM, timeout, verification)
+- [ ] Move credit deduction to after confirmed save
+- [ ] Show error category in results view
+- [ ] Add expandable details for failed listings
+
+**Files:** `etsyAutomation.js`, `sidepanel.js`
+
+### E.4 Host Legal Pages
+- [ ] Copy legal files to `docs/` folder
+- [ ] Enable GitHub Pages (manual step)
+- [ ] URLs: `https://smythmyke.github.io/BulkListingPro/...`
+
+**Files:** `docs/privacy-policy.html`, `docs/terms-of-service.html`
+
+### E.5 Progress
+
+| Feature | Status |
+|---------|--------|
+| Retry Failed Listings | ✅ Complete |
+| Publish vs Draft Toggle | ✅ Complete |
+| Error Handling | ✅ Complete |
+| Host Legal Pages | ✅ Complete |

@@ -5,6 +5,23 @@ const STORAGE_KEYS = {
   UPLOAD_RESULTS: 'bulklistingpro_upload_results'
 };
 
+const CATEGORY_ATTRIBUTES = {
+  'Clip Art & Image Files': {
+    craft_type: {
+      required: true,
+      options: ['Scrapbooking', 'Card making & stationery', 'Collage', "Kids' crafts"],
+      default: 'Scrapbooking'
+    }
+  },
+  'Fonts': {
+    craft_type: {
+      required: true,
+      options: ['Scrapbooking', 'Card making & stationery', 'Collage', "Kids' crafts"],
+      default: 'Scrapbooking'
+    }
+  }
+};
+
 let user = null;
 let credits = { available: 0, used: 0 };
 let creditPacks = [];
@@ -13,33 +30,30 @@ let uploadQueue = [];
 let uploadResults = [];
 let isUploading = false;
 let isPaused = false;
-let nativeConnected = false;
 let listingImages = [];
 let digitalFile = null;
 let currentUploadIndex = 0;
+let autoCheckInterval = null;
 
 let setupState = {
   nativeHost: false,
-  chromeDebug: false,
   etsyLoggedIn: false
 };
 
-let uploadMode = 'direct';
 
 const elements = {
   setupSection: document.getElementById('setup-section'),
   authSection: document.getElementById('auth-section'),
   mainSection: document.getElementById('main-section'),
   stepNative: document.getElementById('step-native'),
-  stepChrome: document.getElementById('step-chrome'),
   stepEtsy: document.getElementById('step-etsy'),
   nativeStatus: document.getElementById('native-status'),
-  chromeStatus: document.getElementById('chrome-status'),
   etsyStatus: document.getElementById('etsy-status'),
   downloadWindows: document.getElementById('download-windows'),
-  copyCommand: document.getElementById('copy-command'),
-  chromeCommand: document.getElementById('chrome-command'),
   checkSetupBtn: document.getElementById('check-setup-btn'),
+  powerModeSection: document.getElementById('power-mode-section'),
+  powerModeBadge: document.getElementById('power-mode-badge'),
+  powerModeStatus: document.getElementById('power-mode-status'),
   signInBtn: document.getElementById('sign-in-btn'),
   signOutBtn: document.getElementById('sign-out-btn'),
   userAvatar: document.getElementById('user-avatar'),
@@ -55,6 +69,7 @@ const elements = {
   queueList: document.getElementById('queue-list'),
   queueCount: document.getElementById('queue-count'),
   startUploadBtn: document.getElementById('start-upload-btn'),
+  listingStateSelect: document.getElementById('listing-state-select'),
   clearQueueBtn: document.getElementById('clear-queue-btn'),
   progressSection: document.getElementById('progress-section'),
   progressFill: document.getElementById('progress-fill'),
@@ -73,6 +88,7 @@ const elements = {
   resultsSkipped: document.getElementById('results-skipped'),
   resultsList: document.getElementById('results-list'),
   newUploadBtn: document.getElementById('new-upload-btn'),
+  retryFailedBtn: document.getElementById('retry-failed-btn'),
   toast: document.getElementById('toast'),
   imageDropZone: document.getElementById('image-drop-zone'),
   imagePreviews: document.getElementById('image-previews'),
@@ -86,7 +102,10 @@ const elements = {
   digitalFileBrowseBtn: document.getElementById('digital-file-browse-btn'),
   digitalFileInput: document.getElementById('digital-file-input'),
   digitalFilePrompt: document.getElementById('digital-file-prompt'),
-  selectAllCheckbox: document.getElementById('select-all-checkbox')
+  selectAllCheckbox: document.getElementById('select-all-checkbox'),
+  categorySelect: document.getElementById('category'),
+  craftTypeGroup: document.getElementById('craft-type-group'),
+  craftTypeSelect: document.getElementById('craft-type')
 };
 
 document.addEventListener('DOMContentLoaded', init);
@@ -243,7 +262,6 @@ function showResumeDialog(savedState, savedResults) {
 
 function setupEventListeners() {
   elements.checkSetupBtn.addEventListener('click', recheckSetup);
-  elements.copyCommand.addEventListener('click', copyCommandToClipboard);
   elements.downloadWindows.addEventListener('click', handleDownload);
   elements.signInBtn.addEventListener('click', signIn);
   elements.signOutBtn.addEventListener('click', signOut);
@@ -259,12 +277,14 @@ function setupEventListeners() {
   elements.dropZone.addEventListener('dragleave', handleDragLeave);
   elements.dropZone.addEventListener('drop', handleDrop);
   elements.singleListingForm.addEventListener('submit', handleSingleListing);
+  elements.categorySelect.addEventListener('change', handleCategoryChange);
   elements.startUploadBtn.addEventListener('click', startUpload);
   elements.clearQueueBtn.addEventListener('click', clearQueue);
   elements.pauseBtn.addEventListener('click', pauseUpload);
   elements.skipBtn.addEventListener('click', skipListing);
   elements.cancelBtn.addEventListener('click', cancelUpload);
   elements.newUploadBtn.addEventListener('click', resetToQueue);
+  elements.retryFailedBtn.addEventListener('click', retryFailed);
   elements.imageDropZone.addEventListener('dragover', handleImageDragOver);
   elements.imageDropZone.addEventListener('dragleave', handleImageDragLeave);
   elements.imageDropZone.addEventListener('drop', handleImageDrop);
@@ -319,9 +339,24 @@ function updatePageStatus(url) {
   }
 }
 
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (changeInfo.status === 'complete') {
     checkPageStatus();
+    if (autoCheckInterval && tab?.url?.includes('etsy.com')) {
+      const wasLoggedIn = setupState.etsyLoggedIn;
+      setupState.etsyLoggedIn = await checkEtsyLoggedIn();
+      if (!wasLoggedIn && setupState.etsyLoggedIn) {
+        stopAutoCheck();
+        setupState.nativeHost = await checkNativeHost();
+        updateSetupUI();
+        if (setupState.nativeHost) {
+          showToast('Ready! Power Mode enabled for local file paths.', 'success');
+        } else {
+          showToast('Logged in! Ready to upload.', 'success');
+        }
+        await checkAuth();
+      }
+    }
   }
 });
 
@@ -614,6 +649,19 @@ function sanitizeListing(row, rowIndex) {
     selected: true
   };
 
+  const categoryAttrs = CATEGORY_ATTRIBUTES[category];
+  if (categoryAttrs?.craft_type) {
+    const craftType = (row.craft_type || row.CraftType || row['Craft Type'] || '').toString().trim();
+    if (craftType && categoryAttrs.craft_type.options.includes(craftType)) {
+      listing.craft_type = craftType;
+    } else {
+      listing.craft_type = categoryAttrs.craft_type.default;
+      if (craftType) {
+        warnings.push(`Row ${rowIndex}: invalid craft_type "${craftType}", using default "${categoryAttrs.craft_type.default}"`);
+      }
+    }
+  }
+
   return { listing, warnings };
 }
 
@@ -637,13 +685,25 @@ async function processSpreadsheet(file) {
       if (listing) listings.push(listing);
     });
 
-    uploadQueue = listings;
-
-    if (uploadQueue.length === 0) {
+    if (listings.length === 0) {
       showToast('No valid listings found (title and valid price required)', 'error');
       return;
     }
 
+    const localPaths = collectLocalFilePaths(listings);
+    if (localPaths.length > 0) {
+      if (setupState.nativeHost) {
+        showToast(`Resolving ${localPaths.length} local file paths...`, 'success');
+        const resolvedCount = await resolveLocalFilePaths(listings, localPaths);
+        if (resolvedCount > 0) {
+          showToast(`Resolved ${resolvedCount} files`, 'success');
+        }
+      } else {
+        allWarnings.push(`Found ${localPaths.length} local file paths but Native Host not installed - files will be skipped`);
+      }
+    }
+
+    uploadQueue = listings;
     renderQueue();
     await saveQueueToStorage();
 
@@ -657,6 +717,73 @@ async function processSpreadsheet(file) {
   } catch (error) {
     console.error('Spreadsheet error:', error);
     showToast('Failed to parse spreadsheet: ' + error.message, 'error');
+  }
+}
+
+function isLocalFilePath(value) {
+  if (!value || typeof value !== 'string') return false;
+  if (value.startsWith('data:')) return false;
+  if (value.startsWith('http://') || value.startsWith('https://')) return false;
+  if (value.match(/^[A-Za-z]:[\\\/]/) || value.startsWith('/') || value.startsWith('\\\\')) {
+    return true;
+  }
+  return false;
+}
+
+function collectLocalFilePaths(listings) {
+  const paths = new Set();
+  const fileFields = ['image_1', 'image_2', 'image_3', 'image_4', 'image_5', 'digital_file_1'];
+
+  for (const listing of listings) {
+    for (const field of fileFields) {
+      const value = listing[field];
+      if (isLocalFilePath(value)) {
+        paths.add(value);
+      }
+    }
+  }
+
+  return Array.from(paths);
+}
+
+async function resolveLocalFilePaths(listings, paths) {
+  try {
+    const response = await chrome.runtime.sendMessage({
+      type: 'NATIVE_READ_FILES',
+      payload: { paths }
+    });
+
+    if (!response.success) {
+      console.warn('Failed to read files:', response.error);
+      return 0;
+    }
+
+    const pathToData = new Map();
+    for (const result of response.results) {
+      if (result.data && !result.error) {
+        pathToData.set(result.path, result.data);
+      } else if (result.error) {
+        console.warn(`Failed to read ${result.path}: ${result.error}`);
+      }
+    }
+
+    const fileFields = ['image_1', 'image_2', 'image_3', 'image_4', 'image_5', 'digital_file_1'];
+    let resolvedCount = 0;
+
+    for (const listing of listings) {
+      for (const field of fileFields) {
+        const value = listing[field];
+        if (pathToData.has(value)) {
+          listing[field] = pathToData.get(value);
+          resolvedCount++;
+        }
+      }
+    }
+
+    return resolvedCount;
+  } catch (err) {
+    console.error('Error resolving file paths:', err);
+    return 0;
   }
 }
 
@@ -704,20 +831,36 @@ function extractTags(row) {
   return tags;
 }
 
+function handleCategoryChange() {
+  const category = elements.categorySelect.value;
+  const attrs = CATEGORY_ATTRIBUTES[category];
+
+  if (attrs?.craft_type) {
+    elements.craftTypeGroup.classList.remove('hidden');
+  } else {
+    elements.craftTypeGroup.classList.add('hidden');
+  }
+}
+
 function handleSingleListing(e) {
   e.preventDefault();
 
   const formData = new FormData(e.target);
+  const category = formData.get('category');
   const listing = {
     id: Date.now().toString(),
     title: formData.get('title'),
-    category: formData.get('category'),
+    category: category,
     description: formData.get('description'),
     price: parseFloat(formData.get('price')),
     tags: formData.get('tags').split(',').map(t => t.trim()).filter(t => t),
     status: 'pending',
     selected: true
   };
+
+  if (CATEGORY_ATTRIBUTES[category]?.craft_type) {
+    listing.craft_type = formData.get('craft_type');
+  }
 
   listingImages.forEach((img, i) => {
     listing[`image_${i + 1}`] = img.dataUrl;
@@ -731,6 +874,7 @@ function handleSingleListing(e) {
   renderQueue();
   saveQueueToStorage();
   e.target.reset();
+  handleCategoryChange();
   listingImages = [];
   renderImagePreviews();
   digitalFile = null;
@@ -906,12 +1050,14 @@ async function startUpload() {
   updateProgress(0, total);
   await saveUploadState();
 
+  const listingState = elements.listingStateSelect.value;
+
   const listings = selectedItems.map(item => ({
     title: item.title,
     description: item.description || '',
     price: String(item.price),
     category: item.category || 'Digital Prints',
-    listing_state: 'draft',
+    listing_state: item.listing_state || listingState,
     image_1: item.image_1 || '',
     image_2: item.image_2 || '',
     image_3: item.image_3 || '',
@@ -933,51 +1079,13 @@ async function startUpload() {
     tag_13: item.tags?.[12]
   }));
 
-  if (uploadMode === 'native') {
-    await startNativeUpload(listings);
-  } else {
-    await startDirectUpload(listings);
-  }
+  await runUpload(listings);
 
   isUploading = false;
   await loadCredits(true);
 }
 
-async function startNativeUpload(listings) {
-  elements.currentListing.textContent = 'Connecting to native host...';
-
-  try {
-    const connectResponse = await chrome.runtime.sendMessage({ type: 'NATIVE_CONNECT' });
-    if (!connectResponse.success) {
-      throw new Error(connectResponse.error || 'Failed to connect to native host');
-    }
-    nativeConnected = true;
-
-    elements.currentListing.textContent = 'Starting upload...';
-
-    const response = await chrome.runtime.sendMessage({
-      type: 'NATIVE_UPLOAD',
-      payload: { listings }
-    });
-
-    if (response.success) {
-      showResults();
-    } else {
-      throw new Error(response.error || 'Upload failed');
-    }
-  } catch (error) {
-    console.error('Upload error:', error);
-    showToast('Upload failed: ' + error.message, 'error');
-    if (uploadResults.length > 0) {
-      showResults();
-    } else {
-      elements.progressSection.classList.add('hidden');
-      elements.queueSection.classList.remove('hidden');
-    }
-  }
-}
-
-async function startDirectUpload(listings) {
+async function runUpload(listings) {
   elements.currentListing.textContent = 'Attaching to browser...';
 
   try {
@@ -1013,17 +1121,14 @@ async function startDirectUpload(listings) {
 async function pauseUpload() {
   if (!isUploading) return;
 
-  const pauseMsg = uploadMode === 'native' ? 'NATIVE_PAUSE' : 'DIRECT_PAUSE';
-  const resumeMsg = uploadMode === 'native' ? 'NATIVE_RESUME' : 'DIRECT_RESUME';
-
   if (!isPaused) {
-    await chrome.runtime.sendMessage({ type: pauseMsg });
+    await chrome.runtime.sendMessage({ type: 'DIRECT_PAUSE' });
     isPaused = true;
     elements.pauseBtn.textContent = 'Resume';
     elements.skipBtn.disabled = false;
     showToast('Upload paused', 'success');
   } else {
-    await chrome.runtime.sendMessage({ type: resumeMsg });
+    await chrome.runtime.sendMessage({ type: 'DIRECT_RESUME' });
     isPaused = false;
     elements.pauseBtn.textContent = 'Pause';
     elements.skipBtn.disabled = true;
@@ -1034,8 +1139,7 @@ async function pauseUpload() {
 async function skipListing() {
   if (!isUploading || !isPaused) return;
 
-  const skipMsg = uploadMode === 'native' ? 'NATIVE_SKIP' : 'DIRECT_SKIP';
-  await chrome.runtime.sendMessage({ type: skipMsg });
+  await chrome.runtime.sendMessage({ type: 'DIRECT_SKIP' });
   elements.skipBtn.disabled = true;
   elements.pauseBtn.textContent = 'Pause';
   isPaused = false;
@@ -1045,8 +1149,7 @@ async function skipListing() {
 async function cancelUpload() {
   if (!isUploading) return;
 
-  const cancelMsg = uploadMode === 'native' ? 'NATIVE_CANCEL' : 'DIRECT_CANCEL';
-  await chrome.runtime.sendMessage({ type: cancelMsg });
+  await chrome.runtime.sendMessage({ type: 'DIRECT_CANCEL' });
   isUploading = false;
   isPaused = false;
 
@@ -1092,7 +1195,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         elements.currentListing.textContent = `Uploading: ${message.title}`;
       } else if (message.status === 'complete') {
         elements.currentListing.textContent = `Completed: ${message.title}`;
-        uploadResults.push({ title: message.title, status: 'success' });
+        const listing = uploadQueue.filter(l => l.selected)[message.index];
+        uploadResults.push({ title: message.title, status: 'success', listing });
         currentUploadIndex = message.index + 1;
         saveUploadState();
         if (message.creditsRemaining !== undefined) {
@@ -1102,12 +1206,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
       } else if (message.status === 'error') {
         elements.currentListing.textContent = `Failed: ${message.title} - ${message.error}`;
-        uploadResults.push({ title: message.title, status: 'error', error: message.error });
+        const listing = uploadQueue.filter(l => l.selected)[message.index];
+        uploadResults.push({ title: message.title, status: 'error', error: message.error, errorCategory: message.errorCategory, listing });
         currentUploadIndex = message.index + 1;
         saveUploadState();
       } else if (message.status === 'skipped') {
         elements.currentListing.textContent = `Skipped: ${message.title}`;
-        uploadResults.push({ title: message.title, status: 'skipped' });
+        const listing = uploadQueue.filter(l => l.selected)[message.index];
+        uploadResults.push({ title: message.title, status: 'skipped', listing });
         currentUploadIndex = message.index + 1;
         saveUploadState();
       } else if (message.status === 'verification_required') {
@@ -1150,15 +1256,54 @@ function showResults() {
   elements.resultsFailed.textContent = failedCount;
   elements.resultsSkipped.textContent = skippedCount;
 
+  if (failedCount > 0) {
+    elements.retryFailedBtn.classList.remove('hidden');
+  } else {
+    elements.retryFailedBtn.classList.add('hidden');
+  }
+
   renderResultsList();
   clearUploadState();
 }
 
+function retryFailed() {
+  const failedListings = uploadResults
+    .filter(r => r.status === 'error')
+    .map(r => r.listing)
+    .filter(Boolean);
+
+  if (failedListings.length === 0) {
+    showToast('No failed listings to retry', 'error');
+    return;
+  }
+
+  uploadQueue = failedListings;
+  uploadResults = [];
+
+  elements.resultsSection.classList.add('hidden');
+  elements.retryFailedBtn.classList.add('hidden');
+
+  renderQueue();
+  showToast(`${failedListings.length} listing(s) queued for retry`, 'success');
+}
+
 function renderResultsList() {
+  const categoryLabels = {
+    verification: 'Verification Required',
+    timeout: 'Timeout',
+    network: 'Network Error',
+    dom: 'Page Changed',
+    unknown: 'Error'
+  };
+
   elements.resultsList.innerHTML = uploadResults.map((item, index) => {
     const statusLabel = item.status === 'error' ? 'failed' : item.status;
+    const categoryLabel = item.errorCategory ? categoryLabels[item.errorCategory] || 'Error' : '';
     const errorHtml = item.error
-      ? `<div class="error-detail">${item.error}</div>`
+      ? `<details class="error-details">
+           <summary class="error-summary">${categoryLabel}</summary>
+           <div class="error-detail">${item.error}</div>
+         </details>`
       : '';
     return `
       <div class="result-item" style="animation-delay: ${index * 0.05}s">
@@ -1183,18 +1328,6 @@ async function checkSetup() {
   setupState.nativeHost = await checkNativeHost();
   setupState.etsyLoggedIn = await checkEtsyLoggedIn();
 
-  if (setupState.nativeHost) {
-    setupState.chromeDebug = await checkChromeDebug();
-    if (setupState.chromeDebug) {
-      uploadMode = 'native';
-    } else {
-      uploadMode = 'direct';
-    }
-  } else {
-    setupState.chromeDebug = false;
-    uploadMode = 'direct';
-  }
-
   updateSetupUI();
 
   return setupState.etsyLoggedIn;
@@ -1212,24 +1345,6 @@ async function checkNativeHost() {
   }
 }
 
-async function checkChromeDebug() {
-  if (!setupState.nativeHost) return false;
-
-  try {
-    const response = await Promise.race([
-      chrome.runtime.sendMessage({ type: 'NATIVE_CONNECT' }),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 15000))
-    ]);
-    nativeConnected = response.success;
-    if (!response.success && response.error) {
-      console.log('Chrome debug check failed:', response.error);
-    }
-    return response.success;
-  } catch (err) {
-    console.log('Chrome debug check error:', err.message);
-    return false;
-  }
-}
 
 async function checkEtsyLoggedIn() {
   try {
@@ -1251,25 +1366,6 @@ async function checkEtsyLoggedIn() {
 }
 
 function updateSetupUI() {
-  if (setupState.nativeHost) {
-    elements.stepNative.classList.add('complete');
-    elements.nativeStatus.textContent = 'Installed (Power Mode)';
-  } else {
-    elements.stepNative.classList.remove('complete');
-    elements.nativeStatus.textContent = 'Optional - Skip for Lite Mode';
-  }
-
-  if (setupState.chromeDebug) {
-    elements.stepChrome.classList.add('complete');
-    elements.chromeStatus.textContent = 'Connected';
-  } else if (setupState.nativeHost) {
-    elements.stepChrome.classList.remove('complete');
-    elements.chromeStatus.textContent = 'Not connected';
-  } else {
-    elements.stepChrome.classList.add('complete');
-    elements.chromeStatus.textContent = 'Not needed (Lite Mode)';
-  }
-
   if (setupState.etsyLoggedIn) {
     elements.stepEtsy.classList.add('complete');
     elements.etsyStatus.textContent = 'Logged in';
@@ -1277,12 +1373,68 @@ function updateSetupUI() {
     elements.stepEtsy.classList.remove('complete');
     elements.etsyStatus.textContent = 'Not logged in';
   }
+
+  if (setupState.nativeHost) {
+    elements.stepNative.classList.add('complete');
+    elements.nativeStatus.textContent = 'Installed';
+  } else {
+    elements.stepNative.classList.remove('complete');
+    elements.nativeStatus.textContent = 'Not installed';
+  }
+
+  updatePowerModeSection();
+}
+
+function updatePowerModeSection() {
+  const badge = elements.powerModeBadge;
+  const statusEl = elements.powerModeStatus;
+
+  if (setupState.nativeHost) {
+    badge.textContent = 'Enabled';
+    badge.className = 'power-mode-badge enabled';
+    statusEl.textContent = 'Power Mode active! Spreadsheet imports with local file paths enabled.';
+    statusEl.className = 'power-mode-status success';
+    statusEl.classList.remove('hidden');
+  } else {
+    badge.textContent = 'Optional';
+    badge.className = 'power-mode-badge';
+    statusEl.classList.add('hidden');
+  }
 }
 
 function showSetupSection() {
   elements.setupSection.classList.remove('hidden');
   elements.authSection.classList.add('hidden');
   elements.mainSection.classList.add('hidden');
+  startAutoCheck();
+}
+
+function startAutoCheck() {
+  stopAutoCheck();
+  autoCheckInterval = setInterval(async () => {
+    const wasLoggedIn = setupState.etsyLoggedIn;
+    setupState.etsyLoggedIn = await checkEtsyLoggedIn();
+
+    if (!wasLoggedIn && setupState.etsyLoggedIn) {
+      stopAutoCheck();
+      setupState.nativeHost = await checkNativeHost();
+      updateSetupUI();
+
+      if (setupState.nativeHost) {
+        showToast('Ready! Power Mode enabled for local file paths.', 'success');
+      } else {
+        showToast('Logged in! Ready to upload.', 'success');
+      }
+      await checkAuth();
+    }
+  }, 2000);
+}
+
+function stopAutoCheck() {
+  if (autoCheckInterval) {
+    clearInterval(autoCheckInterval);
+    autoCheckInterval = null;
+  }
 }
 
 async function recheckSetup() {
@@ -1295,23 +1447,18 @@ async function recheckSetup() {
   elements.checkSetupBtn.disabled = false;
 
   if (setupComplete) {
-    const modeText = uploadMode === 'native' ? 'Power Mode' : 'Lite Mode';
-    showToast(`Setup complete! (${modeText})`, 'success');
+    stopAutoCheck();
+    if (setupState.nativeHost) {
+      showToast('Ready! Power Mode enabled for local file paths.', 'success');
+    } else {
+      showToast('Ready! Upload via form or spreadsheet with URLs.', 'success');
+    }
     await checkAuth();
   } else {
     if (!setupState.etsyLoggedIn) {
       showToast('Please log into Etsy first', 'error');
     }
   }
-}
-
-function copyCommandToClipboard() {
-  const command = elements.chromeCommand.textContent;
-  navigator.clipboard.writeText(command).then(() => {
-    showToast('Command copied!', 'success');
-  }).catch(() => {
-    showToast('Failed to copy', 'error');
-  });
 }
 
 function handleDownload(e) {
