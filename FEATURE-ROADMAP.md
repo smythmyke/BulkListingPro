@@ -18,6 +18,9 @@
 | Retry Failed Listings | ✅ | Re-queue failed items with one click |
 | Publish vs Draft Toggle | ✅ | Choose save mode before upload |
 | Error Categorization | ✅ | Verification, timeout, network, DOM errors |
+| Phase 1 Field Automation | ✅ | who_made, what_is_it, ai_content, when_made, renewal, materials, quantity, SKU |
+| XLSX Template with Dropdowns | ✅ | ExcelJS generator with formatting, validation, Options sheet |
+| Free Credits for New Users | ✅ | 10 credits on signup + welcome toast |
 
 ---
 
@@ -54,47 +57,14 @@ Allow users to paste a competitor's Etsy listing URL and extract their tags for 
 
 ---
 
-### 1.2 Internal Search & Replace
-**Priority:** High
-**Complexity:** Easy
-**Value:** Bulk editing power
-
-**Description:**
-Find and replace text across all queued listings before upload.
-
-**User Flow:**
-1. User clicks "Search & Replace" button in queue section
-2. Modal appears with:
-   - Find text input
-   - Replace with input
-   - Scope checkboxes: Title, Description, Tags, All
-3. Preview matches before applying
-4. Apply changes to queue
-
-**Use Cases:**
-- Update year: "2025" → "2026"
-- Seasonal swap: "Christmas" → "Valentine"
-- Brand name changes
-- Fix typos across batch
-
-**Files to modify:**
-- `sidepanel/sidepanel.html` - Add modal UI
-- `sidepanel/sidepanel.js` - Add search/replace logic
+### ~~1.2 Internal Search & Replace~~ (Removed)
 
 ---
 
-### 1.3 Free Credits for New Users
-**Priority:** High
-**Complexity:** Easy (backend only)
-**Value:** Conversion optimization
+### 1.3 Free Credits for New Users ✅
+**Status:** Complete
 
-**Description:**
-Give new users 10-20 free credits on signup to experience the "magic" before paying.
-
-**Implementation:**
-- Backend change in Firebase/API
-- No extension changes needed
-- Already have 5 credits monthly - could increase or make one-time bonus
+10 free credits on signup. Backend DEFAULT_CREDITS updated, welcome toast in sidepanel.
 
 ---
 
@@ -289,8 +259,8 @@ Based on market research, these niches have highest upload volume:
 | Feature | Status | Date |
 |---------|--------|------|
 | Keyword/Tag Copy Tool | 🟡 Phase 1 Complete | Feb 5, 2026 |
-| Search & Replace | ⬜ Not started | |
-| Free Credits | ⬜ Backend change | |
+| ~~Search & Replace~~ | ❌ Removed | |
+| Free Credits | ✅ Complete | Feb 6, 2026 |
 | Listing Profiles | ⬜ Not started | |
 | Smart Field Propagation | ⬜ Not started | |
 | Trending Tags Scraper | ⬜ Not started | |

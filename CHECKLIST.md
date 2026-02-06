@@ -44,7 +44,7 @@
 - [x] Queue view
   - [x] List all pending listings
   - [x] Show title and status per listing
-  - [ ] Select/deselect individual listings
+  - [x] Select/deselect individual listings
   - [x] Clear queue button
   - [x] Start Upload button (disabled if no listings/credits)
 - [x] Progress view
@@ -89,7 +89,7 @@
 - [x] Implement sign-in flow in sidepanel
 - [x] Implement sign-out flow
 - [x] Test auth persistence across sessions
-- [ ] Handle token refresh
+- [x] Handle token refresh
 
 ### 1.6 Backend API
 - [x] **Decision: API location** → Share GovToolsPro backend
@@ -110,15 +110,15 @@
 - [x] Deduct credits on successful listing upload (2 credits/listing)
 
 ### 1.8 MVP Testing
-- [ ] Test fresh install experience
-- [ ] Test native host installation
-- [ ] Test sign-in flow
-- [ ] Test listing form → queue → upload flow
-- [ ] Test spreadsheet import → queue → upload flow
-- [ ] Test credit deduction
-- [ ] Test error handling (Etsy DOM changes, network errors)
-- [ ] Test pause/resume/cancel
-- [ ] Fix any bugs found
+- [x] Test fresh install experience
+- [x] Test native host installation
+- [x] Test sign-in flow
+- [x] Test listing form → queue → upload flow
+- [x] Test spreadsheet import → queue → upload flow
+- [x] Test credit deduction
+- [x] Test error handling (Etsy DOM changes, network errors)
+- [x] Test pause/resume/cancel
+- [x] Fix any bugs found
 
 ---
 
@@ -272,6 +272,9 @@
 | 2026-02-06 | Category-based tag library with category dropdown in save modal |
 | 2026-02-06 | Welcome bonus (10 credits) for new users - backend + toast |
 | 2026-02-06 | Planned: Referral/Affiliate system port from GovToolsPro |
+| 2026-02-06 | Phase 1 field automation complete (who_made, what_is_it, ai_content, when_made, renewal, materials, quantity, SKU) |
+| 2026-02-06 | XLSX template rebuilt with ExcelJS (dropdowns, formatting, Options sheet) |
+| 2026-02-06 | Friendly text mapping for spreadsheet values |
 | | |
 
 ---
