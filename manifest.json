@@ -72,6 +72,10 @@
     {
       "resources": ["assets/*"],
       "matches": ["https://*.etsy.com/*"]
+    },
+    {
+      "resources": ["editor/*"],
+      "matches": ["<all_urls>"]
     }
   ]
 }

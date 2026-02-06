@@ -1,28 +1,6 @@
-const CREDITS_PER_LISTING = 2;
-const STORAGE_KEYS = {
-  QUEUE: 'bulklistingpro_queue',
-  UPLOAD_STATE: 'bulklistingpro_upload_state',
-  UPLOAD_RESULTS: 'bulklistingpro_upload_results',
-  RESEARCH_CLIPBOARD: 'bulklistingpro_research_clipboard',
-  TAG_LIBRARY: 'bulklistingpro_tag_library'
-};
+import { STORAGE_KEYS, CATEGORY_ATTRIBUTES, sanitizeListing, readSpreadsheetFile, isLocalFilePath, collectLocalFilePaths } from '../services/listingUtils.js';
 
-const CATEGORY_ATTRIBUTES = {
-  'Clip Art & Image Files': {
-    craft_type: {
-      required: true,
-      options: ['Scrapbooking', 'Card making & stationery', 'Collage', "Kids' crafts"],
-      default: 'Scrapbooking'
-    }
-  },
-  'Fonts': {
-    craft_type: {
-      required: true,
-      options: ['Scrapbooking', 'Card making & stationery', 'Collage', "Kids' crafts"],
-      default: 'Scrapbooking'
-    }
-  }
-};
+const CREDITS_PER_LISTING = 2;
 
 let user = null;
 let credits = { available: 0, used: 0 };
@@ -154,7 +132,8 @@ const elements = {
   accountTagLibrary: document.getElementById('account-tag-library'),
   tagSuggestions: document.getElementById('tag-suggestions'),
   suggestionsContent: document.getElementById('suggestions-content'),
-  hideSuggestionsBtn: document.getElementById('hide-suggestions-btn')
+  hideSuggestionsBtn: document.getElementById('hide-suggestions-btn'),
+  openEditorBtn: document.getElementById('open-editor-btn')
 };
 
 document.addEventListener('DOMContentLoaded', init);
@@ -362,6 +341,7 @@ function setupEventListeners() {
   elements.hideSuggestionsBtn.addEventListener('click', hideSuggestions);
   elements.tagsInput.addEventListener('focus', () => showSuggestionsForCategory(elements.categorySelect.value));
   elements.tagsInput.addEventListener('input', updateSuggestionStates);
+  elements.openEditorBtn.addEventListener('click', openEditor);
 }
 
 const ETSY_PATTERNS = [
@@ -681,120 +661,6 @@ function handleFileSelect(e) {
   e.target.value = '';
 }
 
-function sanitizeListing(row, rowIndex) {
-  const warnings = [];
-
-  let title = (row.title || row.Title || '').toString().trim();
-  if (!title) {
-    warnings.push(`Row ${rowIndex}: empty title, skipping`);
-    return { listing: null, warnings };
-  }
-  if (title.length > 140) {
-    warnings.push(`Row ${rowIndex}: title truncated from ${title.length} to 140 chars`);
-    title = title.substring(0, 140);
-  }
-
-  let priceRaw = (row.price || row.Price || '').toString().replace(/[$,\s]/g, '');
-  let price = parseFloat(priceRaw);
-  if (isNaN(price) || price < 0.20) {
-    warnings.push(`Row ${rowIndex}: invalid price "${row.price || row.Price || ''}", skipping`);
-    return { listing: null, warnings };
-  }
-
-  let category = (row.category || row.Category || '').toString().trim();
-  if (!category) {
-    category = 'Digital Prints';
-  }
-
-  let tags = extractTags(row);
-  const seenTags = new Set();
-  const dedupedTags = [];
-  for (const tag of tags) {
-    const lower = tag.toLowerCase().trim();
-    if (!lower || seenTags.has(lower)) continue;
-    seenTags.add(lower);
-    let t = tag.trim();
-    if (t.length > 20) {
-      warnings.push(`Row ${rowIndex}: tag "${t}" truncated to 20 chars`);
-      t = t.substring(0, 20);
-    }
-    dedupedTags.push(t);
-  }
-  tags = dedupedTags.slice(0, 13);
-
-  const WHO_MADE_FRIENDLY = { 'i did': 'i_did', 'a member of my shop': 'member', 'another company or person': 'another' };
-  const WHAT_IS_IT_FRIENDLY = { 'a finished product': 'finished_product', 'a supply or tool to make things': 'supply' };
-  const AI_CONTENT_FRIENDLY = { 'created by me': 'original', 'with an ai generator': 'ai_gen' };
-  const WHEN_MADE_FRIENDLY = { 'made to order': 'made_to_order', '2020 - 2026': '2020_2026', '2010 - 2019': '2010_2019', '2007 - 2009': '2007_2009', 'before 2007': 'before_2007' };
-  const RENEWAL_FRIENDLY = { 'automatic': 'automatic', 'manual': 'manual' };
-  const LISTING_STATE_FRIENDLY = { 'draft': 'draft', 'active': 'active', 'published': 'active' };
-
-  const VALID_WHO_MADE = ['i_did', 'member', 'another'];
-  const VALID_WHAT_IS_IT = ['finished_product', 'supply'];
-  const VALID_AI_CONTENT = ['original', 'ai_gen'];
-  const VALID_WHEN_MADE = ['made_to_order', '2020_2026', '2010_2019', '2007_2009', 'before_2007'];
-  const VALID_RENEWAL = ['automatic', 'manual'];
-
-  function resolveField(raw, friendlyMap, validCodes, fallback) {
-    if (!raw) return fallback;
-    const lower = raw.toLowerCase();
-    if (friendlyMap[lower]) return friendlyMap[lower];
-    if (validCodes.includes(lower)) return lower;
-    return fallback;
-  }
-
-  const whoMadeRaw = (row.who_made || row.WhoMade || row['Who Made'] || '').toString().trim();
-  const whatIsItRaw = (row.what_is_it || row.WhatIsIt || row['What Is It'] || '').toString().trim();
-  const aiContentRaw = (row.ai_content || row.AiContent || row['AI Content'] || '').toString().trim();
-  const whenMadeRaw = (row.when_made || row.WhenMade || row['When Made'] || '').toString().trim();
-  const renewalRaw = (row.renewal || row.Renewal || row.auto_renew || '').toString().trim();
-  const listingStateRaw = (row.listing_state || row.ListingState || row['Listing State'] || '').toString().trim();
-  const materialsRaw = (row.materials || row.Materials || '').toString().trim();
-  const materials = materialsRaw ? materialsRaw.split(',').map(m => m.trim()).filter(m => m) : [];
-  const quantity = parseInt(row.quantity || row.Quantity || '999') || 999;
-  const sku = (row.sku || row.SKU || '').toString().trim();
-
-  const listing = {
-    id: String(Date.now() + rowIndex),
-    title,
-    description: (row.description || row.Description || '').toString(),
-    price,
-    category,
-    tags,
-    who_made: resolveField(whoMadeRaw, WHO_MADE_FRIENDLY, VALID_WHO_MADE, 'i_did'),
-    what_is_it: resolveField(whatIsItRaw, WHAT_IS_IT_FRIENDLY, VALID_WHAT_IS_IT, 'finished_product'),
-    ai_content: resolveField(aiContentRaw, AI_CONTENT_FRIENDLY, VALID_AI_CONTENT, 'original'),
-    when_made: resolveField(whenMadeRaw, WHEN_MADE_FRIENDLY, VALID_WHEN_MADE, 'made_to_order'),
-    renewal: resolveField(renewalRaw, RENEWAL_FRIENDLY, VALID_RENEWAL, 'automatic'),
-    listing_state: resolveField(listingStateRaw, LISTING_STATE_FRIENDLY, ['draft', 'active'], 'draft'),
-    materials,
-    quantity,
-    sku,
-    image_1: row.image_1 || row.Image1 || row['Image 1'] || '',
-    image_2: row.image_2 || row.Image2 || row['Image 2'] || '',
-    image_3: row.image_3 || row.Image3 || row['Image 3'] || '',
-    image_4: row.image_4 || row.Image4 || row['Image 4'] || '',
-    image_5: row.image_5 || row.Image5 || row['Image 5'] || '',
-    digital_file_1: row.digital_file_1 || row.DigitalFile || row['Digital File'] || '',
-    status: 'pending',
-    selected: true
-  };
-
-  const categoryAttrs = CATEGORY_ATTRIBUTES[category];
-  if (categoryAttrs?.craft_type) {
-    const craftType = (row.craft_type || row.CraftType || row['Craft Type'] || '').toString().trim();
-    if (craftType && categoryAttrs.craft_type.options.includes(craftType)) {
-      listing.craft_type = craftType;
-    } else {
-      listing.craft_type = categoryAttrs.craft_type.default;
-      if (craftType) {
-        warnings.push(`Row ${rowIndex}: invalid craft_type "${craftType}", using default "${categoryAttrs.craft_type.default}"`);
-      }
-    }
-  }
-
-  return { listing, warnings };
-}
 
 async function processSpreadsheet(file) {
   console.log('Processing spreadsheet:', file.name);
@@ -851,31 +717,6 @@ async function processSpreadsheet(file) {
   }
 }
 
-function isLocalFilePath(value) {
-  if (!value || typeof value !== 'string') return false;
-  if (value.startsWith('data:')) return false;
-  if (value.startsWith('http://') || value.startsWith('https://')) return false;
-  if (value.match(/^[A-Za-z]:[\\\/]/) || value.startsWith('/') || value.startsWith('\\\\')) {
-    return true;
-  }
-  return false;
-}
-
-function collectLocalFilePaths(listings) {
-  const paths = new Set();
-  const fileFields = ['image_1', 'image_2', 'image_3', 'image_4', 'image_5', 'digital_file_1'];
-
-  for (const listing of listings) {
-    for (const field of fileFields) {
-      const value = listing[field];
-      if (isLocalFilePath(value)) {
-        paths.add(value);
-      }
-    }
-  }
-
-  return Array.from(paths);
-}
 
 async function resolveLocalFilePaths(listings, paths) {
   try {
@@ -918,49 +759,6 @@ async function resolveLocalFilePaths(listings, paths) {
   }
 }
 
-async function readSpreadsheetFile(file) {
-  return new Promise((resolve, reject) => {
-    if (file.name.endsWith('.csv')) {
-      Papa.parse(file, {
-        header: true,
-        skipEmptyLines: true,
-        complete: (results) => {
-          resolve(results.data);
-        },
-        error: (err) => {
-          reject(new Error(err.message));
-        }
-      });
-    } else {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: 'array' });
-          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-          const rows = XLSX.utils.sheet_to_json(firstSheet);
-          resolve(rows);
-        } catch (err) {
-          reject(err);
-        }
-      };
-      reader.onerror = () => reject(new Error('Failed to read file'));
-      reader.readAsArrayBuffer(file);
-    }
-  });
-}
-
-function extractTags(row) {
-  const tags = [];
-  for (let i = 1; i <= 13; i++) {
-    const tag = row[`tag_${i}`] || row[`Tag${i}`] || row[`Tag ${i}`];
-    if (tag) tags.push(tag);
-  }
-  if (tags.length === 0 && row.tags) {
-    return row.tags.split(',').map(t => t.trim()).filter(t => t);
-  }
-  return tags;
-}
 
 function handleCategoryChange() {
   const category = elements.categorySelect.value;
@@ -1552,6 +1350,15 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
     const oldCredits = credits.available;
     credits = changes.bulklistingpro_credits.newValue || { available: 0, used: 0 };
     updateCreditsDisplay(oldCredits);
+  }
+  if (areaName === 'local' && changes[STORAGE_KEYS.QUEUE]) {
+    const newQueue = changes[STORAGE_KEYS.QUEUE].newValue || [];
+    if (newQueue.length > uploadQueue.length) {
+      const added = newQueue.length - uploadQueue.length;
+      uploadQueue = newQueue;
+      renderQueue();
+      showToast(`${added} listing(s) received from editor`, 'success');
+    }
   }
 });
 
@@ -2452,6 +2259,31 @@ async function loadResearchClipboard() {
 function truncateText(text, maxLength) {
   if (!text) return '';
   return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+}
+
+async function openEditor() {
+  try {
+    const data = await chrome.storage.local.get(STORAGE_KEYS.EDITOR_TAB_ID);
+    const savedTabId = data[STORAGE_KEYS.EDITOR_TAB_ID];
+
+    if (savedTabId) {
+      try {
+        const tab = await chrome.tabs.get(savedTabId);
+        if (tab) {
+          await chrome.tabs.update(savedTabId, { active: true });
+          await chrome.windows.update(tab.windowId, { focused: true });
+          return;
+        }
+      } catch (e) {}
+    }
+
+    const tab = await chrome.tabs.create({
+      url: chrome.runtime.getURL('editor/editor.html')
+    });
+    await chrome.storage.local.set({ [STORAGE_KEYS.EDITOR_TAB_ID]: tab.id });
+  } catch (err) {
+    showToast('Failed to open editor', 'error');
+  }
 }
 
 function escapeHtml(text) {

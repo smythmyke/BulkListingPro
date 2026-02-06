@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BulkListingPro - Listing Editor</title>
+  <link rel="stylesheet" href="editor.css">
+  <link rel="stylesheet" href="lib/jsuites.css">
+  <link rel="stylesheet" href="lib/jspreadsheet.css">
+</head>
+<body>
+  <div id="app">
+    <div class="editor-toolbar">
+      <div class="toolbar-left">
+        <h1 class="toolbar-title">BulkListingPro Editor</h1>
+        <span class="listing-count" id="listing-count">0 listings</span>
+      </div>
+      <div class="toolbar-center">
+        <div class="view-toggle" id="view-toggle">
+          <button class="view-toggle-btn active" data-view="form">Form View</button>
+          <button class="view-toggle-btn" data-view="grid">Grid View</button>
+        </div>
+      </div>
+      <div class="toolbar-right">
+        <button id="add-listing-btn" class="btn btn-secondary">+ Add Listing</button>
+        <div class="toolbar-dropdown" id="more-actions-dropdown">
+          <button id="more-actions-btn" class="btn btn-secondary">More &#9662;</button>
+          <div class="toolbar-dropdown-menu" id="more-actions-menu">
+            <button data-action="duplicate-selected">Duplicate Selected</button>
+            <button data-action="delete-selected">Delete Selected</button>
+            <hr>
+            <button data-action="select-all">Select All</button>
+            <button data-action="select-none">Deselect All</button>
+            <hr>
+            <button data-action="export-xlsx">Export XLSX</button>
+            <button data-action="export-csv">Export CSV</button>
+          </div>
+        </div>
+        <button id="import-btn" class="btn btn-secondary">Import</button>
+        <input type="file" id="import-file-input" accept=".xlsx,.xls,.csv" hidden>
+        <button id="send-to-queue-btn" class="btn btn-primary" disabled>Send to Queue</button>
+        <button id="close-editor-btn" class="btn btn-close" title="Close Editor">&times;</button>
+      </div>
+    </div>
+
+    <div class="import-zone" id="import-zone">
+      <p>Drag & drop XLSX or CSV to import listings</p>
+      <p class="small">or use the Import button above</p>
+    </div>
+
+    <div class="search-bar" id="search-bar">
+      <input type="text" id="search-input" placeholder="Search listings..." class="search-input">
+      <select id="filter-category" class="filter-select">
+        <option value="">All Categories</option>
+      </select>
+      <select id="filter-status" class="filter-select">
+        <option value="">All Status</option>
+        <option value="valid">Valid</option>
+        <option value="errors">Has Errors</option>
+        <option value="warnings">Has Warnings</option>
+        <option value="empty">Empty</option>
+      </select>
+      <select id="sort-by" class="filter-select">
+        <option value="">Sort by...</option>
+        <option value="title-asc">Title A-Z</option>
+        <option value="title-desc">Title Z-A</option>
+        <option value="price-asc">Price Low-High</option>
+        <option value="price-desc">Price High-Low</option>
+        <option value="category">Category</option>
+        <option value="status">Validation Status</option>
+      </select>
+    </div>
+
+    <div id="listing-cards" class="listing-cards"></div>
+    <div id="grid-container" class="grid-container" style="display:none;"></div>
+
+    <div class="add-card-area" id="add-card-area" style="display:none;">
+      <button id="add-listing-bottom-btn" class="btn btn-secondary btn-add-bottom">+ Add Another Listing</button>
+    </div>
+
+    <div class="editor-footer" id="editor-footer" style="display:none;">
+      <div class="footer-left">
+        <button id="undo-btn" class="btn btn-small btn-secondary" disabled title="Undo (Ctrl+Z)">Undo</button>
+        <button id="redo-btn" class="btn btn-small btn-secondary" disabled title="Redo (Ctrl+Y)">Redo</button>
+        <span class="autosave-status" id="autosave-status">Not saved yet</span>
+      </div>
+      <button id="send-to-queue-bottom-btn" class="btn btn-primary" disabled>Send to Queue</button>
+    </div>
+
+    <div id="toast" class="toast"></div>
+  </div>
+
+  <script src="../sidepanel/lib/xlsx.full.min.js"></script>
+  <script src="../sidepanel/lib/papaparse.min.js"></script>
+  <script src="lib/jsuites.js"></script>
+  <script src="lib/jspreadsheet.js"></script>
+  <script src="editor.js" type="module"></script>
+</body>
+</html>
