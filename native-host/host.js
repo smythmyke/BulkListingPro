@@ -1,19 +1,14 @@
 #!/usr/bin/env node
 
-// Redirect console.log to stderr to avoid corrupting Native Messaging protocol
+const fs = require('fs');
+const path = require('path');
+
 const originalLog = console.log;
 const originalWarn = console.warn;
 const originalError = console.error;
 console.log = (...args) => process.stderr.write('[LOG] ' + args.join(' ') + '\n');
 console.warn = (...args) => process.stderr.write('[WARN] ' + args.join(' ') + '\n');
 console.error = (...args) => process.stderr.write('[ERROR] ' + args.join(' ') + '\n');
-
-const { createListing } = require('./src/listing');
-const { connectCDP, disconnectCDP } = require('./src/cdp');
-const config = require('./config/default');
-const { AbortError, setPaused, setSkip, setCancel, reset: resetAbort } = require('./src/abort');
-
-let cdpClient = null;
 
 process.stdin.on('readable', () => {
   let chunk;
@@ -61,35 +56,23 @@ async function processMessage(message) {
 
   switch (type) {
     case 'PING':
-      sendMessage({ type: 'PONG', version: '1.0.0' });
+      sendMessage({ type: 'PONG', version: '2.0.0' });
       break;
 
-    case 'CONNECT':
-      await handleConnect(payload);
+    case 'READ_FILE':
+      await handleReadFile(payload);
       break;
 
-    case 'DISCONNECT':
-      await handleDisconnect();
+    case 'READ_FILES':
+      await handleReadFiles(payload);
       break;
 
-    case 'START_UPLOAD':
-      await handleStartUpload(payload);
+    case 'READ_SPREADSHEET':
+      await handleReadSpreadsheet(payload);
       break;
 
-    case 'PAUSE':
-      handlePause();
-      break;
-
-    case 'RESUME':
-      handleResume();
-      break;
-
-    case 'CANCEL':
-      handleCancel();
-      break;
-
-    case 'SKIP':
-      handleSkip();
+    case 'LIST_DIRECTORY':
+      await handleListDirectory(payload);
       break;
 
     default:
@@ -97,224 +80,245 @@ async function processMessage(message) {
   }
 }
 
-async function handleConnect(payload) {
-  const { port = 9222, host = 'localhost' } = payload || {};
+async function handleReadFile(payload) {
+  const { path: filePath, requestId } = payload || {};
 
-  try {
-    cdpClient = await connectCDP({ host, port });
-    sendMessage({ type: 'CONNECTED', success: true });
-  } catch (err) {
-    sendMessage({
-      type: 'CONNECTION_ERROR',
-      success: false,
-      error: err.message,
-      hint: 'Make sure Chrome is running with --remote-debugging-port=9222'
-    });
-  }
-}
-
-async function handleDisconnect() {
-  try {
-    await disconnectCDP(cdpClient);
-    cdpClient = null;
-    sendMessage({ type: 'DISCONNECTED', success: true });
-  } catch (err) {
-    sendMessage({ type: 'ERROR', error: err.message });
-  }
-}
-
-let isCancelled = false;
-
-function handlePause() {
-  setPaused(true);
-  sendMessage({ type: 'PAUSED' });
-}
-
-function handleResume() {
-  setPaused(false);
-  sendMessage({ type: 'RESUMED' });
-}
-
-function handleCancel() {
-  isCancelled = true;
-  setCancel(true);
-  sendMessage({ type: 'CANCELLED' });
-}
-
-function handleSkip() {
-  setSkip(true);
-  setPaused(false);
-  sendMessage({ type: 'SKIPPING' });
-}
-
-async function handleStartUpload(payload) {
-  const { listings } = payload;
-
-  if (!cdpClient) {
-    sendMessage({
-      type: 'ERROR',
-      error: 'Not connected to Chrome. Send CONNECT first.'
-    });
+  if (!filePath) {
+    sendMessage({ type: 'FILE_ERROR', error: 'No path provided', requestId });
     return;
   }
 
-  if (!listings || !Array.isArray(listings) || listings.length === 0) {
-    sendMessage({ type: 'ERROR', error: 'No listings provided' });
-    return;
-  }
+  try {
+    const resolvedPath = path.resolve(filePath);
 
-  isCancelled = false;
-  resetAbort();
-
-  const results = {
-    total: listings.length,
-    success: 0,
-    failed: 0,
-    details: []
-  };
-
-  sendMessage({
-    type: 'UPLOAD_STARTED',
-    total: listings.length
-  });
-
-  for (let i = 0; i < listings.length; i++) {
-    if (isCancelled) {
-      sendMessage({ type: 'UPLOAD_CANCELLED', results });
+    if (!fs.existsSync(resolvedPath)) {
+      sendMessage({ type: 'FILE_ERROR', error: 'File not found', path: filePath, requestId });
       return;
     }
 
-    const listing = listings[i];
-
-    sendMessage({
-      type: 'LISTING_STARTED',
-      index: i,
-      total: listings.length,
-      title: listing.title
-    });
-
-    try {
-      const onVerificationRequired = (verificationType) => {
-        sendMessage({
-          type: 'VERIFICATION_REQUIRED',
-          index: i,
-          total: listings.length,
-          title: listing.title,
-          verificationType
-        });
-      };
-
-      const result = await createListing(cdpClient, listing, { onVerificationRequired });
-
-      if (result.success) {
-        results.success++;
-        results.details.push({
-          index: i,
-          title: listing.title,
-          status: 'success'
-        });
-
-        sendMessage({
-          type: 'LISTING_COMPLETE',
-          index: i,
-          total: listings.length,
-          title: listing.title,
-          success: true
-        });
-      } else if (result.verificationRequired) {
-        results.failed++;
-        results.details.push({
-          index: i,
-          title: listing.title,
-          status: 'verification_timeout',
-          error: result.error
-        });
-
-        sendMessage({
-          type: 'LISTING_ERROR',
-          index: i,
-          total: listings.length,
-          title: listing.title,
-          error: result.error,
-          verificationRequired: true
-        });
-      } else {
-        results.failed++;
-        results.details.push({
-          index: i,
-          title: listing.title,
-          status: 'failed',
-          error: result.error
-        });
-
-        sendMessage({
-          type: 'LISTING_ERROR',
-          index: i,
-          total: listings.length,
-          title: listing.title,
-          error: result.error
-        });
-      }
-    } catch (err) {
-      if (err instanceof AbortError) {
-        if (err.reason === 'skip') {
-          setSkip(false);
-          results.failed++;
-          results.details.push({
-            index: i,
-            title: listing.title,
-            status: 'skipped'
-          });
-          sendMessage({
-            type: 'LISTING_SKIPPED',
-            index: i,
-            total: listings.length,
-            title: listing.title
-          });
-          continue;
-        } else if (err.reason === 'cancel') {
-          isCancelled = true;
-          sendMessage({ type: 'UPLOAD_CANCELLED', results });
-          return;
-        }
-      }
-
-      results.failed++;
-      results.details.push({
-        index: i,
-        title: listing.title,
-        status: 'failed',
-        error: err.message
-      });
-
-      sendMessage({
-        type: 'LISTING_ERROR',
-        index: i,
-        total: listings.length,
-        title: listing.title,
-        error: err.message
-      });
+    const stats = fs.statSync(resolvedPath);
+    if (stats.size > 50 * 1024 * 1024) {
+      sendMessage({ type: 'FILE_ERROR', error: 'File too large (max 50MB)', path: filePath, requestId });
+      return;
     }
 
-    if (i < listings.length - 1) {
-      const jitter = Math.random() * config.automation.delayJitter;
-      const { interruptibleDelay } = require('./src/abort');
-      try {
-        await interruptibleDelay(config.automation.delayBetweenListings + jitter);
-      } catch (abortErr) {
-        if (abortErr instanceof AbortError && abortErr.reason === 'cancel') {
-          isCancelled = true;
-          sendMessage({ type: 'UPLOAD_CANCELLED', results });
-          return;
-        }
+    const data = fs.readFileSync(resolvedPath);
+    const base64 = data.toString('base64');
+    const mimeType = getMimeType(resolvedPath);
+
+    sendMessage({
+      type: 'FILE_DATA',
+      path: filePath,
+      data: `data:${mimeType};base64,${base64}`,
+      mimeType,
+      size: stats.size,
+      requestId
+    });
+  } catch (err) {
+    sendMessage({ type: 'FILE_ERROR', error: err.message, path: filePath, requestId });
+  }
+}
+
+async function handleReadFiles(payload) {
+  const { paths, requestId } = payload || {};
+
+  if (!paths || !Array.isArray(paths)) {
+    sendMessage({ type: 'FILES_ERROR', error: 'No paths array provided', requestId });
+    return;
+  }
+
+  const results = [];
+
+  for (const filePath of paths) {
+    try {
+      const resolvedPath = path.resolve(filePath);
+
+      if (!fs.existsSync(resolvedPath)) {
+        results.push({ path: filePath, error: 'File not found' });
+        continue;
       }
+
+      const stats = fs.statSync(resolvedPath);
+      if (stats.size > 50 * 1024 * 1024) {
+        results.push({ path: filePath, error: 'File too large (max 50MB)' });
+        continue;
+      }
+
+      const data = fs.readFileSync(resolvedPath);
+      const base64 = data.toString('base64');
+      const mimeType = getMimeType(resolvedPath);
+
+      results.push({
+        path: filePath,
+        data: `data:${mimeType};base64,${base64}`,
+        mimeType,
+        size: stats.size
+      });
+    } catch (err) {
+      results.push({ path: filePath, error: err.message });
     }
   }
 
-  sendMessage({
-    type: 'UPLOAD_COMPLETE',
-    results
-  });
+  sendMessage({ type: 'FILES_DATA', results, requestId });
 }
 
-sendMessage({ type: 'READY', version: '1.0.0' });
+async function handleReadSpreadsheet(payload) {
+  const { path: filePath, requestId } = payload || {};
+
+  if (!filePath) {
+    sendMessage({ type: 'SPREADSHEET_ERROR', error: 'No path provided', requestId });
+    return;
+  }
+
+  try {
+    const resolvedPath = path.resolve(filePath);
+
+    if (!fs.existsSync(resolvedPath)) {
+      sendMessage({ type: 'SPREADSHEET_ERROR', error: 'File not found', path: filePath, requestId });
+      return;
+    }
+
+    const ext = path.extname(resolvedPath).toLowerCase();
+
+    if (ext === '.csv') {
+      const content = fs.readFileSync(resolvedPath, 'utf8');
+      const rows = parseCSV(content);
+      sendMessage({ type: 'SPREADSHEET_DATA', path: filePath, rows, requestId });
+    } else if (ext === '.xlsx' || ext === '.xls') {
+      const XLSX = require('xlsx');
+      const workbook = XLSX.readFile(resolvedPath);
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(firstSheet);
+      sendMessage({ type: 'SPREADSHEET_DATA', path: filePath, rows, requestId });
+    } else {
+      sendMessage({ type: 'SPREADSHEET_ERROR', error: 'Unsupported file type', path: filePath, requestId });
+    }
+  } catch (err) {
+    sendMessage({ type: 'SPREADSHEET_ERROR', error: err.message, path: filePath, requestId });
+  }
+}
+
+function parseCSV(content) {
+  const lines = content.split(/\r?\n/).filter(line => line.trim());
+  if (lines.length === 0) return [];
+
+  const headers = parseCSVLine(lines[0]);
+  const rows = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const values = parseCSVLine(lines[i]);
+    const row = {};
+    headers.forEach((header, index) => {
+      row[header] = values[index] || '';
+    });
+    rows.push(row);
+  }
+
+  return rows;
+}
+
+function parseCSVLine(line) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+
+    if (char === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      result.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+
+  result.push(current.trim());
+  return result;
+}
+
+async function handleListDirectory(payload) {
+  const { path: dirPath, filter, requestId } = payload || {};
+
+  if (!dirPath) {
+    sendMessage({ type: 'DIRECTORY_ERROR', error: 'No path provided', requestId });
+    return;
+  }
+
+  try {
+    const resolvedPath = path.resolve(dirPath);
+
+    if (!fs.existsSync(resolvedPath)) {
+      sendMessage({ type: 'DIRECTORY_ERROR', error: 'Directory not found', path: dirPath, requestId });
+      return;
+    }
+
+    const stats = fs.statSync(resolvedPath);
+    if (!stats.isDirectory()) {
+      sendMessage({ type: 'DIRECTORY_ERROR', error: 'Path is not a directory', path: dirPath, requestId });
+      return;
+    }
+
+    let files = fs.readdirSync(resolvedPath);
+
+    if (filter) {
+      const filterLower = filter.toLowerCase();
+      const extensions = filterLower.split(',').map(e => e.trim());
+      files = files.filter(f => {
+        const ext = path.extname(f).toLowerCase().replace('.', '');
+        return extensions.includes(ext);
+      });
+    }
+
+    const fileInfos = files.map(f => {
+      const fullPath = path.join(resolvedPath, f);
+      const fileStat = fs.statSync(fullPath);
+      return {
+        name: f,
+        path: fullPath,
+        isDirectory: fileStat.isDirectory(),
+        size: fileStat.size,
+        modified: fileStat.mtime.toISOString()
+      };
+    });
+
+    sendMessage({ type: 'DIRECTORY_DATA', path: dirPath, files: fileInfos, requestId });
+  } catch (err) {
+    sendMessage({ type: 'DIRECTORY_ERROR', error: err.message, path: dirPath, requestId });
+  }
+}
+
+function getMimeType(filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+  const mimeTypes = {
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.png': 'image/png',
+    '.gif': 'image/gif',
+    '.webp': 'image/webp',
+    '.svg': 'image/svg+xml',
+    '.pdf': 'application/pdf',
+    '.zip': 'application/zip',
+    '.rar': 'application/x-rar-compressed',
+    '.7z': 'application/x-7z-compressed',
+    '.txt': 'text/plain',
+    '.csv': 'text/csv',
+    '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    '.xls': 'application/vnd.ms-excel',
+    '.doc': 'application/msword',
+    '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    '.psd': 'image/vnd.adobe.photoshop',
+    '.ai': 'application/postscript',
+    '.eps': 'application/postscript'
+  };
+  return mimeTypes[ext] || 'application/octet-stream';
+}
+
+sendMessage({ type: 'READY', version: '2.0.0' });

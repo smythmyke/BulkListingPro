@@ -12,16 +12,30 @@
 
 console.log('BulkListingPro content script loaded on:', window.location.href);
 
-// Import selectors (will be defined in services/etsySelectors.js)
-// For now, inline basic selectors
+const WHO_MADE_MAP = { i_did: 0, member: 1, another: 2 };
+const WHAT_IS_IT_MAP = { finished_product: 0, supply: 1 };
+const RENEWAL_MAP = { automatic: 0, manual: 1 };
 const SELECTORS = {
-  titleInput: 'input[name="title"], [data-test-id="title-input"] input',
-  descriptionInput: 'textarea[name="description"]',
-  priceInput: 'input[name="price"]',
-  quantityInput: 'input[name="quantity"]',
-  tagInput: 'input[placeholder*="tag"]',
-  saveAsDraft: 'button:has-text("Save as draft")',
-  successToast: '[data-test-id="toast-success"], :has-text("successfully")'
+  titleInput: 'textarea#listing-title-input, textarea[name="title"]',
+  descriptionInput: 'textarea#listing-description-textarea, textarea[name="description"]',
+  priceInput: 'input#listing-price-input, input[name="variations.configuration.price"]',
+  quantityInput: 'input#listing-quantity-input, input[name="quantity"]',
+  skuInput: 'input#listing-sku-input, input[name="sku"]',
+  tagInput: 'input#listing-tags-input',
+  tagButton: 'button#listing-tags-button',
+  materialsInput: 'input#listing-materials-input',
+  materialsButton: 'button#listing-materials-button',
+  categoryInput: 'input#category-field-search',
+  whoMade: 'input[name="whoMade"]',
+  isSupply: 'input[name="isSupply"]',
+  whatContent: 'input[name="whatContent"]',
+  whenMade: 'select#when-made-select',
+  listingType: 'input[name="listing_type_options_group"]',
+  shouldAutoRenew: 'input[name="shouldAutoRenew"]',
+  shopSection: 'select#shop-section-select',
+  saveDraft: 'button[data-testid="save"], button#shop-manager--listing-save',
+  publish: 'button[data-testid="publish"]',
+  successToast: '[data-test-id="toast-success"], [role="alert"]'
 };
 
 // Listen for messages from background script
@@ -44,7 +58,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       break;
 
     default:
-      sendResponse({ success: false, error: 'Unknown message type' });
+      // Don't respond to unknown messages - let other content scripts handle them
+      return false;
   }
 });
 
@@ -55,39 +70,59 @@ async function fillListing(data) {
   console.log('Filling listing:', data.title);
 
   try {
-    // Wait for form to be ready
     await waitForElement(SELECTORS.titleInput);
 
-    // Fill title
+    if (data.who_made) {
+      await selectRadioByIndex(SELECTORS.whoMade, WHO_MADE_MAP[data.who_made] ?? 0);
+    }
+
+    if (data.what_is_it) {
+      await selectRadioByIndex(SELECTORS.isSupply, WHAT_IS_IT_MAP[data.what_is_it] ?? 0);
+    }
+
+    if (data.ai_content) {
+      await selectRadioByValue(SELECTORS.whatContent, data.ai_content);
+    }
+
+    if (data.when_made) {
+      await selectDropdownValue(SELECTORS.whenMade, data.when_made);
+    }
+
     if (data.title) {
       await fillInput(SELECTORS.titleInput, data.title);
     }
 
-    // Fill description
     if (data.description) {
       await fillInput(SELECTORS.descriptionInput, data.description);
     }
 
-    // Fill price
     if (data.price) {
       await fillInput(SELECTORS.priceInput, data.price.toString());
     }
 
-    // Fill quantity
     if (data.quantity) {
       await fillInput(SELECTORS.quantityInput, data.quantity.toString());
     }
 
-    // Add tags
-    if (data.tags && data.tags.length > 0) {
-      await addTags(data.tags);
+    if (data.sku) {
+      await fillInput(SELECTORS.skuInput, data.sku);
     }
 
-    // Upload images (TODO)
-    // Upload digital files (TODO)
+    if (data.tags && data.tags.length > 0) {
+      await addChipItems(SELECTORS.tagInput, SELECTORS.tagButton, data.tags.slice(0, 13));
+    }
 
-    // Save as draft
-    // await clickButton(SELECTORS.saveAsDraft);
+    if (data.materials && data.materials.length > 0) {
+      await addChipItems(SELECTORS.materialsInput, SELECTORS.materialsButton, data.materials.slice(0, 13));
+    }
+
+    if (data.renewal) {
+      await selectRadioByIndex(SELECTORS.shouldAutoRenew, RENEWAL_MAP[data.renewal] ?? 0);
+    }
+
+    if (data.shop_section) {
+      await selectDropdownByText(SELECTORS.shopSection, data.shop_section);
+    }
 
     return { message: 'Listing filled successfully' };
   } catch (error) {
@@ -143,22 +178,60 @@ async function fillInput(selector, value) {
 /**
  * Add tags one by one
  */
-async function addTags(tags) {
-  for (const tag of tags.slice(0, 13)) { // Max 13 tags
-    const input = await waitForElement(SELECTORS.tagInput);
-    input.focus();
-    input.value = tag;
-    input.dispatchEvent(new Event('input', { bubbles: true }));
+async function selectRadioByIndex(selector, index) {
+  const radios = document.querySelectorAll(selector);
+  if (radios[index]) {
+    radios[index].click();
+    radios[index].dispatchEvent(new Event('change', { bubbles: true }));
+    await delay(100);
+  }
+}
 
-    // Press Enter to add tag
-    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+async function selectRadioByValue(selector, value) {
+  const radio = document.querySelector(`${selector}[value="${value}"]`);
+  if (radio) {
+    radio.click();
+    radio.dispatchEvent(new Event('change', { bubbles: true }));
+    await delay(100);
+  }
+}
+
+async function selectDropdownValue(selector, value) {
+  const select = await waitForElement(selector);
+  select.value = value;
+  select.dispatchEvent(new Event('change', { bubbles: true }));
+  await delay(100);
+}
+
+async function selectDropdownByText(selector, text) {
+  const select = await waitForElement(selector);
+  const option = Array.from(select.options).find(o =>
+    o.textContent.trim().toLowerCase() === text.toLowerCase()
+  );
+  if (option) {
+    select.value = option.value;
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+  await delay(100);
+}
+
+async function addChipItems(inputSelector, buttonSelector, items) {
+  for (const item of items) {
+    const input = await waitForElement(inputSelector);
+    input.focus();
+    input.value = item;
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    await delay(50);
+    const btn = document.querySelector(buttonSelector);
+    if (btn) {
+      btn.click();
+    } else {
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    }
     await delay(200);
   }
 }
 
-/**
- * Click a button
- */
 async function clickButton(selector) {
   const button = await waitForElement(selector);
   button.click();

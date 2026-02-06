@@ -120,6 +120,8 @@ class EtsyAutomationService {
       await this.fillPriceTab(listing);
       await this.fillCategoryAttributes(listing);
       await this.fillTags(listing);
+      await this.fillMaterials(listing);
+      await this.fillSettingsTab(listing);
       await this.saveListing(listing.listing_state !== 'active');
 
       return { success: true, title: listing.title };
@@ -299,24 +301,28 @@ class EtsyAutomationService {
     await this.clickByText('Digital files');
     await this.interruptibleDelay(DELAYS.medium);
 
-    await this.clickByText('I did');
+    const whoMadeText = { i_did: 'I did', member: 'A member of my shop', another: 'Another company or person' };
+    await this.clickByText(whoMadeText[listing.who_made] || 'I did');
     await this.interruptibleDelay(DELAYS.short);
 
-    await this.clickByText('A finished product');
+    const whatIsItText = { finished_product: 'A finished product', supply: 'A supply or tool to make things' };
+    await this.clickByText(whatIsItText[listing.what_is_it] || 'A finished product');
     await this.interruptibleDelay(DELAYS.short);
 
+    const whenMade = listing.when_made || 'made_to_order';
     await cdpService.evaluate(`
       (() => {
         const select = document.querySelector('#when-made-select');
         if (select) {
-          select.value = '2020_2026';
+          select.value = ${JSON.stringify(whenMade)};
           select.dispatchEvent(new Event('change', { bubbles: true }));
         }
       })()
     `);
     await this.interruptibleDelay(DELAYS.short);
 
-    await this.clickByText('Created by me');
+    const aiContentText = { original: 'Created by me', ai_gen: 'With an AI generator' };
+    await this.clickByText(aiContentText[listing.ai_content] || 'Created by me');
     await this.interruptibleDelay(DELAYS.short);
 
     await this.clickByText('Continue');
@@ -506,17 +512,32 @@ class EtsyAutomationService {
     const quantity = listing.quantity || 999;
     await cdpService.evaluate(`
       (() => {
-        const input = document.querySelector('input[name="quantity"]') ||
-                      document.querySelector('input[id*="quantity"]');
+        const input = document.querySelector('#listing-quantity-input') ||
+                      document.querySelector('input[name="quantity"]');
         if (input) {
-          input.value = '';
           input.focus();
-          input.value = '${quantity}';
-          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.select();
         }
       })()
     `);
+    await this.interruptibleDelay(100);
+    await cdpService.type(String(quantity), DELAYS.typing);
     await this.interruptibleDelay(DELAYS.short);
+
+    if (listing.sku) {
+      await this.clickByText('Add SKU');
+      await this.interruptibleDelay(DELAYS.medium);
+      await cdpService.evaluate(`
+        (() => {
+          const input = document.querySelector('#listing-sku-input') ||
+                        document.querySelector('input[name="sku"]');
+          if (input) { input.focus(); }
+        })()
+      `);
+      await this.interruptibleDelay(100);
+      await cdpService.type(listing.sku, DELAYS.typing);
+      await this.interruptibleDelay(DELAYS.short);
+    }
   }
 
   async fillTags(listing) {
@@ -559,6 +580,79 @@ class EtsyAutomationService {
           }
         })()
       `);
+      await this.interruptibleDelay(DELAYS.short);
+    }
+  }
+
+  async fillMaterials(listing) {
+    const materials = listing.materials || [];
+    if (materials.length === 0) return;
+
+    await cdpService.evaluate(`
+      (() => {
+        const input = document.querySelector('#listing-materials-input');
+        if (input) input.scrollIntoView({ block: 'center' });
+      })()
+    `);
+    await this.interruptibleDelay(DELAYS.medium);
+
+    for (const material of materials.slice(0, 13)) {
+      await cdpService.evaluate(`
+        (() => {
+          const input = document.querySelector('#listing-materials-input');
+          if (input) { input.focus(); input.value = ''; }
+        })()
+      `);
+      await this.interruptibleDelay(100);
+      await cdpService.type(material, DELAYS.typing);
+
+      await cdpService.evaluate(`
+        (() => {
+          const btn = document.querySelector('#listing-materials-button');
+          if (btn) {
+            btn.click();
+          } else {
+            const input = document.querySelector('#listing-materials-input');
+            if (input) input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', keyCode: 13, bubbles: true }));
+          }
+        })()
+      `);
+      await this.interruptibleDelay(DELAYS.short);
+    }
+  }
+
+  async fillSettingsTab(listing) {
+    const hasRenewal = listing.renewal && listing.renewal !== 'automatic';
+    const hasShopSection = listing.shop_section;
+    if (!hasRenewal && !hasShopSection) return;
+
+    await cdpService.evaluate(`
+      (() => {
+        const settingsTab = document.querySelector('a[href*="#settings"]');
+        if (settingsTab) settingsTab.click();
+      })()
+    `);
+    await this.interruptibleDelay(DELAYS.long);
+
+    if (hasShopSection) {
+      await cdpService.evaluate(`
+        (() => {
+          const select = document.querySelector('#shop-section-select');
+          if (!select) return;
+          const sectionName = ${JSON.stringify(listing.shop_section)}.toLowerCase();
+          const option = [...select.options].find(o => o.textContent.trim().toLowerCase() === sectionName);
+          if (option) {
+            select.value = option.value;
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+        })()
+      `);
+      await this.interruptibleDelay(DELAYS.short);
+    }
+
+    if (hasRenewal) {
+      const renewalText = listing.renewal === 'manual' ? 'Manual' : 'Automatic';
+      await this.clickByText(renewalText);
       await this.interruptibleDelay(DELAYS.short);
     }
   }

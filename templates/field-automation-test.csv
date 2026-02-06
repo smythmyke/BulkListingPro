@@ -1,0 +1,6 @@
+title,description,price,category,tag_1,tag_2,tag_3,who_made,what_is_it,ai_content,when_made,renewal,materials,quantity,sku
+All Defaults Test,Testing that missing fields get correct defaults,1.99,Digital Prints,test,defaults,digital,,,,,,,,
+Explicit Defaults Test - Friendly Text,All fields set using friendly dropdown text,2.49,Digital Prints,test,explicit,defaults,I did,A finished product,Created by me,Made to order,Automatic,,999,
+Non-Default Values - Friendly Text,Testing non-default selections with friendly text,3.99,Clip Art & Image Files,clipart,ai,supply,Another company or person,A supply or tool to make things,With an AI generator,2020 - 2026,Manual,cotton,50,SKU-003
+Materials and SKU Test,Testing materials parsing and SKU,4.99,Planners & Templates,planner,template,organizer,I did,A finished product,Created by me,Made to order,Automatic,"paper, ink, laminate",100,PLAN-004
+Code Values Still Work,Testing that raw code values still parse correctly,1.49,Digital Prints,test,code,values,another,supply,ai_gen,2010_2019,manual,,,CODE-005

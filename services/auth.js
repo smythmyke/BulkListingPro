@@ -74,11 +74,17 @@ class AuthService {
         isAdmin: authData.isAdmin || false
       };
 
-      await chrome.storage.local.set({
+      const storageData = {
         bulklistingpro_token: authData.token || token,
         bulklistingpro_user: this.user,
         authToken: authData.token || token
-      });
+      };
+
+      if (authData.isNewUser) {
+        storageData.bulklistingpro_welcome_bonus = true;
+      }
+
+      await chrome.storage.local.set(storageData);
 
       this.notifyListeners(this.user);
       return this.user;

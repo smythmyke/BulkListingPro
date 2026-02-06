@@ -2,7 +2,9 @@ const CREDITS_PER_LISTING = 2;
 const STORAGE_KEYS = {
   QUEUE: 'bulklistingpro_queue',
   UPLOAD_STATE: 'bulklistingpro_upload_state',
-  UPLOAD_RESULTS: 'bulklistingpro_upload_results'
+  UPLOAD_RESULTS: 'bulklistingpro_upload_results',
+  RESEARCH_CLIPBOARD: 'bulklistingpro_research_clipboard',
+  TAG_LIBRARY: 'bulklistingpro_tag_library'
 };
 
 const CATEGORY_ATTRIBUTES = {
@@ -39,6 +41,10 @@ let setupState = {
   nativeHost: false,
   etsyLoggedIn: false
 };
+
+let researchClipboard = null;
+let tagLibrary = {};
+let selectedTags = new Set();
 
 
 const elements = {
@@ -105,7 +111,50 @@ const elements = {
   selectAllCheckbox: document.getElementById('select-all-checkbox'),
   categorySelect: document.getElementById('category'),
   craftTypeGroup: document.getElementById('craft-type-group'),
-  craftTypeSelect: document.getElementById('craft-type')
+  craftTypeSelect: document.getElementById('craft-type'),
+  tabBtns: document.querySelectorAll('.tab-btn'),
+  tabContents: document.querySelectorAll('.tab-content'),
+  researchClipboardBar: document.getElementById('research-clipboard-bar'),
+  clipboardTitle: document.getElementById('clipboard-title'),
+  clipboardMeta: document.getElementById('clipboard-meta'),
+  clipboardClearBtn: document.getElementById('clipboard-clear-btn'),
+  captureListingBtn: document.getElementById('capture-listing-btn'),
+  captureStatus: document.getElementById('capture-status'),
+  capturedDataSection: document.getElementById('captured-data-section'),
+  capturedTitle: document.getElementById('captured-title'),
+  capturedTitleCount: document.getElementById('captured-title-count'),
+  capturedPrice: document.getElementById('captured-price'),
+  capturedCategory: document.getElementById('captured-category'),
+  capturedCategoryField: document.getElementById('captured-category-field'),
+  capturedTags: document.getElementById('captured-tags'),
+  capturedTagsCount: document.getElementById('captured-tags-count'),
+  capturedDescription: document.getElementById('captured-description'),
+  capturedShop: document.getElementById('captured-shop'),
+  capturedShopLink: document.getElementById('captured-shop-link'),
+  capturedReviews: document.getElementById('captured-reviews'),
+  capturedFavorites: document.getElementById('captured-favorites'),
+  selectAllTagsBtn: document.getElementById('select-all-tags-btn'),
+  clearTagsBtn: document.getElementById('clear-tags-btn'),
+  copySelectedTagsBtn: document.getElementById('copy-selected-tags-btn'),
+  toggleDescBtn: document.getElementById('toggle-desc-btn'),
+  useAsTemplateBtn: document.getElementById('use-as-template-btn'),
+  saveTagsBtn: document.getElementById('save-tags-btn'),
+  tagLibraryList: document.getElementById('tag-library-list'),
+  titleInput: document.getElementById('title'),
+  descriptionInput: document.getElementById('description'),
+  priceInput: document.getElementById('price'),
+  tagsInput: document.getElementById('tags'),
+  accountAvatar: document.getElementById('account-avatar'),
+  accountEmail: document.getElementById('account-email'),
+  accountMemberSince: document.getElementById('account-member-since'),
+  accountSignOutBtn: document.getElementById('account-sign-out-btn'),
+  accountCredits: document.getElementById('account-credits'),
+  accountCreditsEstimate: document.getElementById('account-credits-estimate'),
+  accountBuyCreditsBtn: document.getElementById('account-buy-credits-btn'),
+  accountTagLibrary: document.getElementById('account-tag-library'),
+  tagSuggestions: document.getElementById('tag-suggestions'),
+  suggestionsContent: document.getElementById('suggestions-content'),
+  hideSuggestionsBtn: document.getElementById('hide-suggestions-btn')
 };
 
 document.addEventListener('DOMContentLoaded', init);
@@ -114,6 +163,8 @@ async function init() {
   console.log('BulkListingPro sidepanel initializing...');
   setupEventListeners();
   await checkPageStatus();
+  await loadResearchClipboard();
+  await loadTagLibrary();
 
   const setupComplete = await checkSetup();
   if (!setupComplete) {
@@ -294,6 +345,23 @@ function setupEventListeners() {
   elements.digitalFileInput.addEventListener('change', handleDigitalFileSelect);
   elements.digitalFileRemove.addEventListener('click', clearDigitalFile);
   elements.selectAllCheckbox.addEventListener('change', toggleSelectAll);
+  elements.tabBtns.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
+  elements.clipboardClearBtn.addEventListener('click', clearResearchClipboard);
+  elements.captureListingBtn.addEventListener('click', captureListingData);
+  elements.selectAllTagsBtn.addEventListener('click', selectAllTags);
+  elements.clearTagsBtn.addEventListener('click', clearTagSelection);
+  elements.copySelectedTagsBtn.addEventListener('click', copySelectedTags);
+  elements.toggleDescBtn.addEventListener('click', toggleDescription);
+  elements.useAsTemplateBtn.addEventListener('click', useAsTemplate);
+  elements.saveTagsBtn.addEventListener('click', showSaveTagsModal);
+  document.querySelectorAll('.copy-btn[data-copy]').forEach(btn => {
+    btn.addEventListener('click', () => copyField(btn.dataset.copy));
+  });
+  elements.accountSignOutBtn.addEventListener('click', signOut);
+  elements.accountBuyCreditsBtn.addEventListener('click', showCreditsModal);
+  elements.hideSuggestionsBtn.addEventListener('click', hideSuggestions);
+  elements.tagsInput.addEventListener('focus', () => showSuggestionsForCategory(elements.categorySelect.value));
+  elements.tagsInput.addEventListener('input', updateSuggestionStates);
 }
 
 const ETSY_PATTERNS = [
@@ -371,8 +439,21 @@ async function checkAuth() {
     user = response.user;
     showMainSection();
     await loadCredits();
+    await checkWelcomeBonus();
   } else {
     showAuthSection();
+  }
+}
+
+async function checkWelcomeBonus() {
+  try {
+    const { bulklistingpro_welcome_bonus } = await chrome.storage.local.get('bulklistingpro_welcome_bonus');
+    if (bulklistingpro_welcome_bonus) {
+      await chrome.storage.local.remove('bulklistingpro_welcome_bonus');
+      showToast('Welcome! You received 10 free credits to get started!', 'success');
+    }
+  } catch (err) {
+    console.warn('Error checking welcome bonus:', err);
   }
 }
 
@@ -425,6 +506,10 @@ function showMainSection() {
   if (user) {
     elements.userEmail.textContent = user.email;
     elements.userAvatar.src = user.picture || 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23999"><circle cx="12" cy="8" r="4"/><path d="M12 14c-6 0-8 3-8 6v2h16v-2c0-3-2-6-8-6z"/></svg>';
+
+    elements.accountEmail.textContent = user.email;
+    elements.accountAvatar.src = user.picture || 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23999"><circle cx="12" cy="8" r="4"/><path d="M12 14c-6 0-8 3-8 6v2h16v-2c0-3-2-6-8-6z"/></svg>';
+    elements.accountMemberSince.textContent = 'BulkListingPro User';
   }
 }
 
@@ -447,6 +532,10 @@ function updateCreditsDisplay(oldValue) {
   const creditsSpan = elements.creditBalance.querySelector('.credits');
 
   creditsSpan.textContent = newValue;
+
+  elements.accountCredits.textContent = newValue;
+  const listingsEstimate = Math.floor(newValue / CREDITS_PER_LISTING);
+  elements.accountCreditsEstimate.textContent = `(~${listingsEstimate} listings)`;
 
   if (oldValue !== undefined && oldValue !== newValue) {
     elements.creditBalance.classList.remove('animate-pop', 'animate-deduct');
@@ -589,6 +678,7 @@ function handleFileSelect(e) {
   if (files.length > 0) {
     processSpreadsheet(files[0]);
   }
+  e.target.value = '';
 }
 
 function sanitizeListing(row, rowIndex) {
@@ -632,6 +722,38 @@ function sanitizeListing(row, rowIndex) {
   }
   tags = dedupedTags.slice(0, 13);
 
+  const WHO_MADE_FRIENDLY = { 'i did': 'i_did', 'a member of my shop': 'member', 'another company or person': 'another' };
+  const WHAT_IS_IT_FRIENDLY = { 'a finished product': 'finished_product', 'a supply or tool to make things': 'supply' };
+  const AI_CONTENT_FRIENDLY = { 'created by me': 'original', 'with an ai generator': 'ai_gen' };
+  const WHEN_MADE_FRIENDLY = { 'made to order': 'made_to_order', '2020 - 2026': '2020_2026', '2010 - 2019': '2010_2019', '2007 - 2009': '2007_2009', 'before 2007': 'before_2007' };
+  const RENEWAL_FRIENDLY = { 'automatic': 'automatic', 'manual': 'manual' };
+  const LISTING_STATE_FRIENDLY = { 'draft': 'draft', 'active': 'active', 'published': 'active' };
+
+  const VALID_WHO_MADE = ['i_did', 'member', 'another'];
+  const VALID_WHAT_IS_IT = ['finished_product', 'supply'];
+  const VALID_AI_CONTENT = ['original', 'ai_gen'];
+  const VALID_WHEN_MADE = ['made_to_order', '2020_2026', '2010_2019', '2007_2009', 'before_2007'];
+  const VALID_RENEWAL = ['automatic', 'manual'];
+
+  function resolveField(raw, friendlyMap, validCodes, fallback) {
+    if (!raw) return fallback;
+    const lower = raw.toLowerCase();
+    if (friendlyMap[lower]) return friendlyMap[lower];
+    if (validCodes.includes(lower)) return lower;
+    return fallback;
+  }
+
+  const whoMadeRaw = (row.who_made || row.WhoMade || row['Who Made'] || '').toString().trim();
+  const whatIsItRaw = (row.what_is_it || row.WhatIsIt || row['What Is It'] || '').toString().trim();
+  const aiContentRaw = (row.ai_content || row.AiContent || row['AI Content'] || '').toString().trim();
+  const whenMadeRaw = (row.when_made || row.WhenMade || row['When Made'] || '').toString().trim();
+  const renewalRaw = (row.renewal || row.Renewal || row.auto_renew || '').toString().trim();
+  const listingStateRaw = (row.listing_state || row.ListingState || row['Listing State'] || '').toString().trim();
+  const materialsRaw = (row.materials || row.Materials || '').toString().trim();
+  const materials = materialsRaw ? materialsRaw.split(',').map(m => m.trim()).filter(m => m) : [];
+  const quantity = parseInt(row.quantity || row.Quantity || '999') || 999;
+  const sku = (row.sku || row.SKU || '').toString().trim();
+
   const listing = {
     id: String(Date.now() + rowIndex),
     title,
@@ -639,6 +761,15 @@ function sanitizeListing(row, rowIndex) {
     price,
     category,
     tags,
+    who_made: resolveField(whoMadeRaw, WHO_MADE_FRIENDLY, VALID_WHO_MADE, 'i_did'),
+    what_is_it: resolveField(whatIsItRaw, WHAT_IS_IT_FRIENDLY, VALID_WHAT_IS_IT, 'finished_product'),
+    ai_content: resolveField(aiContentRaw, AI_CONTENT_FRIENDLY, VALID_AI_CONTENT, 'original'),
+    when_made: resolveField(whenMadeRaw, WHEN_MADE_FRIENDLY, VALID_WHEN_MADE, 'made_to_order'),
+    renewal: resolveField(renewalRaw, RENEWAL_FRIENDLY, VALID_RENEWAL, 'automatic'),
+    listing_state: resolveField(listingStateRaw, LISTING_STATE_FRIENDLY, ['draft', 'active'], 'draft'),
+    materials,
+    quantity,
+    sku,
     image_1: row.image_1 || row.Image1 || row['Image 1'] || '',
     image_2: row.image_2 || row.Image2 || row['Image 2'] || '',
     image_3: row.image_3 || row.Image3 || row['Image 3'] || '',
@@ -840,6 +971,144 @@ function handleCategoryChange() {
   } else {
     elements.craftTypeGroup.classList.add('hidden');
   }
+
+  showSuggestionsForCategory(category);
+}
+
+function showSuggestionsForCategory(category) {
+  const suggestions = getSuggestionsForCategory(category);
+
+  if (suggestions.sets.length === 0 && suggestions.recentTags.length === 0) {
+    elements.tagSuggestions.classList.add('hidden');
+    return;
+  }
+
+  let html = '';
+
+  if (suggestions.sets.length > 0) {
+    suggestions.sets.forEach(set => {
+      html += `
+        <div class="suggestion-group">
+          <div class="suggestion-group-title">From "${escapeHtml(set.name)}"</div>
+          <div class="suggestion-tags">
+            ${set.tags.slice(0, 10).map(tag => `
+              <span class="suggestion-tag" data-tag="${escapeHtml(tag)}">${escapeHtml(tag)}</span>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    });
+  }
+
+  if (suggestions.recentTags.length > 0) {
+    html += `
+      <div class="suggestion-group">
+        <div class="suggestion-group-title">Recently used</div>
+        <div class="suggestion-tags">
+          ${suggestions.recentTags.slice(0, 10).map(tag => `
+            <span class="suggestion-tag" data-tag="${escapeHtml(tag)}">${escapeHtml(tag)}</span>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  elements.suggestionsContent.innerHTML = html;
+  elements.tagSuggestions.classList.remove('hidden');
+
+  elements.suggestionsContent.querySelectorAll('.suggestion-tag').forEach(tag => {
+    tag.addEventListener('click', () => addSuggestionTag(tag));
+  });
+
+  updateSuggestionStates();
+}
+
+function getSuggestionsForCategory(formCategory) {
+  const internalCategory = mapFormCategoryToInternal(formCategory);
+
+  const result = { sets: [], recentTags: [] };
+
+  if (internalCategory && tagLibrary[internalCategory]) {
+    const catData = tagLibrary[internalCategory];
+    result.sets = catData.sets || [];
+    result.recentTags = catData.recentTags || [];
+  }
+
+  return result;
+}
+
+function mapFormCategoryToInternal(formCategory) {
+  const mapping = {
+    'Cutting Machine Files': 'Cutting Machine Files',
+    'Clip Art & Image Files': 'Clip Art & Image Files',
+    'Planners & Templates': 'Planners & Templates',
+    'Fonts': 'Fonts',
+    'Embroidery Machine Files': 'Embroidery Machine Files',
+    'Digital Prints': 'Digital Prints',
+    'Digital Patterns': 'Digital Patterns',
+    '3D Printer Files': '3D Printer Files',
+    'Photography': 'Photography',
+    'Social Media Templates': 'Planners & Templates',
+    'Resume Templates': 'Planners & Templates',
+    'Greeting Card Templates': 'Planners & Templates',
+    'Menu Templates': 'Planners & Templates',
+    'Event Program Templates': 'Planners & Templates',
+    'Newsletter Templates': 'Planners & Templates',
+    'Personal Finance Templates': 'Planners & Templates',
+    'Bookkeeping Templates': 'Planners & Templates',
+    'Contract & Agreement Templates': 'Planners & Templates',
+    'Guides & How Tos': 'Digital Prints',
+    'Drawing & Illustration': 'Clip Art & Image Files',
+    'Flashcards': 'Digital Prints',
+    'Study Guides': 'Digital Prints',
+    'Worksheets': 'Planners & Templates',
+    'Knitting Machine Files': 'Embroidery Machine Files'
+  };
+  return mapping[formCategory] || null;
+}
+
+function addSuggestionTag(tagElement) {
+  const tag = tagElement.dataset.tag;
+  const currentTags = elements.tagsInput.value
+    .split(',')
+    .map(t => t.trim())
+    .filter(t => t);
+
+  if (currentTags.length >= 13) {
+    showToast('Maximum 13 tags allowed', 'error');
+    return;
+  }
+
+  if (currentTags.some(t => t.toLowerCase() === tag.toLowerCase())) {
+    showToast('Tag already added', 'error');
+    return;
+  }
+
+  currentTags.push(tag);
+  elements.tagsInput.value = currentTags.join(', ');
+
+  tagElement.classList.add('added');
+  updateSuggestionStates();
+}
+
+function updateSuggestionStates() {
+  const currentTags = elements.tagsInput.value
+    .split(',')
+    .map(t => t.trim().toLowerCase())
+    .filter(t => t);
+
+  elements.suggestionsContent.querySelectorAll('.suggestion-tag').forEach(tag => {
+    const tagText = tag.dataset.tag.toLowerCase();
+    if (currentTags.includes(tagText)) {
+      tag.classList.add('added');
+    } else {
+      tag.classList.remove('added');
+    }
+  });
+}
+
+function hideSuggestions() {
+  elements.tagSuggestions.classList.add('hidden');
 }
 
 function handleSingleListing(e) {
@@ -854,6 +1123,15 @@ function handleSingleListing(e) {
     description: formData.get('description'),
     price: parseFloat(formData.get('price')),
     tags: formData.get('tags').split(',').map(t => t.trim()).filter(t => t),
+    who_made: formData.get('who_made') || 'i_did',
+    what_is_it: formData.get('what_is_it') || 'finished_product',
+    ai_content: formData.get('ai_content') || 'original',
+    when_made: formData.get('when_made') || 'made_to_order',
+    renewal: formData.get('renewal') || 'automatic',
+    shop_section: formData.get('shop_section') || '',
+    materials: (formData.get('materials') || '').split(',').map(m => m.trim()).filter(m => m),
+    quantity: parseInt(formData.get('quantity')) || 999,
+    sku: formData.get('sku') || '',
     status: 'pending',
     selected: true
   };
@@ -873,6 +1151,11 @@ function handleSingleListing(e) {
   uploadQueue.push(listing);
   renderQueue();
   saveQueueToStorage();
+
+  if (listing.tags.length > 0) {
+    trackRecentTags(category, listing.tags);
+  }
+
   e.target.reset();
   handleCategoryChange();
   listingImages = [];
@@ -880,6 +1163,25 @@ function handleSingleListing(e) {
   digitalFile = null;
   clearDigitalFile();
   showToast('Listing added to queue', 'success');
+}
+
+async function trackRecentTags(formCategory, tags) {
+  const internalCategory = mapFormCategoryToInternal(formCategory);
+  if (!internalCategory) return;
+
+  if (!tagLibrary[internalCategory]) {
+    tagLibrary[internalCategory] = { sets: [], recentTags: [] };
+  }
+
+  const existing = new Set(tagLibrary[internalCategory].recentTags.map(t => t.toLowerCase()));
+  const newTags = tags.filter(t => !existing.has(t.toLowerCase()));
+
+  tagLibrary[internalCategory].recentTags = [
+    ...newTags,
+    ...tagLibrary[internalCategory].recentTags
+  ].slice(0, 20);
+
+  await chrome.storage.sync.set({ [STORAGE_KEYS.TAG_LIBRARY]: tagLibrary });
 }
 
 function handleImageDragOver(e) {
@@ -1058,6 +1360,15 @@ async function startUpload() {
     price: String(item.price),
     category: item.category || 'Digital Prints',
     listing_state: item.listing_state || listingState,
+    who_made: item.who_made || 'i_did',
+    what_is_it: item.what_is_it || 'finished_product',
+    ai_content: item.ai_content || 'original',
+    when_made: item.when_made || 'made_to_order',
+    renewal: item.renewal || 'automatic',
+    shop_section: item.shop_section || '',
+    materials: item.materials || [],
+    quantity: String(item.quantity || 999),
+    sku: item.sku || '',
     image_1: item.image_1 || '',
     image_2: item.image_2 || '',
     image_3: item.image_3 || '',
@@ -1462,6 +1773,689 @@ async function recheckSetup() {
 }
 
 function handleDownload(e) {
-  // Let the link work naturally (opens GitHub release download)
   showToast('Downloading installer... Run it when complete', 'success');
+}
+
+function switchTab(tabName) {
+  elements.tabBtns.forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === tabName);
+  });
+  elements.tabContents.forEach(content => {
+    content.classList.toggle('active', content.id === `tab-${tabName}`);
+  });
+
+  if (tabName === 'research') {
+    loadTagLibrary();
+  } else if (tabName === 'account') {
+    updateAccountTab();
+  }
+}
+
+function updateAccountTab() {
+  if (user) {
+    elements.accountEmail.textContent = user.email || 'user@email.com';
+    elements.accountAvatar.src = user.picture || 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23999"><circle cx="12" cy="8" r="4"/><path d="M12 14c-6 0-8 3-8 6v2h16v-2c0-3-2-6-8-6z"/></svg>';
+    elements.accountMemberSince.textContent = 'BulkListingPro User';
+  }
+
+  elements.accountCredits.textContent = credits.available || 0;
+  const listingsEstimate = Math.floor((credits.available || 0) / CREDITS_PER_LISTING);
+  elements.accountCreditsEstimate.textContent = `(~${listingsEstimate} listings)`;
+
+  loadTagLibrary();
+}
+
+async function captureListingData() {
+  elements.captureListingBtn.classList.add('btn-loading');
+  elements.captureListingBtn.disabled = true;
+  elements.captureStatus.classList.add('hidden');
+
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+    if (!tab?.url?.includes('etsy.com/listing/')) {
+      showCaptureStatus('Please navigate to an Etsy listing page first.', 'error');
+      return;
+    }
+
+    const response = await chrome.tabs.sendMessage(tab.id, { type: 'EXTRACT_LISTING_DATA' });
+
+    if (response.success) {
+      researchClipboard = response.data;
+      await saveResearchClipboard();
+      displayCapturedData(researchClipboard);
+      updateClipboardBar();
+      showCaptureStatus('Listing data captured successfully!', 'success');
+    } else {
+      showCaptureStatus(response.error || 'Failed to extract data', 'error');
+    }
+  } catch (error) {
+    console.error('Capture error:', error);
+    showCaptureStatus('Failed to capture data. Make sure you\'re on an Etsy listing page.', 'error');
+  } finally {
+    elements.captureListingBtn.classList.remove('btn-loading');
+    elements.captureListingBtn.disabled = false;
+  }
+}
+
+function showCaptureStatus(message, type) {
+  elements.captureStatus.textContent = message;
+  elements.captureStatus.className = `capture-status ${type}`;
+  elements.captureStatus.classList.remove('hidden');
+
+  setTimeout(() => {
+    elements.captureStatus.classList.add('hidden');
+  }, 5000);
+}
+
+function displayCapturedData(data) {
+  elements.capturedDataSection.classList.remove('hidden');
+
+  elements.capturedTitle.textContent = data.title || '';
+  elements.capturedTitleCount.textContent = `${(data.title || '').length}/140`;
+
+  const priceDisplay = data.currency === 'USD' ? `$${data.price}` :
+                       data.currency === 'EUR' ? `€${data.price}` :
+                       data.currency === 'GBP' ? `£${data.price}` : data.price;
+  elements.capturedPrice.textContent = priceDisplay || '';
+
+  console.log('Captured category:', data.category);
+  if (data.category) {
+    const mappedCategory = mapEtsyCategoryToInternal(data.category);
+    console.log('Mapped category:', mappedCategory);
+    elements.capturedCategory.textContent = mappedCategory || data.category;
+    elements.capturedCategoryField.classList.remove('hidden');
+  } else {
+    elements.capturedCategoryField.classList.add('hidden');
+  }
+
+  elements.capturedDescription.textContent = data.description || '';
+  elements.capturedDescription.classList.add('collapsed');
+  elements.toggleDescBtn.textContent = 'Show more';
+
+  elements.capturedShop.textContent = data.shopName || 'Unknown Shop';
+  elements.capturedShopLink.href = data.shopUrl || '#';
+
+  const shopCard = elements.capturedShopLink.closest('.shop-info-card');
+  if (shopCard) {
+    shopCard.classList.toggle('hidden', !data.shopName && !data.shopUrl);
+  }
+
+  elements.capturedReviews.textContent = data.reviews?.count
+    ? `⭐ ${data.reviews.rating} (${data.reviews.count.toLocaleString()})`
+    : '';
+
+  elements.capturedFavorites.textContent = data.favorites
+    ? `❤️ ${data.favorites.toLocaleString()}`
+    : '';
+
+  renderCapturedTags(data.tags || []);
+}
+
+function renderCapturedTags(tags) {
+  selectedTags = new Set(tags);
+  elements.capturedTagsCount.textContent = tags.length;
+
+  elements.capturedTags.innerHTML = tags.map(tag => `
+    <div class="tag-chip selected" data-tag="${escapeHtml(tag)}">
+      <span class="tag-check">✓</span>
+      <span class="tag-text">${escapeHtml(tag)}</span>
+    </div>
+  `).join('');
+
+  elements.capturedTags.querySelectorAll('.tag-chip').forEach(chip => {
+    chip.addEventListener('click', () => toggleTagSelection(chip));
+  });
+}
+
+function toggleTagSelection(chip) {
+  const tag = chip.dataset.tag;
+  if (selectedTags.has(tag)) {
+    selectedTags.delete(tag);
+    chip.classList.remove('selected');
+    chip.querySelector('.tag-check').textContent = '';
+  } else {
+    selectedTags.add(tag);
+    chip.classList.add('selected');
+    chip.querySelector('.tag-check').textContent = '✓';
+  }
+}
+
+function selectAllTags() {
+  if (!researchClipboard?.tags) return;
+  selectedTags = new Set(researchClipboard.tags);
+  elements.capturedTags.querySelectorAll('.tag-chip').forEach(chip => {
+    chip.classList.add('selected');
+    chip.querySelector('.tag-check').textContent = '✓';
+  });
+}
+
+function clearTagSelection() {
+  selectedTags.clear();
+  elements.capturedTags.querySelectorAll('.tag-chip').forEach(chip => {
+    chip.classList.remove('selected');
+    chip.querySelector('.tag-check').textContent = '';
+  });
+}
+
+async function copySelectedTags() {
+  if (selectedTags.size === 0) {
+    showToast('No tags selected', 'error');
+    return;
+  }
+  const tagsText = Array.from(selectedTags).join(', ');
+  await navigator.clipboard.writeText(tagsText);
+  showToast(`${selectedTags.size} tag(s) copied!`, 'success');
+}
+
+function toggleDescription() {
+  const desc = elements.capturedDescription;
+  const isCollapsed = desc.classList.contains('collapsed');
+  desc.classList.toggle('collapsed');
+  elements.toggleDescBtn.textContent = isCollapsed ? 'Show less' : 'Show more';
+}
+
+async function copyField(field) {
+  if (!researchClipboard) return;
+
+  let text = '';
+  switch (field) {
+    case 'title':
+      text = researchClipboard.title || '';
+      break;
+    case 'price':
+      text = researchClipboard.price || '';
+      break;
+    case 'description':
+      text = researchClipboard.description || '';
+      break;
+  }
+
+  if (!text) {
+    showToast('Nothing to copy', 'error');
+    return;
+  }
+
+  await navigator.clipboard.writeText(text);
+
+  const btn = document.querySelector(`.copy-btn[data-copy="${field}"]`);
+  if (btn) {
+    btn.classList.add('copied');
+    setTimeout(() => btn.classList.remove('copied'), 1000);
+  }
+
+  showToast('Copied to clipboard!', 'success');
+}
+
+function useAsTemplate() {
+  if (!researchClipboard) {
+    showToast('No data captured', 'error');
+    return;
+  }
+
+  switchTab('upload');
+
+  const singleListingDetails = document.querySelector('.single-listing');
+  if (singleListingDetails) {
+    singleListingDetails.open = true;
+  }
+
+  if (elements.titleInput && researchClipboard.title) {
+    elements.titleInput.value = researchClipboard.title;
+  }
+
+  if (elements.descriptionInput && researchClipboard.description) {
+    elements.descriptionInput.value = researchClipboard.description;
+  }
+
+  if (elements.priceInput && researchClipboard.price) {
+    elements.priceInput.value = researchClipboard.price;
+  }
+
+  if (elements.tagsInput && selectedTags.size > 0) {
+    elements.tagsInput.value = Array.from(selectedTags).join(', ');
+  }
+
+  if (researchClipboard.category && elements.categorySelect) {
+    const mappedCategory = mapEtsyCategoryToInternal(researchClipboard.category);
+    const formCategory = mapInternalCategoryToForm(mappedCategory);
+    if (formCategory) {
+      const option = Array.from(elements.categorySelect.options).find(
+        opt => opt.value === formCategory || opt.textContent.includes(formCategory)
+      );
+      if (option) {
+        elements.categorySelect.value = option.value;
+        handleCategoryChange();
+      }
+    }
+  }
+
+  showToast('Data applied to form!', 'success');
+}
+
+function showSaveTagsModal() {
+  if (selectedTags.size === 0) {
+    showToast('No tags selected to save', 'error');
+    return;
+  }
+
+  const detectedCategory = researchClipboard?.category || '';
+  const mappedCategory = mapEtsyCategoryToInternal(detectedCategory);
+
+  const internalCategories = [
+    'Cutting Machine Files',
+    'Clip Art & Image Files',
+    'Digital Prints',
+    'Digital Patterns',
+    'Planners & Templates',
+    'Fonts',
+    'Embroidery Machine Files',
+    '3D Printer Files',
+    'Photography',
+    'Guides & How Tos',
+    'Other'
+  ];
+
+  const categoryOptions = internalCategories.map(cat => {
+    const selected = cat === mappedCategory ? 'selected' : '';
+    return `<option value="${cat}" ${selected}>${cat}</option>`;
+  }).join('');
+
+  const detectedHint = detectedCategory
+    ? `<span class="detected-category-hint">Detected: ${escapeHtml(detectedCategory.split(' > ').slice(0, 2).join(' > '))}</span>`
+    : '';
+
+  const modal = document.createElement('div');
+  modal.className = 'save-tags-modal';
+  modal.innerHTML = `
+    <div class="save-tags-content">
+      <h3>Save Tags to Library</h3>
+      <div class="save-tags-field">
+        <label for="tag-set-name">Name</label>
+        <input type="text" id="tag-set-name" placeholder="e.g., SVG Bundle Tags" autofocus>
+      </div>
+      <div class="save-tags-field">
+        <label for="tag-set-category">Category</label>
+        <select id="tag-set-category">
+          ${categoryOptions}
+        </select>
+        ${detectedHint}
+      </div>
+      <div class="save-tags-actions">
+        <button class="btn btn-secondary" id="cancel-save-tags">Cancel</button>
+        <button class="btn btn-primary" id="confirm-save-tags">Save</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  const nameInput = modal.querySelector('#tag-set-name');
+  const categorySelect = modal.querySelector('#tag-set-category');
+  const cancelBtn = modal.querySelector('#cancel-save-tags');
+  const confirmBtn = modal.querySelector('#confirm-save-tags');
+
+  cancelBtn.addEventListener('click', () => modal.remove());
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.remove();
+  });
+
+  confirmBtn.addEventListener('click', async () => {
+    const name = nameInput.value.trim();
+    if (!name) {
+      showToast('Please enter a name', 'error');
+      return;
+    }
+
+    const selectedCategory = categorySelect.value;
+    await saveTagsToLibrary(name, Array.from(selectedTags), selectedCategory);
+    modal.remove();
+    showToast('Tags saved to library!', 'success');
+    loadTagLibrary();
+  });
+
+  nameInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') confirmBtn.click();
+  });
+}
+
+async function saveTagsToLibrary(name, tags, category = null) {
+  const categoryName = category || mapEtsyCategoryToInternal(researchClipboard?.category) || 'Uncategorized';
+
+  const entry = {
+    id: `lib_${Date.now()}`,
+    name,
+    tags,
+    source: 'captured',
+    sourceUrl: researchClipboard?.url || null,
+    createdAt: new Date().toISOString()
+  };
+
+  if (!tagLibrary[categoryName]) {
+    tagLibrary[categoryName] = { sets: [], recentTags: [] };
+  }
+
+  tagLibrary[categoryName].sets.push(entry);
+
+  if (tagLibrary[categoryName].sets.length > 20) {
+    tagLibrary[categoryName].sets = tagLibrary[categoryName].sets.slice(-20);
+  }
+
+  await chrome.storage.sync.set({ [STORAGE_KEYS.TAG_LIBRARY]: tagLibrary });
+}
+
+function mapEtsyCategoryToInternal(etsyCategory) {
+  if (!etsyCategory) return null;
+  const lower = etsyCategory.toLowerCase();
+
+  // Digital file types (most specific first)
+  if (lower.includes('svg') || lower.includes('cut file') || lower.includes('cutting machine')) {
+    return 'Cutting Machine Files';
+  }
+  if (lower.includes('embroidery')) {
+    return 'Embroidery Machine Files';
+  }
+  if (lower.includes('font')) {
+    return 'Fonts';
+  }
+  if (lower.includes('3d print') || lower.includes('stl')) {
+    return '3D Printer Files';
+  }
+  if (lower.includes('clip art') || lower.includes('clipart')) {
+    return 'Clip Art & Image Files';
+  }
+  if (lower.includes('planner') || lower.includes('calendar') || lower.includes('spreadsheet')) {
+    return 'Planners & Templates';
+  }
+  if (lower.includes('template') || lower.includes('invitation') || lower.includes('resume') || lower.includes('card')) {
+    return 'Planners & Templates';
+  }
+  if (lower.includes('pattern') && !lower.includes('sewing pattern')) {
+    return 'Digital Patterns';
+  }
+  if (lower.includes('photo') || lower.includes('stock image') || lower.includes('photography')) {
+    return 'Photography';
+  }
+
+  // Etsy top-level categories
+  if (lower.includes('art & collectibles') || lower.includes('art and collectibles')) {
+    return 'Digital Prints';
+  }
+  if (lower.includes('craft supplies') || lower.includes('craft supply')) {
+    return 'Clip Art & Image Files';
+  }
+  if (lower.includes('paper & party') || lower.includes('paper and party')) {
+    return 'Planners & Templates';
+  }
+  if (lower.includes('digital download') || lower.includes('instant download')) {
+    return 'Digital Prints';
+  }
+
+  // Subcategories
+  if (lower.includes('print') || lower.includes('wall art') || lower.includes('poster') || lower.includes('artwork')) {
+    return 'Digital Prints';
+  }
+  if (lower.includes('coins') || lower.includes('collectibles') || lower.includes('memorabilia')) {
+    return 'Digital Prints';
+  }
+  if (lower.includes('drawing') || lower.includes('illustration')) {
+    return 'Clip Art & Image Files';
+  }
+  if (lower.includes('graphic') || lower.includes('logo') || lower.includes('design')) {
+    return 'Clip Art & Image Files';
+  }
+  if (lower.includes('journal') || lower.includes('notebook') || lower.includes('worksheet')) {
+    return 'Planners & Templates';
+  }
+  if (lower.includes('sticker') || lower.includes('label')) {
+    return 'Clip Art & Image Files';
+  }
+
+  // Return the raw category if no mapping (better than "Uncategorized")
+  // This preserves the original category for the user to see
+  return etsyCategory.split(' > ')[0] || 'Uncategorized';
+}
+
+async function loadTagLibrary() {
+  try {
+    const data = await chrome.storage.sync.get(STORAGE_KEYS.TAG_LIBRARY);
+    const stored = data[STORAGE_KEYS.TAG_LIBRARY];
+
+    if (Array.isArray(stored)) {
+      tagLibrary = { 'Uncategorized': { sets: stored, recentTags: [] } };
+      await chrome.storage.sync.set({ [STORAGE_KEYS.TAG_LIBRARY]: tagLibrary });
+    } else {
+      tagLibrary = stored || {};
+    }
+
+    renderTagLibrary();
+    renderAccountTagLibrary();
+  } catch (err) {
+    console.warn('Failed to load tag library:', err);
+    tagLibrary = {};
+  }
+}
+
+function renderTagLibrary() {
+  const allSets = getAllTagSets();
+
+  if (allSets.length === 0) {
+    elements.tagLibraryList.innerHTML = '<p class="empty-library">No saved tags yet. Capture a listing to save tags.</p>';
+    return;
+  }
+
+  elements.tagLibraryList.innerHTML = allSets.slice(0, 5).map(item => `
+    <div class="tag-library-item" data-id="${item.id}" data-category="${escapeHtml(item.category)}">
+      <div class="library-item-info">
+        <span class="library-item-name">${escapeHtml(item.name)}</span>
+        <span class="library-item-meta">${item.tags.length} tags • ${item.category}</span>
+      </div>
+      <div class="library-item-actions">
+        <button class="btn btn-small apply-library-tags" data-id="${item.id}" data-category="${escapeHtml(item.category)}">Apply</button>
+        <button class="btn btn-small delete-library-tags" data-id="${item.id}" data-category="${escapeHtml(item.category)}">✕</button>
+      </div>
+    </div>
+  `).join('');
+
+  if (allSets.length > 5) {
+    elements.tagLibraryList.innerHTML += `<p class="library-more-hint">View all ${allSets.length} tag sets in Account tab</p>`;
+  }
+
+  elements.tagLibraryList.querySelectorAll('.apply-library-tags').forEach(btn => {
+    btn.addEventListener('click', () => applyLibraryTags(btn.dataset.id, btn.dataset.category));
+  });
+
+  elements.tagLibraryList.querySelectorAll('.delete-library-tags').forEach(btn => {
+    btn.addEventListener('click', () => deleteLibraryTags(btn.dataset.id, btn.dataset.category));
+  });
+}
+
+function getAllTagSets() {
+  const allSets = [];
+  for (const [category, data] of Object.entries(tagLibrary)) {
+    if (data.sets) {
+      for (const set of data.sets) {
+        allSets.push({ ...set, category });
+      }
+    }
+  }
+  return allSets.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+}
+
+function renderAccountTagLibrary() {
+  const categories = Object.keys(tagLibrary).filter(cat => tagLibrary[cat].sets?.length > 0);
+
+  if (categories.length === 0) {
+    elements.accountTagLibrary.innerHTML = '<p class="empty-library">No saved tags yet. Capture listings to build your library.</p>';
+    return;
+  }
+
+  elements.accountTagLibrary.innerHTML = categories.map(category => {
+    const data = tagLibrary[category];
+    const setCount = data.sets.length;
+    return `
+      <div class="category-group" data-category="${escapeHtml(category)}">
+        <div class="category-header">
+          <div class="category-title">
+            <span class="category-toggle">▶</span>
+            <span>${escapeHtml(category)}</span>
+            <span class="category-count">(${setCount} set${setCount !== 1 ? 's' : ''})</span>
+          </div>
+        </div>
+        <div class="category-sets">
+          ${data.sets.map(set => `
+            <div class="tag-set-item" data-id="${set.id}">
+              <div class="tag-set-info">
+                <span class="tag-set-name">${escapeHtml(set.name)}</span>
+                <span class="tag-set-meta">${set.tags.length} tags</span>
+              </div>
+              <div class="tag-set-actions">
+                <button class="btn btn-small apply-set-btn" data-id="${set.id}" data-category="${escapeHtml(category)}">Apply</button>
+                <button class="btn btn-small delete-set-btn" data-id="${set.id}" data-category="${escapeHtml(category)}">✕</button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  elements.accountTagLibrary.querySelectorAll('.category-header').forEach(header => {
+    header.addEventListener('click', () => {
+      header.closest('.category-group').classList.toggle('expanded');
+    });
+  });
+
+  elements.accountTagLibrary.querySelectorAll('.apply-set-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      applyLibraryTags(btn.dataset.id, btn.dataset.category);
+    });
+  });
+
+  elements.accountTagLibrary.querySelectorAll('.delete-set-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteLibraryTags(btn.dataset.id, btn.dataset.category);
+    });
+  });
+}
+
+function applyLibraryTags(id, category) {
+  const catData = tagLibrary[category];
+  if (!catData) return;
+
+  const item = catData.sets.find(t => t.id === id);
+  if (!item) return;
+
+  switchTab('upload');
+
+  const singleListingDetails = document.querySelector('.single-listing');
+  if (singleListingDetails) {
+    singleListingDetails.open = true;
+  }
+
+  if (elements.tagsInput) {
+    const currentTags = elements.tagsInput.value.split(',').map(t => t.trim()).filter(t => t);
+    const mergedTags = [...new Set([...currentTags, ...item.tags])].slice(0, 13);
+    elements.tagsInput.value = mergedTags.join(', ');
+  }
+
+  const internalCategory = mapInternalCategoryToForm(category);
+  if (internalCategory && elements.categorySelect) {
+    const option = Array.from(elements.categorySelect.options).find(
+      opt => opt.value === internalCategory || opt.textContent.includes(internalCategory)
+    );
+    if (option) {
+      elements.categorySelect.value = option.value;
+      handleCategoryChange();
+    }
+  }
+
+  showToast(`Applied ${item.tags.length} tags from "${item.name}"`, 'success');
+}
+
+function mapInternalCategoryToForm(category) {
+  const mapping = {
+    'Cutting Machine Files': 'Cutting Machine Files',
+    'Clip Art & Image Files': 'Clip Art & Image Files',
+    'Planners & Templates': 'Planners & Templates',
+    'Fonts': 'Fonts',
+    'Embroidery Machine Files': 'Embroidery Machine Files',
+    'Digital Prints': 'Digital Prints',
+    'Digital Patterns': 'Digital Patterns',
+    '3D Printer Files': '3D Printer Files',
+    'Photography': 'Photography'
+  };
+  return mapping[category] || null;
+}
+
+async function deleteLibraryTags(id, category) {
+  if (!tagLibrary[category]) return;
+
+  tagLibrary[category].sets = tagLibrary[category].sets.filter(t => t.id !== id);
+
+  if (tagLibrary[category].sets.length === 0 && tagLibrary[category].recentTags.length === 0) {
+    delete tagLibrary[category];
+  }
+
+  await chrome.storage.sync.set({ [STORAGE_KEYS.TAG_LIBRARY]: tagLibrary });
+  renderTagLibrary();
+  renderAccountTagLibrary();
+  showToast('Deleted from library', 'success');
+}
+
+function updateClipboardBar() {
+  if (!researchClipboard) {
+    elements.researchClipboardBar.classList.add('hidden');
+    return;
+  }
+
+  elements.researchClipboardBar.classList.remove('hidden');
+  elements.clipboardTitle.textContent = truncateText(researchClipboard.title, 25) || 'Captured listing';
+
+  const meta = [];
+  if (researchClipboard.tags?.length) meta.push(`${researchClipboard.tags.length} tags`);
+  if (researchClipboard.price) meta.push(`$${researchClipboard.price}`);
+  elements.clipboardMeta.textContent = meta.join(' | ');
+}
+
+async function clearResearchClipboard() {
+  researchClipboard = null;
+  selectedTags.clear();
+  await chrome.storage.local.remove(STORAGE_KEYS.RESEARCH_CLIPBOARD);
+  elements.researchClipboardBar.classList.add('hidden');
+  elements.capturedDataSection.classList.add('hidden');
+  showToast('Clipboard cleared', 'success');
+}
+
+async function saveResearchClipboard() {
+  try {
+    await chrome.storage.local.set({ [STORAGE_KEYS.RESEARCH_CLIPBOARD]: researchClipboard });
+  } catch (err) {
+    console.warn('Failed to save research clipboard:', err);
+  }
+}
+
+async function loadResearchClipboard() {
+  try {
+    const data = await chrome.storage.local.get(STORAGE_KEYS.RESEARCH_CLIPBOARD);
+    researchClipboard = data[STORAGE_KEYS.RESEARCH_CLIPBOARD] || null;
+    if (researchClipboard) {
+      updateClipboardBar();
+    }
+  } catch (err) {
+    console.warn('Failed to load research clipboard:', err);
+  }
+}
+
+function truncateText(text, maxLength) {
+  if (!text) return '';
+  return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
 }

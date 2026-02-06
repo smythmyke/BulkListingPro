@@ -1,6 +1,6 @@
 # BulkListingPro Master Checklist
 
-> **Last Updated:** February 5, 2026
+> **Last Updated:** February 6, 2026
 > **Status:** Phase 1 - Foundation
 
 ---
@@ -180,7 +180,27 @@
 - [ ] Prioritize feature requests
 - [ ] Fix reported bugs
 
-### 3.2 Feature Ideas (Prioritize Later)
+### 3.2 Referral & Affiliate System (Port from GovToolsPro)
+- [x] Welcome bonus: 10 free credits for new users (backend change)
+- [x] Welcome toast notification in sidepanel
+- [ ] **Deploy backend change** (DEFAULT_CREDITS = 10) to production
+- [ ] **Referral System** (USR codes)
+  - [ ] Port referral code generation/validation from GovToolsPro
+  - [ ] 100 credits for referrer when code used
+  - [ ] 100 credits for new user who uses code
+  - [ ] Share referral code pool with GovToolsPro (same codes work in both)
+- [ ] **Affiliate System** (AFF codes)
+  - [ ] Port affiliate code generation/validation from GovToolsPro
+  - [ ] 10% commission via Stripe Connect
+  - [ ] Share affiliate code pool with GovToolsPro
+- [ ] **Welcome Modal for New Users**
+  - [ ] Show modal on first sign-in
+  - [ ] Input field for referral/affiliate code
+  - [ ] Apply code and show success message
+- [ ] Account tab: Show user's referral code and copy button
+- [ ] Account tab: Show referral stats (invites, credits earned)
+
+### 3.3 Feature Ideas (Prioritize Later)
 - [ ] **Retry failed listings** - Auto-retry or manual "Retry Failed" button after upload completes
 - [ ] **Publish vs Draft toggle** - Let users choose to publish immediately or save as draft (default: draft)
   - UI: Toggle button or dropdown in queue section before starting upload
@@ -193,6 +213,13 @@
 - [ ] Bulk edit existing listings
 - [ ] AI description generator
 - [ ] Other platforms (Amazon, Shopify)
+
+### 3.4 Account Tab (Implemented)
+- [x] Profile section (name, email, picture)
+- [x] Credits display with buy button
+- [x] Tag Library with category-based organization
+- [x] Smart tag suggestions based on selected category
+- [x] Save tags modal with category dropdown (auto-detected + editable)
 
 ---
 
@@ -241,6 +268,10 @@
 | 2026-02-05 | Auto-detection for Etsy login status |
 | 2026-02-05 | Extension v0.2.0 uploaded to Chrome Web Store |
 | 2026-02-05 | Category-specific attributes support (Clip Art & Image Files + Craft Type) |
+| 2026-02-06 | Smart tag suggestions (Phase 3) implemented |
+| 2026-02-06 | Category-based tag library with category dropdown in save modal |
+| 2026-02-06 | Welcome bonus (10 credits) for new users - backend + toast |
+| 2026-02-06 | Planned: Referral/Affiliate system port from GovToolsPro |
 | | |
 
 ---

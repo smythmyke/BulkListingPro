@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "BulkListingPro - Etsy Bulk Upload Tool",
-  "version": "0.1.0",
+  "version": "0.4.0",
   "description": "Bulk upload digital product listings to Etsy from a spreadsheet. Save hours on listing creation.",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnWGXlolepp72yC7+hmzxQHe05xCULdWGM7R9zGqUceB8mmNXw/+6J0A4vRWGBi8h3g35UOWZHHX+mZHy0mbbUJ+Q2NUZ8WRnULGU5FGRRKcAiwMjbmx7tFhZ/hq/wLgNyzD66lpCvs1ZrLymo/GEJo2gpX5MHJ/XSK5AYsPUhobxGft8X9r/g9UdhGfaNHHVHK0GAMopatu+ta9kmUEGLBy1BDhG0VAz7bURzwDUJqxiq6Djiftl+ZeBcZ65btPIGOFWnhR+kIUxPAWKz2l0LGeyI0f6m5BJ38sBs90K6gKWCfXd8MFs1EDgT8zMhJywKxtZ9yp3pbfPbpGLPVuNDwIDAQAB",
 
@@ -59,6 +59,11 @@
     {
       "matches": ["https://*.etsy.com/*"],
       "js": ["content/etsy.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://*.etsy.com/listing/*"],
+      "js": ["content/etsy-scraper.js"],
       "run_at": "document_idle"
     }
   ],

@@ -106,12 +106,31 @@
         <button id="sign-out-btn" class="btn btn-small">Sign out</button>
       </div>
 
-      <!-- Credits Info -->
-      <div class="credits-info">
-        Each listing uses <strong>2 credits</strong>
+      <!-- Research Clipboard Bar (persistent, shown when data captured) -->
+      <div id="research-clipboard-bar" class="research-clipboard-bar hidden">
+        <div class="clipboard-summary" id="clipboard-summary">
+          <span class="clipboard-icon">📋</span>
+          <span class="clipboard-title" id="clipboard-title">No data captured</span>
+          <span class="clipboard-meta" id="clipboard-meta"></span>
+        </div>
+        <button id="clipboard-clear-btn" class="clipboard-clear" title="Clear clipboard">&times;</button>
       </div>
 
-      <!-- Upload Options -->
+      <!-- Tab Navigation -->
+      <div class="tab-nav">
+        <button class="tab-btn active" data-tab="upload">Upload</button>
+        <button class="tab-btn" data-tab="research">Research</button>
+        <button class="tab-btn" data-tab="account">Account</button>
+      </div>
+
+      <!-- Tab: Upload -->
+      <div id="tab-upload" class="tab-content active">
+        <!-- Credits Info -->
+        <div class="credits-info">
+          Each listing uses <strong>2 credits</strong>
+        </div>
+
+        <!-- Upload Options -->
       <div class="upload-options">
         <h2>Upload Listings</h2>
 
@@ -183,6 +202,13 @@
             <div class="form-group">
               <label for="tags">Tags (comma separated)</label>
               <input type="text" id="tags" name="tags" placeholder="tag1, tag2, tag3">
+              <div id="tag-suggestions" class="tag-suggestions hidden">
+                <div class="suggestions-header">
+                  <span>Suggestions</span>
+                  <button type="button" id="hide-suggestions-btn" class="btn-link">Hide</button>
+                </div>
+                <div id="suggestions-content" class="suggestions-content"></div>
+              </div>
             </div>
             <div class="form-group">
               <label>Images (up to 5)</label>
@@ -207,6 +233,66 @@
                 <input type="file" id="digital-file-input" hidden>
               </div>
             </div>
+            <details class="advanced-options">
+              <summary>Advanced Options</summary>
+              <div class="form-group">
+                <label for="who-made">Who made it?</label>
+                <select id="who-made" name="who_made">
+                  <option value="i_did" selected>I did</option>
+                  <option value="member">A member of my shop</option>
+                  <option value="another">Another company or person</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="what-is-it">What is it?</label>
+                <select id="what-is-it" name="what_is_it">
+                  <option value="finished_product" selected>A finished product</option>
+                  <option value="supply">A supply or tool to make things</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="ai-content">Content type</label>
+                <select id="ai-content" name="ai_content">
+                  <option value="original" selected>Created by me</option>
+                  <option value="ai_gen">With an AI generator</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="when-made">When was it made?</label>
+                <select id="when-made" name="when_made">
+                  <option value="made_to_order" selected>Made to order</option>
+                  <option value="2020_2026">2020 - 2026</option>
+                  <option value="2010_2019">2010 - 2019</option>
+                  <option value="2007_2009">2007 - 2009</option>
+                  <option value="before_2007">Before 2007</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="renewal">Renewal</label>
+                <select id="renewal" name="renewal">
+                  <option value="automatic" selected>Automatic ($0.20/renewal)</option>
+                  <option value="manual">Manual</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="shop-section">Shop section</label>
+                <select id="shop-section" name="shop_section">
+                  <option value="" selected>None</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="materials">Materials (comma separated)</label>
+                <input type="text" id="materials" name="materials" placeholder="cotton, wood, etc.">
+              </div>
+              <div class="form-group">
+                <label for="quantity">Quantity</label>
+                <input type="number" id="quantity" name="quantity" min="1" value="999">
+              </div>
+              <div class="form-group">
+                <label for="sku">SKU</label>
+                <input type="text" id="sku" name="sku" placeholder="Optional">
+              </div>
+            </details>
             <button type="submit" class="btn btn-primary">Add to Queue</button>
           </form>
         </details>
@@ -269,6 +355,170 @@
           <button id="new-upload-btn" class="btn btn-primary">Upload More</button>
         </div>
       </div>
+      </div><!-- End tab-upload -->
+
+      <!-- Tab: Research -->
+      <div id="tab-research" class="tab-content">
+        <!-- Capture Section -->
+        <div class="research-capture-section">
+          <div class="capture-header">
+            <h3>Capture Listing Data</h3>
+            <p class="capture-hint">Open an Etsy listing page, then click capture.</p>
+          </div>
+          <button id="capture-listing-btn" class="btn btn-primary capture-btn">
+            <span class="capture-icon">🎯</span> Capture from Current Tab
+          </button>
+          <p id="capture-status" class="capture-status hidden"></p>
+        </div>
+
+        <!-- Captured Data Display -->
+        <div id="captured-data-section" class="captured-data-section hidden">
+          <h3>Captured Data</h3>
+
+          <!-- Title -->
+          <div class="captured-field">
+            <div class="field-header">
+              <label>Title</label>
+              <span class="char-count" id="captured-title-count"></span>
+            </div>
+            <div class="field-content">
+              <span id="captured-title" class="captured-text"></span>
+              <button class="copy-btn" data-copy="title" title="Copy">📋</button>
+            </div>
+          </div>
+
+          <!-- Price -->
+          <div class="captured-field">
+            <div class="field-header">
+              <label>Price</label>
+            </div>
+            <div class="field-content">
+              <span id="captured-price" class="captured-text"></span>
+              <button class="copy-btn" data-copy="price" title="Copy">📋</button>
+            </div>
+          </div>
+
+          <!-- Category -->
+          <div class="captured-field" id="captured-category-field">
+            <div class="field-header">
+              <label>Category</label>
+            </div>
+            <div class="field-content">
+              <span id="captured-category" class="captured-text category-badge"></span>
+            </div>
+          </div>
+
+          <!-- Tags -->
+          <div class="captured-field">
+            <div class="field-header">
+              <label>Tags (<span id="captured-tags-count">0</span>)</label>
+              <div class="tag-actions">
+                <button id="select-all-tags-btn" class="btn btn-small">Select All</button>
+                <button id="clear-tags-btn" class="btn btn-small">Clear</button>
+              </div>
+            </div>
+            <div id="captured-tags" class="captured-tags"></div>
+            <div class="tag-bulk-actions">
+              <button id="copy-selected-tags-btn" class="btn btn-small">📋 Copy Selected</button>
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="captured-field">
+            <div class="field-header">
+              <label>Description</label>
+              <button id="toggle-desc-btn" class="btn-link">Show more</button>
+            </div>
+            <div class="field-content">
+              <div id="captured-description" class="captured-description collapsed"></div>
+              <button class="copy-btn" data-copy="description" title="Copy">📋</button>
+            </div>
+          </div>
+
+          <!-- Shop Info -->
+          <div class="captured-field shop-info-card">
+            <div class="shop-info-header">
+              <div class="shop-icon">🏪</div>
+              <div class="shop-details">
+                <span class="shop-name" id="captured-shop">Shop Name</span>
+                <span class="shop-stats">
+                  <span id="captured-reviews"></span>
+                  <span class="stat-divider">•</span>
+                  <span id="captured-favorites"></span>
+                </span>
+              </div>
+            </div>
+            <a id="captured-shop-link" href="#" target="_blank" class="btn-view-shop">
+              <span>Visit Shop</span>
+              <span class="arrow">→</span>
+            </a>
+          </div>
+
+          <!-- Actions -->
+          <div class="captured-actions">
+            <button id="use-as-template-btn" class="btn btn-primary">📝 Use as Template</button>
+            <button id="save-tags-btn" class="btn btn-secondary">💾 Save Tags to Library</button>
+          </div>
+        </div>
+
+        <!-- Tag Library -->
+        <div class="tag-library-section">
+          <h3>Tag Library</h3>
+          <div id="tag-library-list" class="tag-library-list">
+            <p class="empty-library">No saved tags yet. Capture a listing to save tags.</p>
+          </div>
+        </div>
+      </div><!-- End tab-research -->
+
+      <!-- Tab: Account -->
+      <div id="tab-account" class="tab-content">
+        <!-- Profile Section -->
+        <div class="account-section">
+          <div class="section-header">Profile</div>
+          <div class="profile-card">
+            <img id="account-avatar" src="" alt="Avatar" class="profile-avatar">
+            <div class="profile-details">
+              <span id="account-email" class="profile-email">user@email.com</span>
+              <span id="account-member-since" class="profile-meta">Member since Feb 2026</span>
+            </div>
+            <button id="account-sign-out-btn" class="btn btn-small btn-secondary">Sign Out</button>
+          </div>
+        </div>
+
+        <!-- Credits Section -->
+        <div class="account-section">
+          <div class="section-header">Credits</div>
+          <div class="credits-card">
+            <div class="credits-display">
+              <span class="credits-icon">💰</span>
+              <span class="credits-amount"><span id="account-credits">0</span> credits</span>
+              <span class="credits-estimate" id="account-credits-estimate">(~0 listings)</span>
+            </div>
+            <button id="account-buy-credits-btn" class="btn btn-primary btn-small">Buy More</button>
+          </div>
+        </div>
+
+        <!-- Tag Library Section -->
+        <div class="account-section">
+          <div class="section-header">Tag Library</div>
+          <div id="account-tag-library" class="account-tag-library">
+            <p class="empty-library">No saved tags yet. Capture listings to build your library.</p>
+          </div>
+        </div>
+
+        <!-- Links Section -->
+        <div class="account-section">
+          <div class="section-header">Links</div>
+          <div class="account-links">
+            <a href="https://smythmyke.github.io/BulkListingPro/privacy-policy.html" target="_blank" class="account-link">Privacy Policy</a>
+            <span class="link-divider">•</span>
+            <a href="https://smythmyke.github.io/BulkListingPro/terms-of-service.html" target="_blank" class="account-link">Terms of Service</a>
+            <span class="link-divider">•</span>
+            <a href="https://github.com/smythmyke/BulkListingPro/issues" target="_blank" class="account-link">Report Issue</a>
+          </div>
+        </div>
+      </div><!-- End tab-account -->
+
     </div>
 
     <!-- Buy Credits Modal -->

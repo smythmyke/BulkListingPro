@@ -288,7 +288,7 @@ Based on market research, these niches have highest upload volume:
 
 | Feature | Status | Date |
 |---------|--------|------|
-| Keyword/Tag Copy Tool | ⬜ Not started | |
+| Keyword/Tag Copy Tool | 🟡 Phase 1 Complete | Feb 5, 2026 |
 | Search & Replace | ⬜ Not started | |
 | Free Credits | ⬜ Backend change | |
 | Listing Profiles | ⬜ Not started | |

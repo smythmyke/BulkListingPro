@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BulkListingPro - Research Tab Mockup</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      color: #333;
+      background: #e5e5e5;
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .sidepanel {
+      width: 380px;
+      background: #f5f5f5;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #f56400, #ff8533);
+      color: white;
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header h1 {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .credit-balance {
+      background: rgba(255,255,255,0.2);
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      background: white;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 12px;
+      text-align: center;
+      cursor: pointer;
+      border: none;
+      background: none;
+      font-size: 14px;
+      font-weight: 500;
+      color: #666;
+      transition: all 0.2s;
+    }
+
+    .tab:hover {
+      background: #f5f5f5;
+    }
+
+    .tab.active {
+      color: #f56400;
+      border-bottom: 2px solid #f56400;
+      margin-bottom: -1px;
+    }
+
+    /* Content */
+    .content {
+      padding: 16px;
+      background: #f5f5f5;
+      max-height: 600px;
+      overflow-y: auto;
+    }
+
+    /* Section */
+    .section {
+      background: white;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #666;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Search Box */
+    .search-box {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .search-input {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: #f56400;
+    }
+
+    .search-btn {
+      padding: 10px 16px;
+      background: #f56400;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .search-btn:hover {
+      background: #e55a00;
+    }
+
+    /* Quick Actions */
+    .quick-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .action-btn {
+      padding: 8px 12px;
+      background: #f0f0f0;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .action-btn:hover {
+      background: #e5e5e5;
+      border-color: #ccc;
+    }
+
+    .action-btn.primary {
+      background: #f56400;
+      color: white;
+      border-color: #f56400;
+    }
+
+    .action-btn.primary:hover {
+      background: #e55a00;
+    }
+
+    /* Results */
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .results-count {
+      font-size: 12px;
+      color: #888;
+    }
+
+    .select-all {
+      font-size: 12px;
+      color: #f56400;
+      cursor: pointer;
+    }
+
+    .tag-list {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #eee;
+      border-radius: 6px;
+    }
+
+    .tag-item {
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-bottom: 1px solid #f0f0f0;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    .tag-item:last-child {
+      border-bottom: none;
+    }
+
+    .tag-item:hover {
+      background: #f9f9f9;
+    }
+
+    .tag-item input[type="checkbox"] {
+      margin-right: 10px;
+      accent-color: #f56400;
+    }
+
+    .tag-name {
+      flex: 1;
+      font-size: 13px;
+    }
+
+    .tag-count {
+      font-size: 11px;
+      color: #888;
+      background: #f0f0f0;
+      padding: 2px 6px;
+      border-radius: 10px;
+    }
+
+    /* Result Actions */
+    .result-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* Saved Section */
+    .saved-section {
+      margin-top: 8px;
+    }
+
+    .saved-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      background: #f9f9f9;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .saved-item:hover {
+      background: #f0f0f0;
+    }
+
+    .saved-item-name {
+      font-size: 13px;
+    }
+
+    .saved-item-count {
+      font-size: 11px;
+      color: #888;
+    }
+
+    .saved-item-arrow {
+      color: #ccc;
+    }
+
+    /* Competitor Card */
+    .competitor-card {
+      display: flex;
+      align-items: center;
+      padding: 10px 12px;
+      background: #f9f9f9;
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+
+    .competitor-avatar {
+      width: 36px;
+      height: 36px;
+      background: #ddd;
+      border-radius: 50%;
+      margin-right: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: #888;
+    }
+
+    .competitor-info {
+      flex: 1;
+    }
+
+    .competitor-name {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .competitor-stats {
+      font-size: 11px;
+      color: #888;
+    }
+
+    /* Price Results */
+    .price-results {
+      display: flex;
+      gap: 12px;
+      text-align: center;
+    }
+
+    .price-stat {
+      flex: 1;
+      padding: 12px;
+      background: #f9f9f9;
+      border-radius: 6px;
+    }
+
+    .price-label {
+      font-size: 11px;
+      color: #888;
+      margin-bottom: 4px;
+    }
+
+    .price-value {
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .price-value.low { color: #28a745; }
+    .price-value.avg { color: #f56400; }
+    .price-value.high { color: #dc3545; }
+
+    /* Divider */
+    .divider {
+      height: 1px;
+      background: #e0e0e0;
+      margin: 16px 0;
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 30px;
+      color: #888;
+    }
+
+    .empty-state-icon {
+      font-size: 40px;
+      margin-bottom: 10px;
+    }
+
+    /* Toggle */
+    details summary {
+      cursor: pointer;
+      padding: 8px 0;
+      font-weight: 500;
+      font-size: 13px;
+      color: #666;
+      list-style: none;
+    }
+
+    details summary::-webkit-details-marker {
+      display: none;
+    }
+
+    details summary::before {
+      content: '▶ ';
+      font-size: 10px;
+    }
+
+    details[open] summary::before {
+      content: '▼ ';
+    }
+
+    /* Tabs inside research */
+    .sub-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 12px;
+    }
+
+    .sub-tab {
+      padding: 6px 12px;
+      background: #f0f0f0;
+      border: none;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .sub-tab.active {
+      background: #f56400;
+      color: white;
+    }
+
+    /* Capture Section */
+    .capture-status {
+      margin-bottom: 12px;
+    }
+
+    .current-page {
+      display: flex;
+      align-items: center;
+      padding: 10px 12px;
+      background: #e8f5e9;
+      border: 1px solid #c8e6c9;
+      border-radius: 6px;
+      gap: 10px;
+    }
+
+    .current-page.not-etsy {
+      background: #fff3e0;
+      border-color: #ffe0b2;
+    }
+
+    .current-page.not-listing {
+      background: #f5f5f5;
+      border-color: #e0e0e0;
+    }
+
+    .page-icon {
+      font-size: 20px;
+    }
+
+    .page-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .page-title {
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .page-url {
+      font-size: 11px;
+      color: #888;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .capture-actions {
+      margin-bottom: 12px;
+    }
+
+    .capture-btn {
+      width: 100%;
+      padding: 14px 20px;
+      background: linear-gradient(135deg, #f56400, #ff8533);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .capture-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(245, 100, 0, 0.3);
+    }
+
+    .capture-btn:active {
+      transform: translateY(0);
+    }
+
+    .capture-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .capture-icon {
+      font-size: 18px;
+    }
+
+    .capture-options {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .capture-option {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      color: #666;
+      cursor: pointer;
+    }
+
+    .capture-option input {
+      accent-color: #f56400;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidepanel">
+    <!-- Header -->
+    <div class="header">
+      <h1>BulkListingPro</h1>
+      <div class="credit-balance">48 credits</div>
+    </div>
+
+    <!-- Main Tabs -->
+    <div class="tabs">
+      <button class="tab">Upload</button>
+      <button class="tab active">Research</button>
+    </div>
+
+    <!-- Research Content -->
+    <div class="content">
+
+      <!-- Capture Current Page -->
+      <div class="section">
+        <div class="section-title">📸 Capture from Current Tab</div>
+        <div class="capture-status">
+          <div class="current-page">
+            <span class="page-icon">🛒</span>
+            <span class="page-info">
+              <span class="page-title">Digital Planner 2026 | GoodNotes...</span>
+              <span class="page-url">etsy.com/listing/1234567890</span>
+            </span>
+          </div>
+        </div>
+        <div class="capture-actions">
+          <button class="capture-btn">
+            <span class="capture-icon">📷</span>
+            Capture This Listing
+          </button>
+        </div>
+        <div class="capture-options">
+          <label class="capture-option">
+            <input type="checkbox" checked> Tags
+          </label>
+          <label class="capture-option">
+            <input type="checkbox" checked> Title
+          </label>
+          <label class="capture-option">
+            <input type="checkbox" checked> Price
+          </label>
+          <label class="capture-option">
+            <input type="checkbox"> Description
+          </label>
+        </div>
+      </div>
+
+      <!-- Or Search -->
+      <div class="section">
+        <div class="section-title">🔍 Or Search Etsy</div>
+        <div class="search-box">
+          <input type="text" class="search-input" placeholder="Search term for trending tags...">
+          <button class="search-btn">Search</button>
+        </div>
+      </div>
+
+      <!-- Results Section -->
+      <div class="section">
+        <div class="section-title">📊 Results</div>
+
+        <!-- Sub-tabs for different result types -->
+        <div class="sub-tabs">
+          <button class="sub-tab active">Tags (13)</button>
+          <button class="sub-tab">Prices</button>
+          <button class="sub-tab">Title</button>
+        </div>
+
+        <!-- Tag Results -->
+        <div class="results-header">
+          <span class="results-count">📷 Captured from current tab</span>
+          <span class="select-all">Select All</span>
+        </div>
+
+        <div class="tag-list">
+          <label class="tag-item">
+            <input type="checkbox" checked>
+            <span class="tag-name">digital planner</span>
+            <span class="tag-count">12.4k</span>
+          </label>
+          <label class="tag-item">
+            <input type="checkbox" checked>
+            <span class="tag-name">goodnotes template</span>
+            <span class="tag-count">8.2k</span>
+          </label>
+          <label class="tag-item">
+            <input type="checkbox" checked>
+            <span class="tag-name">ipad planner 2026</span>
+            <span class="tag-count">5.1k</span>
+          </label>
+          <label class="tag-item">
+            <input type="checkbox">
+            <span class="tag-name">daily planner</span>
+            <span class="tag-count">4.8k</span>
+          </label>
+          <label class="tag-item">
+            <input type="checkbox">
+            <span class="tag-name">notability template</span>
+            <span class="tag-count">3.2k</span>
+          </label>
+          <label class="tag-item">
+            <input type="checkbox">
+            <span class="tag-name">digital notebook</span>
+            <span class="tag-count">2.9k</span>
+          </label>
+          <label class="tag-item">
+            <input type="checkbox">
+            <span class="tag-name">hyperlinked planner</span>
+            <span class="tag-count">1.8k</span>
+          </label>
+        </div>
+
+        <div class="result-actions">
+          <button class="action-btn primary">Copy Selected (3)</button>
+          <button class="action-btn">Save to Library</button>
+          <button class="action-btn">Apply to Form</button>
+          <button class="action-btn">Apply to Queue</button>
+        </div>
+      </div>
+
+      <!-- Price Results (alternative view) -->
+      <div class="section" style="display: none;">
+        <div class="section-title">💰 Price Analysis</div>
+        <p style="font-size: 12px; color: #888; margin-bottom: 12px;">Based on 50 listings for "digital planner 2026"</p>
+        <div class="price-results">
+          <div class="price-stat">
+            <div class="price-label">Lowest</div>
+            <div class="price-value low">$2.99</div>
+          </div>
+          <div class="price-stat">
+            <div class="price-label">Average</div>
+            <div class="price-value avg">$7.49</div>
+          </div>
+          <div class="price-stat">
+            <div class="price-label">Highest</div>
+            <div class="price-value high">$24.99</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Saved Section -->
+      <div class="section">
+        <div class="section-title">📁 Saved</div>
+
+        <details>
+          <summary>Tag Library (24 tags)</summary>
+          <div class="saved-section">
+            <div class="saved-item">
+              <span class="saved-item-name">Digital Planners</span>
+              <span class="saved-item-count">12 tags</span>
+              <span class="saved-item-arrow">›</span>
+            </div>
+            <div class="saved-item">
+              <span class="saved-item-name">SVG Bundles</span>
+              <span class="saved-item-count">8 tags</span>
+              <span class="saved-item-arrow">›</span>
+            </div>
+            <div class="saved-item">
+              <span class="saved-item-name">Social Templates</span>
+              <span class="saved-item-count">4 tags</span>
+              <span class="saved-item-arrow">›</span>
+            </div>
+          </div>
+        </details>
+
+        <details>
+          <summary>Watched Competitors (3)</summary>
+          <div class="saved-section">
+            <div class="competitor-card">
+              <div class="competitor-avatar">P</div>
+              <div class="competitor-info">
+                <div class="competitor-name">PlannerPro Shop</div>
+                <div class="competitor-stats">1.2k sales • 156 listings</div>
+              </div>
+            </div>
+            <div class="competitor-card">
+              <div class="competitor-avatar">D</div>
+              <div class="competitor-info">
+                <div class="competitor-name">DigitalDesignCo</div>
+                <div class="competitor-stats">3.4k sales • 89 listings</div>
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <details>
+          <summary>Recent Searches (5)</summary>
+          <div class="saved-section">
+            <div class="saved-item">
+              <span class="saved-item-name">digital planner 2026</span>
+              <span class="saved-item-count">2m ago</span>
+            </div>
+            <div class="saved-item">
+              <span class="saved-item-name">etsy.com/listing/789...</span>
+              <span class="saved-item-count">1h ago</span>
+            </div>
+          </div>
+        </details>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>
