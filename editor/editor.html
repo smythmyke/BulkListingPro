@@ -14,6 +14,7 @@
       <div class="toolbar-left">
         <h1 class="toolbar-title">BulkListingPro Editor</h1>
         <span class="listing-count" id="listing-count">0 listings</span>
+        <span class="validation-summary-badge" id="validation-badge" style="display:none;" title="Click to view report"></span>
       </div>
       <div class="toolbar-center">
         <div class="view-toggle" id="view-toggle">
@@ -31,6 +32,15 @@
             <hr>
             <button data-action="select-all">Select All</button>
             <button data-action="select-none">Deselect All</button>
+            <hr>
+            <button data-action="validate-all">Validate All</button>
+            <button data-action="autoformat-all">Autoformat All</button>
+            <button data-action="titlecase-all">Title Case All Titles</button>
+            <button data-action="ai-generate-all">AI Generate All...</button>
+            <button data-action="evaluate-all">Evaluate All...</button>
+            <hr>
+            <button data-action="add-tags-to-selected">Add Tags to Selected</button>
+            <button data-action="remove-tag-from-all">Remove Tag from All</button>
             <hr>
             <button data-action="export-xlsx">Export XLSX</button>
             <button data-action="export-csv">Export CSV</button>
@@ -88,6 +98,133 @@
     </div>
 
     <div id="toast" class="toast"></div>
+
+    <div id="validation-report-backdrop" class="validation-report-backdrop" style="display:none;"></div>
+    <div id="validation-report" class="validation-report" style="display:none;">
+      <div class="report-header">
+        <h2>Validation Report</h2>
+        <button id="report-close" class="btn btn-close">&times;</button>
+      </div>
+      <div class="report-summary" id="report-summary"></div>
+      <div class="report-list" id="report-list"></div>
+    </div>
+  </div>
+
+  <div id="tag-library-backdrop" class="tag-library-backdrop" style="display:none;"></div>
+  <div id="tag-library-panel" class="tag-library-panel" style="display:none;">
+    <div class="panel-header">
+      <h2>Tag Library</h2>
+      <button id="tag-library-close" class="btn btn-close">&times;</button>
+    </div>
+    <div class="panel-tabs">
+      <button class="panel-tab active" data-panel-tab="library">Library</button>
+      <button class="panel-tab" data-panel-tab="import">Import URL</button>
+      <button class="panel-tab" data-panel-tab="frequency">Frequency</button>
+    </div>
+    <div class="panel-body">
+      <div id="tag-library-content" class="panel-tab-content"></div>
+      <div id="tag-import-content" class="panel-tab-content" style="display:none;"></div>
+      <div id="tag-frequency-content" class="panel-tab-content" style="display:none;"></div>
+    </div>
+    <div class="panel-footer" id="tag-panel-footer" style="display:none;">
+      <label><input type="checkbox" id="apply-tags-to-selected"> Apply to all selected listings</label>
+    </div>
+  </div>
+
+  <div id="ai-panel-backdrop" class="ai-panel-backdrop" style="display:none;"></div>
+  <div id="ai-panel" class="ai-panel" style="display:none;">
+    <div class="panel-header">
+      <h2 id="ai-panel-title">AI Generate</h2>
+      <button id="ai-panel-close" class="btn btn-close">&times;</button>
+    </div>
+    <div class="panel-body">
+      <div id="ai-loading" class="ai-loading" style="display:none;">
+        <div class="ai-spinner"></div>
+        <span>Generating...</span>
+      </div>
+      <div id="ai-error" class="ai-error" style="display:none;"></div>
+      <div id="ai-results" class="ai-results"></div>
+    </div>
+    <div class="panel-footer" id="ai-panel-footer">
+      <span class="ai-credit-cost">1 credit per generation</span>
+    </div>
+  </div>
+
+  <div id="ai-bulk-backdrop" class="ai-bulk-backdrop" style="display:none;"></div>
+  <div id="ai-bulk-modal" class="ai-bulk-modal" style="display:none;">
+    <div class="ai-bulk-header">
+      <h2>AI Generate All</h2>
+      <button id="ai-bulk-close" class="btn btn-close">&times;</button>
+    </div>
+    <div class="ai-bulk-body">
+      <div class="ai-bulk-section">
+        <label class="ai-bulk-label">Fields to generate:</label>
+        <label class="ai-bulk-check"><input type="checkbox" id="ai-bulk-titles" checked> Titles</label>
+        <label class="ai-bulk-check"><input type="checkbox" id="ai-bulk-descriptions" checked> Descriptions</label>
+        <label class="ai-bulk-check"><input type="checkbox" id="ai-bulk-tags" checked> Tags</label>
+      </div>
+      <div class="ai-bulk-section">
+        <label class="ai-bulk-label">Scope:</label>
+        <select id="ai-bulk-scope" class="filter-select">
+          <option value="all">All listings</option>
+          <option value="selected">Selected listings only</option>
+          <option value="missing">Missing fields only</option>
+        </select>
+      </div>
+      <div class="ai-bulk-section">
+        <label class="ai-bulk-label">Style:</label>
+        <select id="ai-bulk-style" class="filter-select">
+          <option value="descriptive">Descriptive</option>
+          <option value="seo-heavy">SEO-Heavy</option>
+          <option value="minimal">Minimal</option>
+        </select>
+      </div>
+      <div class="ai-bulk-cost" id="ai-bulk-cost">Estimated cost: 0 credits</div>
+      <div class="ai-bulk-progress" id="ai-bulk-progress" style="display:none;">
+        <div class="ai-progress-bar"><div class="ai-progress-fill" id="ai-progress-fill"></div></div>
+        <span class="ai-progress-text" id="ai-progress-text">0 / 0</span>
+      </div>
+    </div>
+    <div class="ai-bulk-footer">
+      <button id="ai-bulk-cancel" class="btn btn-secondary" style="display:none;">Cancel</button>
+      <button id="ai-bulk-start" class="btn btn-primary">Generate</button>
+    </div>
+  </div>
+
+  <div id="eval-bulk-backdrop" class="eval-bulk-backdrop" style="display:none;"></div>
+  <div id="eval-bulk-modal" class="eval-bulk-modal" style="display:none;">
+    <div class="ai-bulk-header">
+      <h2>Evaluate All</h2>
+      <button id="eval-bulk-close" class="btn btn-close">&times;</button>
+    </div>
+    <div class="ai-bulk-body">
+      <div class="ai-bulk-section">
+        <label class="ai-bulk-label">Scope:</label>
+        <select id="eval-bulk-scope" class="filter-select">
+          <option value="all">All listings</option>
+          <option value="selected">Selected listings only</option>
+          <option value="unevaluated">Unevaluated only</option>
+        </select>
+      </div>
+      <div class="ai-bulk-cost" id="eval-bulk-cost">Estimated cost: 0 credits (0 listings x 2 credits)</div>
+      <div class="ai-bulk-progress" id="eval-bulk-progress" style="display:none;">
+        <div class="ai-progress-bar"><div class="ai-progress-fill" id="eval-progress-fill"></div></div>
+        <span class="ai-progress-text" id="eval-progress-text">0 / 0</span>
+      </div>
+    </div>
+    <div class="ai-bulk-footer">
+      <button id="eval-bulk-cancel" class="btn btn-secondary" style="display:none;">Cancel</button>
+      <button id="eval-bulk-start" class="btn btn-primary">Evaluate</button>
+    </div>
+  </div>
+
+  <div id="lightbox" class="lightbox" style="display:none;">
+    <div class="lightbox-backdrop"></div>
+    <div class="lightbox-content">
+      <img id="lightbox-img" src="" alt="Preview">
+      <div id="lightbox-caption" class="lightbox-caption"></div>
+      <button id="lightbox-close" class="lightbox-close">&times;</button>
+    </div>
   </div>
 
   <script src="../sidepanel/lib/xlsx.full.min.js"></script>

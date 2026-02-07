@@ -1,7 +1,11 @@
 import { STORAGE_KEYS, CATEGORIES, CATEGORY_ATTRIBUTES, sanitizeListing, readSpreadsheetFile } from '../services/listingUtils.js';
 import { renderListingCard, renderAllCards, createBlankListing } from './components/form-view.js';
-import { validateListing, formatPrice, validateTag } from './components/validator.js';
-import { initGrid, destroyGrid, refreshGridData, getGridListings, addGridRow, deleteGridRows } from './components/grid-view.js';
+import { validateListing, formatPrice, validateTag, autoformatTitle, autoformatDescription, autoformatListing, titleCaseTitle, validateAllListings } from './components/validator.js';
+import { initGrid, destroyGrid, refreshGridData, getGridListings, addGridRow, deleteGridRows, updateCell, IMAGES_COL } from './components/grid-view.js';
+import { openImageDB } from '../services/imageStore.js';
+import { loadTagLibrary, mapFormCategoryToInternal, getSuggestionsForCategory, fetchCompetitorTags, getTagFrequency } from './components/tag-manager.js';
+import { processImageFiles, processImageURL, removeImage, removeAllImages, getFullResolutionImages, reorderImages, showLightbox, closeLightbox, processDigitalFile, removeDigitalFile, hasImage } from './components/image-handler.js';
+import { generateForListing, bulkGenerate, evaluateListing, bulkEvaluate } from './components/ai-generator.js';
 
 let listings = [];
 let expandedIds = new Set();
@@ -10,6 +14,13 @@ let lastSaveTime = null;
 let currentView = 'form';
 let formScrollPos = 0;
 let gridScrollPos = 0;
+
+let tagLibrary = {};
+let tagPanelListingId = null;
+let aiPanelListingId = null;
+let aiPanelField = null;
+let bulkCancelFn = null;
+let evalBulkCancelFn = null;
 
 const undoStack = [];
 const redoStack = [];
@@ -39,17 +50,70 @@ const els = {
   filterStatus: document.getElementById('filter-status'),
   sortBy: document.getElementById('sort-by'),
   undoBtn: document.getElementById('undo-btn'),
-  redoBtn: document.getElementById('redo-btn')
+  redoBtn: document.getElementById('redo-btn'),
+  validationBadge: document.getElementById('validation-badge'),
+  validationReport: document.getElementById('validation-report'),
+  validationReportBackdrop: document.getElementById('validation-report-backdrop'),
+  reportSummary: document.getElementById('report-summary'),
+  reportList: document.getElementById('report-list'),
+  reportClose: document.getElementById('report-close'),
+  tagLibraryPanel: document.getElementById('tag-library-panel'),
+  tagLibraryBackdrop: document.getElementById('tag-library-backdrop'),
+  tagLibraryContent: document.getElementById('tag-library-content'),
+  tagImportContent: document.getElementById('tag-import-content'),
+  tagFrequencyContent: document.getElementById('tag-frequency-content'),
+  tagLibraryClose: document.getElementById('tag-library-close'),
+  applyTagsToSelected: document.getElementById('apply-tags-to-selected'),
+  tagPanelFooter: document.getElementById('tag-panel-footer'),
+  aiPanel: document.getElementById('ai-panel'),
+  aiPanelBackdrop: document.getElementById('ai-panel-backdrop'),
+  aiPanelTitle: document.getElementById('ai-panel-title'),
+  aiPanelClose: document.getElementById('ai-panel-close'),
+  aiResults: document.getElementById('ai-results'),
+  aiLoading: document.getElementById('ai-loading'),
+  aiError: document.getElementById('ai-error'),
+  aiBulkModal: document.getElementById('ai-bulk-modal'),
+  aiBulkBackdrop: document.getElementById('ai-bulk-backdrop'),
+  aiBulkClose: document.getElementById('ai-bulk-close'),
+  aiBulkStart: document.getElementById('ai-bulk-start'),
+  aiBulkCancel: document.getElementById('ai-bulk-cancel'),
+  aiBulkTitles: document.getElementById('ai-bulk-titles'),
+  aiBulkDescriptions: document.getElementById('ai-bulk-descriptions'),
+  aiBulkTags: document.getElementById('ai-bulk-tags'),
+  aiBulkScope: document.getElementById('ai-bulk-scope'),
+  aiBulkStyle: document.getElementById('ai-bulk-style'),
+  aiBulkCost: document.getElementById('ai-bulk-cost'),
+  aiBulkProgress: document.getElementById('ai-bulk-progress'),
+  aiProgressFill: document.getElementById('ai-progress-fill'),
+  aiProgressText: document.getElementById('ai-progress-text'),
+  evalBulkModal: document.getElementById('eval-bulk-modal'),
+  evalBulkBackdrop: document.getElementById('eval-bulk-backdrop'),
+  evalBulkClose: document.getElementById('eval-bulk-close'),
+  evalBulkStart: document.getElementById('eval-bulk-start'),
+  evalBulkCancel: document.getElementById('eval-bulk-cancel'),
+  evalBulkScope: document.getElementById('eval-bulk-scope'),
+  evalBulkCost: document.getElementById('eval-bulk-cost'),
+  evalBulkProgress: document.getElementById('eval-bulk-progress'),
+  evalProgressFill: document.getElementById('eval-progress-fill'),
+  evalProgressText: document.getElementById('eval-progress-text')
 };
 
 document.addEventListener('DOMContentLoaded', init);
 
 async function init() {
+  try {
+    await openImageDB();
+  } catch (e) {
+    console.warn('IndexedDB unavailable, falling back to inline images:', e);
+    idbAvailable = false;
+  }
   await loadSavedState();
+  tagLibrary = await loadTagLibrary();
   populateCategoryFilter();
   render();
   setupEventListeners();
   setupTabTracking();
+  setupStorageListener();
 }
 
 function setupTabTracking() {
@@ -95,11 +159,13 @@ function render() {
   updateSendButtonState();
   updateAutosaveStatus();
   updateUndoRedoButtons();
+  updateValidationBadge();
 }
 
 function renderFormView() {
   const filtered = getFilteredListings();
   renderAllCards(filtered, els.listingCards, expandedIds.size > 0 ? expandedIds : null);
+  updateTagSuggestions();
 }
 
 function renderGridView() {
@@ -265,6 +331,13 @@ function setupEventListeners() {
   els.closeEditorBtn.addEventListener('click', closeEditor);
   els.undoBtn.addEventListener('click', undo);
   els.redoBtn.addEventListener('click', redo);
+  els.validationBadge.addEventListener('click', runBatchValidation);
+  els.reportClose.addEventListener('click', closeValidationReport);
+  els.validationReportBackdrop.addEventListener('click', closeValidationReport);
+  els.reportList.addEventListener('click', (e) => {
+    const jumpBtn = e.target.closest('[data-jump-id]');
+    if (jumpBtn) jumpToListing(jumpBtn.dataset.jumpId);
+  });
 
   els.viewToggle.addEventListener('click', (e) => {
     const btn = e.target.closest('.view-toggle-btn');
@@ -314,8 +387,40 @@ function setupEventListeners() {
   els.listingCards.addEventListener('click', handleCardClick);
   els.listingCards.addEventListener('keydown', handleTagKeydown);
   els.listingCards.addEventListener('paste', handlePricePaste);
+  els.listingCards.addEventListener('blur', handleFieldBlur, true);
+  els.listingCards.addEventListener('mouseover', clampTooltipPosition);
+
+  els.listingCards.addEventListener('dragstart', handleDragStart);
+  els.listingCards.addEventListener('dragover', handleDragOver);
+  els.listingCards.addEventListener('dragleave', handleDragLeave);
+  els.listingCards.addEventListener('drop', handleDrop);
+  els.listingCards.addEventListener('dragend', handleDragEnd);
 
   document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (els.evalBulkModal.style.display !== 'none') {
+        closeEvalBulkModal();
+        return;
+      }
+      if (els.aiPanel.style.display !== 'none') {
+        closeAiPanel();
+        return;
+      }
+      if (els.aiBulkModal.style.display !== 'none') {
+        closeAiBulkModal();
+        return;
+      }
+      if (els.tagLibraryPanel.style.display !== 'none') {
+        closeTagLibraryPanel();
+        return;
+      }
+      if (els.validationReport.style.display !== 'none') {
+        closeValidationReport();
+        return;
+      }
+      closeLightbox();
+      return;
+    }
     if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
       e.preventDefault();
       undo();
@@ -325,6 +430,42 @@ function setupEventListeners() {
       redo();
     }
   });
+
+  els.tagLibraryClose.addEventListener('click', closeTagLibraryPanel);
+  els.tagLibraryBackdrop.addEventListener('click', closeTagLibraryPanel);
+
+  els.tagLibraryPanel.querySelector('.panel-tabs').addEventListener('click', (e) => {
+    const tab = e.target.closest('.panel-tab');
+    if (!tab) return;
+    handlePanelTabClick(tab.dataset.panelTab);
+  });
+
+  els.tagLibraryContent.addEventListener('click', handleLibraryContentClick);
+  els.tagImportContent.addEventListener('click', handleImportContentClick);
+
+  els.aiPanelClose.addEventListener('click', closeAiPanel);
+  els.aiPanelBackdrop.addEventListener('click', closeAiPanel);
+  els.aiResults.addEventListener('click', handleAiResultsClick);
+  els.aiBulkClose.addEventListener('click', closeAiBulkModal);
+  els.aiBulkBackdrop.addEventListener('click', closeAiBulkModal);
+  els.aiBulkStart.addEventListener('click', startBulkGenerate);
+  els.aiBulkCancel.addEventListener('click', cancelBulkGenerate);
+  els.aiBulkTitles.addEventListener('change', updateBulkCost);
+  els.aiBulkDescriptions.addEventListener('change', updateBulkCost);
+  els.aiBulkTags.addEventListener('change', updateBulkCost);
+  els.aiBulkScope.addEventListener('change', updateBulkCost);
+
+  els.evalBulkClose.addEventListener('click', closeEvalBulkModal);
+  els.evalBulkBackdrop.addEventListener('click', closeEvalBulkModal);
+  els.evalBulkStart.addEventListener('click', startBulkEvaluate);
+  els.evalBulkCancel.addEventListener('click', cancelBulkEvaluate);
+  els.evalBulkScope.addEventListener('change', updateEvalBulkCost);
+
+  const lightboxEl = document.getElementById('lightbox');
+  if (lightboxEl) {
+    lightboxEl.querySelector('.lightbox-backdrop').addEventListener('click', closeLightbox);
+    lightboxEl.querySelector('.lightbox-close').addEventListener('click', closeLightbox);
+  }
 }
 
 function debounce(fn, ms) {
@@ -377,8 +518,9 @@ function handleGridChange(type, detail) {
   if (type === 'cell') {
     const { x, y, value } = detail;
     if (listings[y]) {
-      const fields = ['_selected', 'title', 'description', 'price', 'category', 'tags', 'who_made', 'what_is_it', 'ai_content', 'when_made', 'renewal', 'listing_state', 'materials', 'quantity', 'sku'];
+      const fields = ['_selected', 'title', 'description', 'price', 'category', 'tags', 'who_made', 'what_is_it', 'ai_content', 'when_made', 'renewal', 'listing_state', 'materials', 'quantity', 'sku', '_images'];
       const field = fields[x];
+      if (field === '_images') return;
       if (field === '_selected') {
         listings[y]._selected = value === true || value === 'true';
         return;
@@ -421,6 +563,22 @@ function handleGridChange(type, detail) {
     updateCounts();
     updateSendButtonState();
     scheduleSave();
+  } else if (type === 'imageClick') {
+    const rowIndex = detail.y;
+    if (!listings[rowIndex]) return;
+    let gridFileInput = document.getElementById('grid-image-input');
+    if (!gridFileInput) {
+      gridFileInput = document.createElement('input');
+      gridFileInput.type = 'file';
+      gridFileInput.id = 'grid-image-input';
+      gridFileInput.accept = 'image/jpeg,image/png,image/gif,image/webp';
+      gridFileInput.multiple = true;
+      gridFileInput.hidden = true;
+      gridFileInput.addEventListener('change', handleGridImageInput);
+      document.body.appendChild(gridFileInput);
+    }
+    gridFileInput.dataset.rowIndex = rowIndex;
+    gridFileInput.click();
   }
 }
 
@@ -437,6 +595,13 @@ function handleMenuAction(action) {
   else if (action === 'select-none') selectAll(false);
   else if (action === 'export-xlsx') exportXlsx();
   else if (action === 'export-csv') exportCsv();
+  else if (action === 'validate-all') runBatchValidation();
+  else if (action === 'autoformat-all') runAutoformatAll();
+  else if (action === 'titlecase-all') runTitleCaseAll();
+  else if (action === 'ai-generate-all') showAiBulkModal();
+  else if (action === 'evaluate-all') showEvalBulkModal();
+  else if (action === 'add-tags-to-selected') addBatchTags();
+  else if (action === 'remove-tag-from-all') removeBatchTag();
 }
 
 function getSelectedIds() {
@@ -477,7 +642,7 @@ function incrementSku(sku) {
   return sku + '-copy';
 }
 
-function deleteSelected() {
+async function deleteSelected() {
   const selected = listings.filter(l => l._selected);
   if (selected.length === 0) {
     showToast('No listings selected', 'error');
@@ -488,6 +653,7 @@ function deleteSelected() {
   const ids = new Set(selected.map(l => l.id));
   listings = listings.filter(l => !ids.has(l.id));
   ids.forEach(id => expandedIds.delete(id));
+  await Promise.all([...ids].map(id => removeAllImages(id)));
   render();
   scheduleSave();
   showToast(`Deleted ${selected.length} listing(s)`, 'success');
@@ -592,6 +758,8 @@ function handleFieldInput(e) {
     listing.quantity = parseInt(e.target.value) || 999;
   } else if (field === 'sku') {
     listing.sku = e.target.value;
+  } else if (field === '_digital_display_name') {
+    listing._digital_display_name = e.target.value;
   }
 
   updateCardValidation(id);
@@ -631,6 +799,7 @@ function handleFieldChange(e) {
         listing.craft_type = CATEGORY_ATTRIBUTES[listing.category].craft_type.default;
       }
     }
+    updateTagSuggestions(id);
   } else if (field === 'craft_type') {
     listing.craft_type = e.target.value;
   } else if (field === 'who_made') {
@@ -668,7 +837,7 @@ function handleCardClick(e) {
   }
 
   const header = e.target.closest('[data-action="toggle"]');
-  if (header && !e.target.closest('.card-remove') && !e.target.closest('.card-select')) {
+  if (header && !e.target.closest('.card-remove') && !e.target.closest('.card-select') && !e.target.closest('.eval-btn')) {
     const id = header.dataset.listingId;
     toggleCard(id);
     return;
@@ -690,8 +859,38 @@ function handleCardClick(e) {
   }
 
   const imageSlot = e.target.closest('.image-slot');
-  if (imageSlot && !imageSlot.classList.contains('has-image')) {
-    handleImageSlotClick(imageSlot);
+  if (imageSlot) {
+    if (imageSlot.classList.contains('has-image') && !e.target.closest('.image-slot-remove')) {
+      const lid = imageSlot.dataset.listingId;
+      const slotIdx = parseInt(imageSlot.dataset.imageIndex);
+      const listing = findListingById(lid);
+      if (listing) showLightbox(listing, slotIdx);
+    } else if (!imageSlot.classList.contains('has-image')) {
+      handleImageSlotClick(imageSlot);
+    }
+    return;
+  }
+
+  if (e.target.classList.contains('image-url-paste')) {
+    const lid = e.target.dataset.listingId;
+    const listing = findListingById(lid);
+    if (!listing) return;
+    const url = prompt('Enter image URL:');
+    if (!url || !url.trim()) return;
+    const trimmed = url.trim();
+    if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
+      showToast('Enter a valid URL starting with http:// or https://', 'error');
+      return;
+    }
+    pushUndo('add image from URL');
+    processImageURL(trimmed, listing, null, {
+      onError: (msg) => showToast(msg, 'error'),
+      onComplete: (results) => {
+        rerenderCard(lid);
+        scheduleSave();
+        if (results.length > 0) showToast('Image added from URL', 'success');
+      }
+    });
     return;
   }
 
@@ -704,6 +903,38 @@ function handleCardClick(e) {
   if (e.target.classList.contains('digital-file-remove') || e.target.closest('.digital-file-remove')) {
     const btn = e.target.classList.contains('digital-file-remove') ? e.target : e.target.closest('.digital-file-remove');
     handleDigitalFileRemove(btn);
+    return;
+  }
+
+  if (e.target.classList.contains('ai-gen-btn')) {
+    if (e.target.disabled || e.target.classList.contains('disabled')) return;
+    const lid = e.target.dataset.listingId;
+    const field = e.target.dataset.aiField;
+    handleAiGenerate(lid, field, e.target);
+    return;
+  }
+
+  if (e.target.classList.contains('eval-btn')) {
+    if (e.target.disabled || e.target.classList.contains('disabled')) return;
+    handleEvaluateListing(e.target.dataset.listingId, e.target);
+    return;
+  }
+
+  const evalSwap = e.target.closest('[data-eval-action="swap-tag"]');
+  if (evalSwap) {
+    applyEvalTagSwap(evalSwap);
+    return;
+  }
+
+  if (e.target.classList.contains('tag-library-btn')) {
+    const lid = e.target.dataset.listingId;
+    showTagLibraryPanel(lid);
+    return;
+  }
+
+  const suggChip = e.target.closest('.suggestion-chip:not(.added)');
+  if (suggChip) {
+    handleSuggestionClick(suggChip);
     return;
   }
 
@@ -775,30 +1006,77 @@ function handleImageSlotClick(slot) {
   if (input) input.click();
 }
 
-function handleImageSlotChange(input) {
-  const file = input.files[0];
-  if (!file || !file.type.startsWith('image/')) return;
+function countListingImages(listing) {
+  let count = 0;
+  for (let i = 1; i <= 5; i++) {
+    if (listing[`image_${i}`]) count++;
+  }
+  return count;
+}
+
+async function handleGridImageInput(e) {
+  const files = Array.from(e.target.files);
+  if (files.length === 0) return;
+  const rowIndex = parseInt(e.target.dataset.rowIndex);
+  const listing = listings[rowIndex];
+  if (!listing) return;
+
+  pushUndo('add image');
+  await processImageFiles(files, listing, null, {
+    onError: (msg) => showToast(msg, 'error'),
+    onComplete: (results) => {
+      updateCell(IMAGES_COL, rowIndex, `${countListingImages(listing)}/5`);
+      scheduleSave();
+      if (results.length > 0) showToast(`Added ${results.length} image(s)`, 'success');
+    }
+  });
+  e.target.value = '';
+}
+
+async function handleImageSlotChange(input) {
+  const files = Array.from(input.files);
+  if (files.length === 0) return;
   const id = input.dataset.listingId;
-  const idx = input.dataset.imageIndex;
+  const startSlot = parseInt(input.dataset.imageIndex);
   const listing = findListingById(id);
   if (!listing) return;
 
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    listing[`image_${idx}`] = e.target.result;
-    rerenderCard(id);
-    scheduleSave();
-  };
-  reader.readAsDataURL(file);
+  if (!idbAvailable) {
+    const file = files[0];
+    if (!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      listing[`image_${startSlot}`] = e.target.result;
+      rerenderCard(id);
+      scheduleSave();
+    };
+    reader.readAsDataURL(file);
+    input.value = '';
+    return;
+  }
+
+  pushUndo('add image');
+  await processImageFiles(files, listing, startSlot, {
+    onSlotLoading: (lid, slot) => {
+      const slotEl = els.listingCards.querySelector(`.image-slot[data-listing-id="${lid}"][data-image-index="${slot}"]`);
+      if (slotEl) slotEl.classList.add('loading');
+    },
+    onError: (msg) => showToast(msg, 'error'),
+    onComplete: () => {
+      rerenderCard(id);
+      scheduleSave();
+    }
+  });
   input.value = '';
 }
 
-function handleImageRemove(btn) {
+async function handleImageRemove(btn) {
   const id = btn.dataset.listingId;
-  const idx = btn.dataset.imageIndex;
+  const idx = parseInt(btn.dataset.imageIndex);
   const listing = findListingById(id);
   if (!listing) return;
-  listing[`image_${idx}`] = '';
+  pushUndo('remove image');
+  await removeImage(listing, idx);
   rerenderCard(id);
   scheduleSave();
 }
@@ -811,30 +1089,44 @@ function handleDigitalFileBrowse(btn) {
   if (input) input.click();
 }
 
-function handleDigitalFileChange(input) {
+async function handleDigitalFileChange(input) {
   const file = input.files[0];
   if (!file) return;
   const id = input.dataset.listingId;
   const listing = findListingById(id);
   if (!listing) return;
 
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    listing.digital_file_1 = e.target.result;
-    listing._digital_file_name = file.name;
-    rerenderCard(id);
-    scheduleSave();
-  };
-  reader.readAsDataURL(file);
+  if (!idbAvailable) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      listing.digital_file_1 = e.target.result;
+      listing._digital_file_name = file.name;
+      listing._digital_file_size = file.size;
+      rerenderCard(id);
+      scheduleSave();
+    };
+    reader.readAsDataURL(file);
+    input.value = '';
+    return;
+  }
+
+  pushUndo('add digital file');
+  await processDigitalFile(file, listing, {
+    onError: (msg) => showToast(msg, 'error'),
+    onComplete: () => {
+      rerenderCard(id);
+      scheduleSave();
+    }
+  });
   input.value = '';
 }
 
-function handleDigitalFileRemove(btn) {
+async function handleDigitalFileRemove(btn) {
   const id = btn.dataset.listingId;
   const listing = findListingById(id);
   if (!listing) return;
-  listing.digital_file_1 = '';
-  listing._digital_file_name = '';
+  pushUndo('remove digital file');
+  await removeDigitalFile(listing);
   rerenderCard(id);
   scheduleSave();
 }
@@ -860,6 +1152,7 @@ function rerenderCard(id) {
   card.replaceWith(newCard);
   const tagInput = newCard.querySelector(`[data-field="tag_input"][data-listing-id="${id}"]`);
   if (tagInput) tagInput.focus();
+  updateTagSuggestions(id);
   updateSendButtonState();
 }
 
@@ -933,6 +1226,195 @@ function escapeHtmlSimple(text) {
   return div.innerHTML;
 }
 
+let draggedListingId = null;
+let draggedImageInfo = null;
+let idbAvailable = true;
+
+function handleDragStart(e) {
+  const imageSlot = e.target.closest('.image-slot.has-image');
+  if (imageSlot) {
+    const lid = imageSlot.dataset.listingId;
+    const idx = parseInt(imageSlot.dataset.imageIndex);
+    draggedImageInfo = { listingId: lid, slotIndex: idx };
+    imageSlot.classList.add('image-dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', `image:${lid}:${idx}`);
+    return;
+  }
+
+  const card = e.target.closest('.listing-card');
+  if (!card) return;
+  const handle = e.target.closest('.drag-handle');
+  if (!handle) {
+    e.preventDefault();
+    return;
+  }
+  draggedListingId = card.dataset.listingId;
+  card.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', draggedListingId);
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+
+  if (draggedImageInfo) {
+    e.dataTransfer.dropEffect = 'move';
+    clearImageDragIndicators();
+    const targetSlot = e.target.closest('.image-slot');
+    if (targetSlot && targetSlot.dataset.listingId === draggedImageInfo.listingId) {
+      targetSlot.classList.add('image-drag-target');
+    }
+    return;
+  }
+
+  const hasFiles = e.dataTransfer.types.includes('Files');
+  if (hasFiles && !draggedListingId) {
+    e.dataTransfer.dropEffect = 'copy';
+    const slotsContainer = e.target.closest('.image-slots');
+    const digitalSlot = e.target.closest('[data-drop-zone="digital"]');
+    if (slotsContainer) {
+      slotsContainer.classList.add('image-drag-over');
+    } else if (digitalSlot) {
+      digitalSlot.classList.add('digital-drag-over');
+    }
+    return;
+  }
+
+  e.dataTransfer.dropEffect = 'move';
+  const card = e.target.closest('.listing-card');
+  if (!card || card.dataset.listingId === draggedListingId) return;
+
+  clearDragIndicators();
+  const rect = card.getBoundingClientRect();
+  const midY = rect.top + rect.height / 2;
+  if (e.clientY < midY) {
+    card.classList.add('drag-over-above');
+  } else {
+    card.classList.add('drag-over-below');
+  }
+}
+
+function handleDragLeave(e) {
+  const card = e.target.closest('.listing-card');
+  if (card) {
+    card.classList.remove('drag-over-above', 'drag-over-below');
+  }
+  const slot = e.target.closest('.image-slot');
+  if (slot) slot.classList.remove('image-drag-target');
+  const slotsContainer = e.target.closest('.image-slots');
+  if (slotsContainer && !slotsContainer.contains(e.relatedTarget)) {
+    slotsContainer.classList.remove('image-drag-over');
+  }
+  const digitalSlot = e.target.closest('[data-drop-zone="digital"]');
+  if (digitalSlot && !digitalSlot.contains(e.relatedTarget)) {
+    digitalSlot.classList.remove('digital-drag-over');
+  }
+}
+
+async function handleDrop(e) {
+  e.preventDefault();
+
+  if (draggedImageInfo) {
+    const targetSlot = e.target.closest('.image-slot');
+    if (targetSlot && targetSlot.dataset.listingId === draggedImageInfo.listingId) {
+      const toSlot = parseInt(targetSlot.dataset.imageIndex);
+      const listing = findListingById(draggedImageInfo.listingId);
+      if (listing && toSlot !== draggedImageInfo.slotIndex) {
+        pushUndo('reorder images');
+        reorderImages(listing, draggedImageInfo.slotIndex, toSlot);
+        rerenderCard(listing.id);
+        scheduleSave();
+      }
+    }
+    clearImageDragIndicators();
+    draggedImageInfo = null;
+    return;
+  }
+
+  const hasFiles = e.dataTransfer.files && e.dataTransfer.files.length > 0;
+
+  if (hasFiles && !draggedListingId) {
+    const digitalSlot = e.target.closest('[data-drop-zone="digital"]');
+    if (digitalSlot) {
+      digitalSlot.classList.remove('digital-drag-over');
+      const lid = digitalSlot.dataset.listingId;
+      const listing = findListingById(lid);
+      if (listing && idbAvailable) {
+        pushUndo('add digital file');
+        await processDigitalFile(e.dataTransfer.files[0], listing, {
+          onError: (msg) => showToast(msg, 'error'),
+          onComplete: () => { rerenderCard(lid); scheduleSave(); }
+        });
+      }
+      return;
+    }
+
+    const slotsContainer = e.target.closest('.image-slots');
+    if (slotsContainer) {
+      slotsContainer.classList.remove('image-drag-over');
+      const lid = slotsContainer.dataset.listingId;
+      const listing = findListingById(lid);
+      if (listing) {
+        const targetSlot = e.target.closest('.image-slot');
+        const startSlot = targetSlot ? parseInt(targetSlot.dataset.imageIndex) : null;
+        pushUndo('add image');
+        await processImageFiles(Array.from(e.dataTransfer.files), listing, startSlot, {
+          onError: (msg) => showToast(msg, 'error'),
+          onComplete: () => { rerenderCard(lid); scheduleSave(); }
+        });
+      }
+      return;
+    }
+    return;
+  }
+
+  const targetCard = e.target.closest('.listing-card');
+  if (!targetCard || !draggedListingId) return;
+
+  const targetId = targetCard.dataset.listingId;
+  if (targetId === draggedListingId) return;
+
+  const fromIdx = findListingIndex(draggedListingId);
+  let toIdx = findListingIndex(targetId);
+  if (fromIdx === -1 || toIdx === -1) return;
+
+  const rect = targetCard.getBoundingClientRect();
+  const midY = rect.top + rect.height / 2;
+  const insertBelow = e.clientY >= midY;
+
+  pushUndo('reorder');
+  const [moved] = listings.splice(fromIdx, 1);
+  toIdx = findListingIndex(targetId);
+  if (insertBelow) toIdx += 1;
+  listings.splice(toIdx, 0, moved);
+
+  clearDragIndicators();
+  renderFormView();
+  updateCounts();
+  scheduleSave();
+}
+
+function handleDragEnd() {
+  draggedListingId = null;
+  draggedImageInfo = null;
+  clearDragIndicators();
+  clearImageDragIndicators();
+  els.listingCards.querySelectorAll('.dragging').forEach(el => el.classList.remove('dragging'));
+}
+
+function clearDragIndicators() {
+  els.listingCards.querySelectorAll('.drag-over-above, .drag-over-below').forEach(el => {
+    el.classList.remove('drag-over-above', 'drag-over-below');
+  });
+}
+
+function clearImageDragIndicators() {
+  els.listingCards.querySelectorAll('.image-dragging, .image-drag-target, .image-drag-over').forEach(el => {
+    el.classList.remove('image-dragging', 'image-drag-target', 'image-drag-over');
+  });
+}
+
 function addListing() {
   pushUndo('add listing');
   const blank = createBlankListing();
@@ -955,7 +1437,7 @@ function addListing() {
   scheduleSave();
 }
 
-function removeListing(id) {
+async function removeListing(id) {
   const index = findListingIndex(id);
   if (index === -1) return;
   const listing = listings[index];
@@ -966,6 +1448,7 @@ function removeListing(id) {
   pushUndo('remove listing');
   listings.splice(index, 1);
   expandedIds.delete(id);
+  await removeAllImages(id);
   render();
   scheduleSave();
 }
@@ -1018,12 +1501,25 @@ async function sendToQueue() {
     const data = await chrome.storage.local.get(STORAGE_KEYS.QUEUE);
     const existingQueue = data[STORAGE_KEYS.QUEUE] || [];
 
-    const queueListings = listings.map(l => ({
-      ...l,
-      id: String(Date.now() + Math.random()),
-      price: parseFloat(l.price) || 0,
-      status: 'pending',
-      selected: true
+    const queueListings = await Promise.all(listings.map(async l => {
+      const fullImages = idbAvailable ? await getFullResolutionImages(l) : {};
+      const entry = {
+        ...l,
+        ...fullImages,
+        id: String(Date.now() + Math.random()),
+        price: parseFloat(l.price) || 0,
+        status: 'pending',
+        selected: true
+      };
+      for (let i = 1; i <= 5; i++) {
+        delete entry[`_image_${i}_ref`];
+        delete entry[`_image_${i}_meta`];
+      }
+      delete entry._digital_file_size;
+      Object.keys(entry).forEach(k => {
+        if (k.startsWith('_eval_')) delete entry[k];
+      });
+      return entry;
     }));
 
     const merged = [...existingQueue, ...queueListings];
@@ -1050,6 +1546,10 @@ function showClearPrompt() {
   toast.className = 'toast success show';
 
   toast.querySelector('#clear-editor-btn').addEventListener('click', async () => {
+    if (idbAvailable) {
+      const { clearAllImages } = await import('../services/imageStore.js');
+      await clearAllImages();
+    }
     listings = [];
     await chrome.storage.local.remove(STORAGE_KEYS.EDITOR_LISTINGS);
     lastSaveTime = null;
@@ -1113,6 +1613,983 @@ async function importFile(file) {
   } catch (err) {
     showToast('Import failed: ' + err.message, 'error');
   }
+}
+
+function updateValidationBadge() {
+  if (listings.length === 0) {
+    els.validationBadge.style.display = 'none';
+    return;
+  }
+  const { summary } = validateAllListings(listings);
+  els.validationBadge.style.display = '';
+  els.validationBadge.className = 'validation-summary-badge';
+  if (summary.errorListings > 0) {
+    els.validationBadge.classList.add('has-errors');
+    els.validationBadge.textContent = `${summary.totalErrors} error${summary.totalErrors !== 1 ? 's' : ''}, ${summary.totalWarnings} warning${summary.totalWarnings !== 1 ? 's' : ''}`;
+  } else if (summary.warningListings > 0) {
+    els.validationBadge.classList.add('has-warnings');
+    els.validationBadge.textContent = `${summary.totalWarnings} warning${summary.totalWarnings !== 1 ? 's' : ''}`;
+  } else {
+    els.validationBadge.classList.add('all-clean');
+    els.validationBadge.textContent = 'All clean';
+  }
+}
+
+function runBatchValidation() {
+  if (listings.length === 0) {
+    showToast('No listings to validate', 'error');
+    return;
+  }
+  const result = validateAllListings(listings);
+  showValidationReport(result);
+}
+
+function showValidationReport(result) {
+  const { results, summary } = result;
+
+  els.reportSummary.innerHTML = `
+    <span class="report-stat"><span class="dot red"></span>${summary.errorListings} with errors</span>
+    <span class="report-stat"><span class="dot orange"></span>${summary.warningListings} with warnings</span>
+    <span class="report-stat"><span class="dot green"></span>${summary.cleanListings} clean</span>
+  `;
+
+  const issueResults = results.filter(r => r.errors.length > 0 || r.warnings.length > 0);
+  const cleanResults = results.filter(r => r.errors.length === 0 && r.warnings.length === 0);
+
+  let html = '';
+  for (const r of issueResults) {
+    const cls = r.errors.length > 0 ? 'has-errors' : 'has-warnings';
+    html += `<div class="report-item ${cls}">
+      <div class="report-item-header" data-jump-id="${r.listingId}">
+        <span><span class="report-item-number">#${r.index + 1}</span>${escapeHtmlSimple(r.listingTitle)}</span>
+        <button class="report-item-jump" data-jump-id="${r.listingId}">Go to</button>
+      </div>`;
+    if (r.errors.length > 0) {
+      html += `<ul class="report-item-errors">${r.errors.map(e => `<li>${escapeHtmlSimple(e)}</li>`).join('')}</ul>`;
+    }
+    if (r.warnings.length > 0) {
+      html += `<ul class="report-item-warnings">${r.warnings.map(w => `<li>${escapeHtmlSimple(w)}</li>`).join('')}</ul>`;
+    }
+    html += '</div>';
+  }
+
+  if (cleanResults.length > 0) {
+    html += `<div class="report-item is-clean" style="text-align:center;color:#28a745;font-size:13px;padding:12px;">
+      ${cleanResults.length} listing${cleanResults.length !== 1 ? 's' : ''} passed all checks
+    </div>`;
+  }
+
+  els.reportList.innerHTML = html;
+  els.validationReport.style.display = '';
+  els.validationReportBackdrop.style.display = '';
+}
+
+function closeValidationReport() {
+  els.validationReport.style.display = 'none';
+  els.validationReportBackdrop.style.display = 'none';
+}
+
+function jumpToListing(listingId) {
+  closeValidationReport();
+  if (currentView === 'grid') {
+    switchView('form');
+  }
+  expandedIds.add(listingId);
+  renderFormView();
+
+  requestAnimationFrame(() => {
+    const card = els.listingCards.querySelector(`[data-listing-id="${listingId}"]`);
+    if (!card) return;
+    if (card.classList.contains('collapsed')) {
+      toggleCard(listingId);
+    }
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    card.classList.add('report-item-highlight');
+    setTimeout(() => card.classList.remove('report-item-highlight'), 1500);
+  });
+}
+
+function runAutoformatAll() {
+  if (listings.length === 0) {
+    showToast('No listings to autoformat', 'error');
+    return;
+  }
+  pushUndo('autoformat all');
+  listings = listings.map(l => autoformatListing(l));
+  render();
+  scheduleSave();
+  showToast(`Autoformatted ${listings.length} listing(s)`, 'success');
+}
+
+function runTitleCaseAll() {
+  if (listings.length === 0) {
+    showToast('No listings to title case', 'error');
+    return;
+  }
+  pushUndo('title case all');
+  listings.forEach(l => {
+    if (l.title) l.title = titleCaseTitle(l.title);
+  });
+  render();
+  scheduleSave();
+  showToast(`Title-cased ${listings.length} listing(s)`, 'success');
+}
+
+function handleFieldBlur(e) {
+  const field = e.target.dataset.field;
+  const id = e.target.dataset.listingId;
+  if (!field || !id) return;
+  const listing = findListingById(id);
+  if (!listing) return;
+
+  if (field === 'title' && listing.title) {
+    const formatted = autoformatTitle(listing.title);
+    if (formatted !== listing.title) {
+      listing.title = formatted;
+      e.target.value = formatted;
+      const card = e.target.closest('.listing-card');
+      const preview = card.querySelector('.card-title-preview');
+      preview.textContent = formatted ? formatted.substring(0, 60) : 'Untitled listing';
+      updateCardValidation(id);
+      scheduleSave();
+    }
+  } else if (field === 'description' && listing.description) {
+    const formatted = autoformatDescription(listing.description);
+    if (formatted !== listing.description) {
+      listing.description = formatted;
+      e.target.value = formatted;
+      updateCardValidation(id);
+      scheduleSave();
+    }
+  }
+}
+
+function escapeHtmlTag(text) {
+  const d = document.createElement('div');
+  d.textContent = text || '';
+  return d.innerHTML;
+}
+
+function updateTagSuggestions(listingId) {
+  const containers = listingId
+    ? [els.listingCards.querySelector(`[data-suggestions-for="${listingId}"]`)]
+    : Array.from(els.listingCards.querySelectorAll('.tag-suggestions'));
+
+  for (const container of containers) {
+    if (!container) continue;
+    const lid = container.dataset.suggestionsFor;
+    const listing = findListingById(lid);
+    if (!listing) { container.innerHTML = ''; continue; }
+
+    const { sets, recentTags } = getSuggestionsForCategory(listing.category, tagLibrary);
+    const existingTags = new Set((listing.tags || []).map(t => t.toLowerCase()));
+
+    let html = '';
+
+    if (sets.length > 0) {
+      for (const set of sets.slice(0, 3)) {
+        const chips = (set.tags || []).map(tag => {
+          const isAdded = existingTags.has(tag.toLowerCase());
+          return `<span class="suggestion-chip${isAdded ? ' added' : ''}" data-suggestion-tag="${escapeHtmlTag(tag)}" data-listing-id="${lid}">${escapeHtmlTag(tag)}</span>`;
+        }).join('');
+        html += `<div class="suggestion-group"><div class="suggestion-group-title">${escapeHtmlTag(set.name)}</div>${chips}</div>`;
+      }
+    }
+
+    if (recentTags && recentTags.length > 0) {
+      const recentChips = recentTags.slice(0, 10).map(tag => {
+        const isAdded = existingTags.has(tag.toLowerCase());
+        return `<span class="suggestion-chip${isAdded ? ' added' : ''}" data-suggestion-tag="${escapeHtmlTag(tag)}" data-listing-id="${lid}">${escapeHtmlTag(tag)}</span>`;
+      }).join('');
+      html += `<div class="suggestion-group"><div class="suggestion-group-title">Recent</div>${recentChips}</div>`;
+    }
+
+    container.innerHTML = html;
+  }
+}
+
+function handleSuggestionClick(chip) {
+  const tag = chip.dataset.suggestionTag;
+  const lid = chip.dataset.listingId;
+  const listing = findListingById(lid);
+  if (!listing) return;
+
+  if ((listing.tags || []).length >= 13) {
+    showToast('Maximum 13 tags allowed', 'error');
+    return;
+  }
+  if ((listing.tags || []).some(t => t.toLowerCase() === tag.toLowerCase())) return;
+
+  pushUndo('add tag from suggestion');
+  if (!listing.tags) listing.tags = [];
+  listing.tags.push(tag);
+  rerenderCard(lid);
+  scheduleSave();
+}
+
+function showTagLibraryPanel(listingId) {
+  tagPanelListingId = listingId;
+  const listing = findListingById(listingId);
+  if (listing && listings.some(l => l._selected)) {
+    els.tagPanelFooter.style.display = '';
+  } else {
+    els.tagPanelFooter.style.display = 'none';
+  }
+  els.applyTagsToSelected.checked = false;
+  renderTagLibraryContent(listingId);
+  handlePanelTabClick('library');
+  els.tagLibraryPanel.style.display = '';
+  els.tagLibraryBackdrop.style.display = '';
+}
+
+function closeTagLibraryPanel() {
+  els.tagLibraryPanel.style.display = 'none';
+  els.tagLibraryBackdrop.style.display = 'none';
+  tagPanelListingId = null;
+}
+
+function handlePanelTabClick(tabName) {
+  els.tagLibraryPanel.querySelectorAll('.panel-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.panelTab === tabName);
+  });
+  els.tagLibraryContent.style.display = tabName === 'library' ? '' : 'none';
+  els.tagImportContent.style.display = tabName === 'import' ? '' : 'none';
+  els.tagFrequencyContent.style.display = tabName === 'frequency' ? '' : 'none';
+
+  if (tabName === 'import') renderTagImportContent();
+  if (tabName === 'frequency') renderTagFrequencyContent();
+}
+
+function renderTagLibraryContent(listingId) {
+  const lid = listingId || tagPanelListingId;
+  const listing = lid ? findListingById(lid) : null;
+  const existingTags = listing ? new Set((listing.tags || []).map(t => t.toLowerCase())) : new Set();
+
+  const categories = Object.entries(tagLibrary);
+  if (categories.length === 0) {
+    els.tagLibraryContent.innerHTML = '<div class="tag-library-empty">No tag sets saved yet. Capture tags from Etsy listings in the sidepanel.</div>';
+    return;
+  }
+
+  const internal = listing ? mapFormCategoryToInternal(listing.category) : null;
+  const sorted = [...categories].sort((a, b) => {
+    if (internal) {
+      if (a[0] === internal && b[0] !== internal) return -1;
+      if (b[0] === internal && a[0] !== internal) return 1;
+    }
+    return a[0].localeCompare(b[0]);
+  });
+
+  let html = '';
+  for (const [category, data] of sorted) {
+    if (!data.sets || data.sets.length === 0) continue;
+    html += `<div class="tag-set-category">${escapeHtmlTag(category)}${category === internal ? ' (matches listing)' : ''}</div>`;
+    for (const set of data.sets) {
+      const chips = (set.tags || []).map(tag => {
+        const inListing = existingTags.has(tag.toLowerCase());
+        return `<span class="tag-set-chip${inListing ? ' in-listing' : ''}" data-lib-tag="${escapeHtmlTag(tag)}">${escapeHtmlTag(tag)}</span>`;
+      }).join('');
+      html += `<div class="tag-set-card">
+        <div class="tag-set-header"><span class="tag-set-name">${escapeHtmlTag(set.name)} (${(set.tags || []).length})</span><button class="tag-set-apply" data-set-id="${set.id}" data-set-category="${escapeHtmlTag(category)}">Apply All</button></div>
+        <div class="tag-set-chips">${chips}</div>
+      </div>`;
+    }
+  }
+
+  els.tagLibraryContent.innerHTML = html;
+}
+
+function handleLibraryContentClick(e) {
+  const applyBtn = e.target.closest('.tag-set-apply');
+  if (applyBtn) {
+    const setId = applyBtn.dataset.setId;
+    const setCat = applyBtn.dataset.setCategory;
+    const catData = tagLibrary[setCat];
+    if (!catData) return;
+    const set = catData.sets.find(s => s.id === setId);
+    if (!set) return;
+    applyTagsToListings(set.tags);
+    return;
+  }
+
+  const chip = e.target.closest('.tag-set-chip:not(.in-listing)');
+  if (chip) {
+    const tag = chip.dataset.libTag;
+    applyTagsToListings([tag]);
+    return;
+  }
+}
+
+function applyTagsToListings(tags) {
+  const applyToSelected = els.applyTagsToSelected.checked;
+  const targetListings = applyToSelected
+    ? listings.filter(l => l._selected)
+    : (tagPanelListingId ? [findListingById(tagPanelListingId)] : []);
+
+  if (targetListings.length === 0 || !targetListings[0]) return;
+
+  pushUndo('apply tags from library');
+  let addedCount = 0;
+  for (const listing of targetListings) {
+    if (!listing.tags) listing.tags = [];
+    for (const tag of tags) {
+      if (listing.tags.length >= 13) break;
+      if (listing.tags.some(t => t.toLowerCase() === tag.toLowerCase())) continue;
+      listing.tags.push(tag);
+      addedCount++;
+    }
+  }
+
+  if (addedCount === 0) {
+    showToast('All tags already present', 'error');
+    return;
+  }
+
+  renderTagLibraryContent();
+  if (currentView === 'form') {
+    for (const listing of targetListings) rerenderCard(listing.id);
+  }
+  scheduleSave();
+  showToast(`Added ${addedCount} tag(s) to ${targetListings.length} listing(s)`, 'success');
+}
+
+function renderTagImportContent() {
+  if (els.tagImportContent.querySelector('.import-url-row')) return;
+  els.tagImportContent.innerHTML = `
+    <div class="import-url-row">
+      <input type="text" class="import-url-input" placeholder="https://www.etsy.com/listing/..." id="tag-import-url">
+      <button class="import-fetch-btn" id="tag-import-fetch">Fetch</button>
+    </div>
+    <div class="import-results" id="tag-import-results"></div>
+  `;
+}
+
+async function handleImportFetch() {
+  const urlInput = els.tagImportContent.querySelector('#tag-import-url');
+  const resultsDiv = els.tagImportContent.querySelector('#tag-import-results');
+  const url = (urlInput.value || '').trim();
+  if (!url) { showToast('Enter a URL', 'error'); return; }
+
+  resultsDiv.innerHTML = '<div class="import-spinner">Fetching tags...</div>';
+  const fetchBtn = els.tagImportContent.querySelector('#tag-import-fetch');
+  fetchBtn.disabled = true;
+
+  const result = await fetchCompetitorTags(url);
+  fetchBtn.disabled = false;
+
+  if (result.error) {
+    resultsDiv.innerHTML = `<div class="import-spinner">Failed: ${escapeHtmlTag(result.error)}</div>`;
+    return;
+  }
+
+  if (result.tags.length === 0) {
+    resultsDiv.innerHTML = '<div class="import-spinner">No tags found on this page.</div>';
+    return;
+  }
+
+  const listing = tagPanelListingId ? findListingById(tagPanelListingId) : null;
+  const existingTags = listing ? new Set((listing.tags || []).map(t => t.toLowerCase())) : new Set();
+
+  let html = '';
+  if (result.title || result.price) {
+    html += `<div class="import-listing-info"><strong>${escapeHtmlTag(result.title)}</strong>${result.price ? `$${escapeHtmlTag(result.price)}` : ''}</div>`;
+  }
+
+  html += '<div class="import-tag-list">';
+  for (const tag of result.tags) {
+    const inListing = existingTags.has(tag.toLowerCase());
+    html += `<span class="import-tag-chip${inListing ? ' in-listing' : ''}" data-import-tag="${escapeHtmlTag(tag)}">${escapeHtmlTag(tag)}</span>`;
+  }
+  html += '</div>';
+  html += `<div class="import-actions">
+    <button class="import-add-selected" id="import-add-selected">Add Selected</button>
+    <button class="import-add-all" id="import-add-all">Add All</button>
+  </div>`;
+
+  resultsDiv.innerHTML = html;
+}
+
+function handleImportContentClick(e) {
+  if (e.target.id === 'tag-import-fetch') {
+    handleImportFetch();
+    return;
+  }
+
+  const chip = e.target.closest('.import-tag-chip:not(.in-listing)');
+  if (chip) {
+    chip.classList.toggle('selected');
+    return;
+  }
+
+  if (e.target.id === 'import-add-selected') {
+    const selected = Array.from(els.tagImportContent.querySelectorAll('.import-tag-chip.selected:not(.in-listing)'))
+      .map(c => c.dataset.importTag);
+    if (selected.length === 0) { showToast('No tags selected', 'error'); return; }
+    applyTagsToListings(selected);
+    return;
+  }
+
+  if (e.target.id === 'import-add-all') {
+    const all = Array.from(els.tagImportContent.querySelectorAll('.import-tag-chip:not(.in-listing)'))
+      .map(c => c.dataset.importTag);
+    if (all.length === 0) { showToast('All tags already added', 'error'); return; }
+    applyTagsToListings(all);
+    return;
+  }
+}
+
+function renderTagFrequencyContent() {
+  const freq = getTagFrequency(listings);
+  if (freq.length === 0) {
+    els.tagFrequencyContent.innerHTML = '<div class="tag-library-empty">No tags in any listing yet.</div>';
+    return;
+  }
+
+  const maxCount = freq[0].count;
+  let html = '';
+  for (const { tag, count } of freq) {
+    const pct = Math.round((count / maxCount) * 100);
+    html += `<div class="freq-row">
+      <span class="freq-tag">${escapeHtmlTag(tag)}</span>
+      <span class="freq-count">${count}</span>
+      <div class="freq-bar-wrap"><div class="freq-bar" style="width:${pct}%"></div></div>
+    </div>`;
+  }
+  els.tagFrequencyContent.innerHTML = html;
+}
+
+function addBatchTags() {
+  const selected = listings.filter(l => l._selected);
+  if (selected.length === 0) {
+    showToast('No listings selected', 'error');
+    return;
+  }
+  const input = prompt('Enter tags to add (comma separated):');
+  if (!input) return;
+  const newTags = input.split(',').map(t => t.trim()).filter(t => t && t.length <= 20);
+  if (newTags.length === 0) { showToast('No valid tags entered', 'error'); return; }
+
+  pushUndo('batch add tags');
+  let totalAdded = 0;
+  for (const listing of selected) {
+    if (!listing.tags) listing.tags = [];
+    for (const tag of newTags) {
+      if (listing.tags.length >= 13) break;
+      if (listing.tags.some(t => t.toLowerCase() === tag.toLowerCase())) continue;
+      listing.tags.push(tag);
+      totalAdded++;
+    }
+  }
+
+  render();
+  scheduleSave();
+  showToast(`Added ${totalAdded} tag(s) across ${selected.length} listing(s)`, 'success');
+}
+
+function removeBatchTag() {
+  const input = prompt('Enter tag to remove from all listings:');
+  if (!input) return;
+  const target = input.trim().toLowerCase();
+  if (!target) return;
+
+  let found = 0;
+  for (const listing of listings) {
+    if (!listing.tags) continue;
+    if (listing.tags.some(t => t.toLowerCase() === target)) found++;
+  }
+
+  if (found === 0) {
+    showToast(`Tag "${input.trim()}" not found in any listing`, 'error');
+    return;
+  }
+
+  pushUndo('batch remove tag');
+  let removed = 0;
+  for (const listing of listings) {
+    if (!listing.tags) continue;
+    const before = listing.tags.length;
+    listing.tags = listing.tags.filter(t => t.toLowerCase() !== target);
+    removed += before - listing.tags.length;
+  }
+
+  render();
+  scheduleSave();
+  showToast(`Removed "${input.trim()}" from ${removed} listing(s)`, 'success');
+}
+
+function setupStorageListener() {
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === 'sync' && changes[STORAGE_KEYS.TAG_LIBRARY]) {
+      tagLibrary = changes[STORAGE_KEYS.TAG_LIBRARY].newValue || {};
+      if (currentView === 'form') updateTagSuggestions();
+    }
+  });
+}
+
+async function handleAiGenerate(listingId, field, btn) {
+  const listing = findListingById(listingId);
+  if (!listing) return;
+
+  btn.classList.add('loading');
+  btn.textContent = '...';
+
+  try {
+    const result = await generateForListing(listing, [field]);
+    btn.classList.remove('loading');
+    btn.textContent = 'AI';
+    showAiResults(listingId, field, result);
+  } catch (err) {
+    btn.classList.remove('loading');
+    btn.textContent = 'AI';
+    handleAiError(err);
+  }
+}
+
+function showAiResults(listingId, field, result) {
+  aiPanelListingId = listingId;
+  aiPanelField = field;
+
+  els.aiLoading.style.display = 'none';
+  els.aiError.style.display = 'none';
+
+  const listing = findListingById(listingId);
+  const index = findListingIndex(listingId);
+  const prefix = listing ? `#${index + 1} ` : '';
+
+  if (field === 'title') {
+    els.aiPanelTitle.textContent = `${prefix}AI Titles`;
+    const titles = result.titles || [];
+    els.aiResults.innerHTML = titles.map((t, i) => `
+      <div class="ai-title-option" data-ai-action="apply-title" data-title-index="${i}">
+        <div class="ai-title-text">${escapeHtmlSimple(t)}</div>
+        <div class="ai-title-meta">${t.length}/140 characters</div>
+      </div>
+    `).join('') || '<div class="ai-error">No titles generated</div>';
+  } else if (field === 'description') {
+    els.aiPanelTitle.textContent = `${prefix}AI Description`;
+    const desc = result.description || '';
+    els.aiResults.innerHTML = `
+      <div class="ai-desc-preview">${escapeHtmlSimple(desc)}</div>
+      <button class="ai-desc-apply" data-ai-action="apply-description">Use This Description</button>
+    `;
+  } else if (field === 'tags') {
+    els.aiPanelTitle.textContent = `${prefix}AI Tags`;
+    const tags = result.tags || [];
+    const existingTags = new Set((listing?.tags || []).map(t => t.toLowerCase()));
+    els.aiResults.innerHTML = `
+      <div class="ai-tag-chips">
+        ${tags.map(t => {
+          const isExisting = existingTags.has(t.toLowerCase());
+          return `<span class="ai-tag-chip${isExisting ? ' existing' : ' selected'}" data-ai-tag="${escapeHtmlSimple(t)}">${escapeHtmlSimple(t)}</span>`;
+        }).join('')}
+      </div>
+      <button class="ai-tags-apply" data-ai-action="apply-tags">Apply Selected Tags</button>
+    `;
+  }
+
+  els.aiPanel.style.display = '';
+  els.aiPanelBackdrop.style.display = '';
+}
+
+function handleAiResultsClick(e) {
+  const titleOption = e.target.closest('[data-ai-action="apply-title"]');
+  if (titleOption) {
+    const titleText = titleOption.querySelector('.ai-title-text')?.textContent || '';
+    applyAiTitle(titleText);
+    return;
+  }
+
+  if (e.target.dataset.aiAction === 'apply-description') {
+    const preview = els.aiResults.querySelector('.ai-desc-preview');
+    if (preview) applyAiDescription(preview.textContent);
+    return;
+  }
+
+  const tagChip = e.target.closest('.ai-tag-chip:not(.existing)');
+  if (tagChip) {
+    tagChip.classList.toggle('selected');
+    return;
+  }
+
+  if (e.target.dataset.aiAction === 'apply-tags') {
+    applyAiTags();
+    return;
+  }
+}
+
+function applyAiTitle(title) {
+  console.log('[AI] applyAiTitle called, listingId:', aiPanelListingId, 'title:', title);
+  if (!aiPanelListingId || !title) return;
+  const lid = aiPanelListingId;
+  const listing = findListingById(lid);
+  if (!listing) { console.warn('[AI] listing not found for id:', lid); return; }
+  pushUndo('AI title');
+  listing.title = title;
+  console.log('[AI] title set, closing panel, rerendering card:', lid);
+  closeAiPanel();
+  rerenderCard(lid);
+  scheduleSave();
+}
+
+function applyAiDescription(desc) {
+  console.log('[AI] applyAiDescription called, listingId:', aiPanelListingId);
+  if (!aiPanelListingId || !desc) return;
+  const lid = aiPanelListingId;
+  const listing = findListingById(lid);
+  if (!listing) { console.warn('[AI] listing not found for id:', lid); return; }
+  pushUndo('AI description');
+  listing.description = desc;
+  console.log('[AI] description set, closing panel, rerendering card:', lid);
+  closeAiPanel();
+  rerenderCard(lid);
+  scheduleSave();
+}
+
+function applyAiTags() {
+  console.log('[AI] applyAiTags called, listingId:', aiPanelListingId);
+  if (!aiPanelListingId) return;
+  const lid = aiPanelListingId;
+  const listing = findListingById(lid);
+  if (!listing) { console.warn('[AI] listing not found for id:', lid); return; }
+
+  const selected = Array.from(els.aiResults.querySelectorAll('.ai-tag-chip.selected:not(.existing)'))
+    .map(c => c.dataset.aiTag)
+    .filter(Boolean);
+
+  console.log('[AI] selected tags:', selected);
+  if (selected.length === 0) {
+    showToast('No tags selected', 'error');
+    return;
+  }
+
+  pushUndo('AI tags');
+  if (!listing.tags) listing.tags = [];
+  for (const tag of selected) {
+    if (listing.tags.length >= 13) break;
+    if (listing.tags.some(t => t.toLowerCase() === tag.toLowerCase())) continue;
+    listing.tags.push(tag);
+  }
+  console.log('[AI] tags applied, closing panel, rerendering card:', lid);
+  closeAiPanel();
+  rerenderCard(lid);
+  scheduleSave();
+}
+
+function closeAiPanel() {
+  els.aiPanel.style.display = 'none';
+  els.aiPanelBackdrop.style.display = 'none';
+  els.aiResults.innerHTML = '';
+  aiPanelListingId = null;
+  aiPanelField = null;
+}
+
+function handleAiError(err) {
+  if (err.error === 'not_authenticated') {
+    showToast('Sign in required to use AI generation', 'error');
+  } else if (err.error === 'insufficient_credits') {
+    showToast(`Not enough credits (${err.creditsRemaining || 0} remaining)`, 'error');
+  } else if (err.error === 'unavailable') {
+    showToast('AI service temporarily unavailable', 'error');
+  } else {
+    showToast(err.message || 'AI generation failed', 'error');
+  }
+}
+
+function showAiBulkModal() {
+  if (listings.length === 0) {
+    showToast('No listings to generate for', 'error');
+    return;
+  }
+  els.aiBulkTitles.checked = true;
+  els.aiBulkDescriptions.checked = true;
+  els.aiBulkTags.checked = true;
+  els.aiBulkScope.value = 'all';
+  els.aiBulkStyle.value = 'descriptive';
+  els.aiBulkProgress.style.display = 'none';
+  els.aiBulkStart.style.display = '';
+  els.aiBulkCancel.style.display = 'none';
+  els.aiBulkStart.disabled = false;
+  updateBulkCost();
+  els.aiBulkModal.style.display = '';
+  els.aiBulkBackdrop.style.display = '';
+}
+
+function closeAiBulkModal() {
+  els.aiBulkModal.style.display = 'none';
+  els.aiBulkBackdrop.style.display = 'none';
+  bulkCancelFn = null;
+}
+
+function getBulkTargetListings() {
+  const scope = els.aiBulkScope.value;
+  if (scope === 'selected') return listings.filter(l => l._selected);
+  if (scope === 'missing') {
+    const fields = [];
+    if (els.aiBulkTitles.checked) fields.push('title');
+    if (els.aiBulkDescriptions.checked) fields.push('description');
+    if (els.aiBulkTags.checked) fields.push('tags');
+    return listings.filter(l =>
+      fields.some(f => f === 'tags' ? (!l.tags || l.tags.length === 0) : !l[f])
+    );
+  }
+  return [...listings];
+}
+
+function updateBulkCost() {
+  const target = getBulkTargetListings();
+  const hasFields = els.aiBulkTitles.checked || els.aiBulkDescriptions.checked || els.aiBulkTags.checked;
+  const count = hasFields ? target.length : 0;
+  els.aiBulkCost.textContent = `Estimated cost: ${count} credit${count !== 1 ? 's' : ''} (${count} listing${count !== 1 ? 's' : ''})`;
+}
+
+async function startBulkGenerate() {
+  const fields = [];
+  if (els.aiBulkTitles.checked) fields.push('title');
+  if (els.aiBulkDescriptions.checked) fields.push('description');
+  if (els.aiBulkTags.checked) fields.push('tags');
+
+  if (fields.length === 0) {
+    showToast('Select at least one field', 'error');
+    return;
+  }
+
+  const target = getBulkTargetListings();
+  if (target.length === 0) {
+    showToast('No listings match the selected scope', 'error');
+    return;
+  }
+
+  pushUndo('AI bulk generate');
+
+  els.aiBulkStart.style.display = 'none';
+  els.aiBulkCancel.style.display = '';
+  els.aiBulkProgress.style.display = '';
+  els.aiProgressFill.style.width = '0%';
+  els.aiProgressText.textContent = `0 / ${target.length}`;
+
+  const style = els.aiBulkStyle.value;
+  let applied = 0;
+  let failed = 0;
+
+  const results = await bulkGenerate(target, fields, { style }, (progress) => {
+    if (progress.cancel) bulkCancelFn = progress.cancel;
+    const pct = Math.round((progress.current / progress.total) * 100);
+    els.aiProgressFill.style.width = `${pct}%`;
+    els.aiProgressText.textContent = `${progress.current} / ${progress.total}`;
+  });
+
+  for (const r of results) {
+    if (!r.success) { failed++; continue; }
+    const listing = findListingById(r.listingId);
+    if (!listing) continue;
+
+    const scope = els.aiBulkScope.value;
+    if (r.result.titles && r.result.titles.length > 0 && fields.includes('title')) {
+      if (scope === 'missing' ? !listing.title : true) {
+        listing.title = r.result.titles[0];
+      }
+    }
+    if (r.result.description && fields.includes('description')) {
+      if (scope === 'missing' ? !listing.description : true) {
+        listing.description = r.result.description;
+      }
+    }
+    if (r.result.tags && r.result.tags.length > 0 && fields.includes('tags')) {
+      if (scope === 'missing' ? (!listing.tags || listing.tags.length === 0) : true) {
+        if (!listing.tags) listing.tags = [];
+        for (const tag of r.result.tags) {
+          if (listing.tags.length >= 13) break;
+          if (listing.tags.some(t => t.toLowerCase() === tag.toLowerCase())) continue;
+          listing.tags.push(tag);
+        }
+      }
+    }
+    applied++;
+  }
+
+  render();
+  scheduleSave();
+  closeAiBulkModal();
+  bulkCancelFn = null;
+
+  if (failed > 0) {
+    showToast(`Generated for ${applied} listing(s), ${failed} failed`, applied > 0 ? 'success' : 'error');
+  } else {
+    showToast(`Generated content for ${applied} listing(s)`, 'success');
+  }
+}
+
+function cancelBulkGenerate() {
+  if (bulkCancelFn) bulkCancelFn();
+}
+
+async function handleEvaluateListing(lid, btn) {
+  const listing = findListingById(lid);
+  if (!listing) return;
+
+  btn.classList.add('loading');
+  btn.textContent = '...';
+
+  try {
+    const result = await evaluateListing(listing);
+    btn.classList.remove('loading');
+    btn.textContent = 'Evaluate';
+
+    if (result.title) listing._eval_title = result.title;
+    if (result.description) listing._eval_description = result.description;
+    if (result.tags) listing._eval_tags = result.tags;
+    if (result.price) listing._eval_price = result.price;
+    if (result.images) listing._eval_images = result.images;
+    listing._eval_timestamp = Date.now();
+
+    rerenderCard(lid);
+    scheduleSave();
+    showToast('Listing evaluated', 'success');
+  } catch (err) {
+    btn.classList.remove('loading');
+    btn.textContent = 'Evaluate';
+    handleAiError(err);
+  }
+}
+
+function applyEvalTagSwap(el) {
+  const lid = el.dataset.listingId;
+  const listing = findListingById(lid);
+  if (!listing) return;
+  const oldTag = el.dataset.oldTag;
+  const newTag = el.dataset.newTag;
+  if (!oldTag || !newTag) return;
+
+  const tagIndex = (listing.tags || []).findIndex(t => t.toLowerCase() === oldTag.toLowerCase());
+  if (tagIndex === -1) return;
+
+  pushUndo('swap eval tag');
+  listing.tags[tagIndex] = newTag;
+
+  if (listing._eval_tags) {
+    const evalTag = listing._eval_tags.find(t => t.tag.toLowerCase() === oldTag.toLowerCase());
+    if (evalTag) {
+      evalTag.tag = newTag;
+      evalTag.replacement = null;
+      evalTag.score = 8;
+      evalTag.reason = 'Replaced per recommendation';
+    }
+  }
+
+  rerenderCard(lid);
+  scheduleSave();
+  showToast(`Swapped "${oldTag}" → "${newTag}"`, 'success');
+}
+
+function showEvalBulkModal() {
+  if (listings.length === 0) {
+    showToast('No listings to evaluate', 'error');
+    return;
+  }
+  els.evalBulkScope.value = 'all';
+  els.evalBulkProgress.style.display = 'none';
+  els.evalBulkStart.style.display = '';
+  els.evalBulkCancel.style.display = 'none';
+  els.evalBulkStart.disabled = false;
+  updateEvalBulkCost();
+  els.evalBulkModal.style.display = '';
+  els.evalBulkBackdrop.style.display = '';
+}
+
+function closeEvalBulkModal() {
+  els.evalBulkModal.style.display = 'none';
+  els.evalBulkBackdrop.style.display = 'none';
+  evalBulkCancelFn = null;
+}
+
+function getEvalBulkTargetListings() {
+  const scope = els.evalBulkScope.value;
+  if (scope === 'selected') return listings.filter(l => l._selected);
+  if (scope === 'unevaluated') return listings.filter(l => !l._eval_timestamp);
+  return [...listings];
+}
+
+function updateEvalBulkCost() {
+  const target = getEvalBulkTargetListings();
+  const count = target.length;
+  const cost = count * 2;
+  els.evalBulkCost.textContent = `Estimated cost: ${cost} credit${cost !== 1 ? 's' : ''} (${count} listing${count !== 1 ? 's' : ''} x 2 credits)`;
+}
+
+async function startBulkEvaluate() {
+  const target = getEvalBulkTargetListings();
+  if (target.length === 0) {
+    showToast('No listings match the selected scope', 'error');
+    return;
+  }
+
+  pushUndo('bulk evaluate');
+
+  els.evalBulkStart.style.display = 'none';
+  els.evalBulkCancel.style.display = '';
+  els.evalBulkProgress.style.display = '';
+  els.evalProgressFill.style.width = '0%';
+  els.evalProgressText.textContent = `0 / ${target.length}`;
+
+  let applied = 0;
+  let failed = 0;
+
+  const results = await bulkEvaluate(target, (progress) => {
+    if (progress.cancel) evalBulkCancelFn = progress.cancel;
+    const pct = Math.round((progress.current / progress.total) * 100);
+    els.evalProgressFill.style.width = `${pct}%`;
+    els.evalProgressText.textContent = `${progress.current} / ${progress.total}`;
+  });
+
+  for (const r of results) {
+    if (!r.success) { failed++; continue; }
+    const listing = findListingById(r.listingId);
+    if (!listing) continue;
+
+    if (r.result.title) listing._eval_title = r.result.title;
+    if (r.result.description) listing._eval_description = r.result.description;
+    if (r.result.tags) listing._eval_tags = r.result.tags;
+    if (r.result.price) listing._eval_price = r.result.price;
+    if (r.result.images) listing._eval_images = r.result.images;
+    listing._eval_timestamp = Date.now();
+    applied++;
+  }
+
+  render();
+  scheduleSave();
+  closeEvalBulkModal();
+  evalBulkCancelFn = null;
+
+  if (failed > 0) {
+    showToast(`Evaluated ${applied} listing(s), ${failed} failed`, applied > 0 ? 'success' : 'error');
+  } else {
+    showToast(`Evaluated ${applied} listing(s)`, 'success');
+  }
+}
+
+function cancelBulkEvaluate() {
+  if (evalBulkCancelFn) evalBulkCancelFn();
+}
+
+function clampTooltipPosition(e) {
+  const chip = e.target.closest('.eval-score-chip, .tag-chip');
+  if (!chip) return;
+  const tooltip = chip.querySelector('.eval-tooltip, .tag-eval-tooltip');
+  if (!tooltip) return;
+  tooltip.style.left = '';
+  tooltip.style.right = '';
+  tooltip.style.transform = '';
+  requestAnimationFrame(() => {
+    const rect = tooltip.getBoundingClientRect();
+    if (rect.left < 4) {
+      tooltip.style.left = '0';
+      tooltip.style.transform = 'none';
+    } else if (rect.right > window.innerWidth - 4) {
+      tooltip.style.left = 'auto';
+      tooltip.style.right = '0';
+      tooltip.style.transform = 'none';
+    }
+  });
 }
 
 function showToast(message, type = 'success') {

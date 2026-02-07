@@ -1,190 +1,101 @@
 # BulkListingPro Development Roadmap
 
-## Phase 1: Foundation (MVP)
+## Phase 1: Foundation (MVP) ✅
 
 **Goal:** Basic working extension that can upload 1 listing with credits
 
 ### Tasks
 
-- [ ] **1.1 Project Setup**
-  - [x] Create project structure
-  - [x] Set up manifest.json
-  - [x] Create documentation
-  - [ ] Set up package.json with build tools
-  - [ ] Create basic icons
+- [x] **1.1 Project Setup** — project structure, manifest, docs, icons, package.json
+- [x] **1.2 Authentication** — Google sign-in, storage service, auth UI
+- [x] **1.3 Basic Sidepanel UI** — login/logout, credit balance, listing form, upload button
+- [x] **1.4 CDP Automation** — Etsy form filling via Native Host + CDP, file uploads, progress reporting
+- [x] **1.5 Backend Integration** — shared GovToolsPro API, auth/credit endpoints, Stripe checkout
 
-- [ ] **1.2 Authentication**
-  - [ ] Implement Google sign-in (port from GovToolsPro)
-  - [ ] Set up storage service
-  - [ ] Create auth UI in sidepanel
-
-- [ ] **1.3 Basic Sidepanel UI**
-  - [ ] Login/logout flow
-  - [ ] Credit balance display
-  - [ ] Simple form for single listing
-  - [ ] Upload button
-
-- [ ] **1.4 Content Script**
-  - [ ] Port selectors from Node.js uploader
-  - [ ] Implement form filling logic
-  - [ ] Handle file uploads
-  - [ ] Report success/failure
-
-- [ ] **1.5 Backend Integration**
-  - [ ] Decision: New API or extend GovToolsPro
-  - [ ] Auth endpoints
-  - [ ] Credit check/deduct endpoints
-  - [ ] Stripe integration for purchases
-
-### Deliverable
-Working extension that can:
-- Sign in with Google
-- Show credit balance
-- Upload 1 listing from form
-- Deduct 1 credit
+### Deliverable ✅
+Extension uploads listings with credit deduction, signed in via Google OAuth.
 
 ---
 
-## Phase 2: Spreadsheet Support
+## Phase 2: Spreadsheet Support ✅
 
 **Goal:** Bulk upload from spreadsheet
 
 ### Tasks
 
-- [ ] **2.1 Spreadsheet Parser**
-  - [ ] XLSX file reading in browser
-  - [ ] Validate spreadsheet format
-  - [ ] Map columns to listing fields
+- [x] **2.1 Spreadsheet Parser** — XLSX/CSV reading, format validation, column mapping
+- [x] **2.2 Upload Queue UI** — list view, preview, edit before upload, select/deselect
+- [x] **2.3 Batch Processing** — queue management, progress tracking, pause/resume/cancel
+- [x] **2.4 File Handling** — local file paths via Native Host, URL support
 
-- [ ] **2.2 Upload Queue UI**
-  - [ ] List view of pending listings
-  - [ ] Preview individual listing
-  - [ ] Edit before upload
-  - [ ] Select/deselect listings
-
-- [ ] **2.3 Batch Processing**
-  - [ ] Queue management
-  - [ ] Progress tracking
-  - [ ] Pause/resume
-  - [ ] Error handling per listing
-
-- [ ] **2.4 File Handling**
-  - [ ] Support local file paths
-  - [ ] Support URLs (Dropbox, etc.)
-  - [ ] Download and cache files
-
-### Deliverable
-Working bulk upload:
-- Drop spreadsheet → See queue
-- Click upload → All listings created
-- Progress bar and status
+### Deliverable ✅
+Drop spreadsheet → queue → batch upload with progress.
 
 ---
 
-## Phase 3: Polish & Launch
+## Phase 3: Polish & Launch (Partial)
 
 **Goal:** Production-ready extension
 
 ### Tasks
 
-- [ ] **3.1 Error Handling**
-  - [ ] Retry logic
-  - [ ] Credit refunds on failure
-  - [ ] Clear error messages
-
-- [ ] **3.2 Settings**
-  - [ ] Default listing state (draft/publish)
-  - [ ] Delay between listings
-  - [ ] Notification preferences
-
-- [ ] **3.3 Chrome Web Store**
-  - [ ] Create store listing
-  - [ ] Screenshots and video
-  - [ ] Privacy policy
-  - [ ] Submit for review
-
-- [ ] **3.4 Marketing**
-  - [ ] Landing page
-  - [ ] Etsy listing for the product
-  - [ ] Documentation/tutorials
+- [x] **3.1 Error Handling** — captcha detection, progress persistence
+- [ ] **3.2 Settings** — default listing state, delay slider, notifications
+- [x] **3.3 Chrome Web Store** — store listing, privacy policy, terms, packaging, v0.2.0 submitted
+- [ ] **3.4 Marketing** — landing page, tutorials, documentation
 
 ### Deliverable
-Published extension on Chrome Web Store
+Extension published on Chrome Web Store (v0.2.0).
 
 ---
 
-## Phase 4: Enhancements (Post-Launch)
+## Phase 4: Listing Editor ✅ (Phases 1-6)
+
+**Goal:** Full-tab hybrid editor replacing spreadsheet workflow
+
+### Completed
+
+- [x] **Editor Phase 1** — Form view, validation, autosave, import, queue sync
+- [x] **Editor Phase 2** — Grid view, view toggle, search/filter/sort, multi-select, duplicate, batch delete, export, undo/redo, drag-to-reorder
+- [x] **Editor Phase 3** — IndexedDB image storage, drag/drop images, lightbox, digital files
+- [x] **Editor Phase 4** — Autoformat, title case, batch validation, cross-listing checks, validation badge, report panel
+- [x] **Editor Phase 5** — Tag library integration, category suggestions, competitor tag import, frequency analysis, batch tag operations, similar tag warnings
+- [x] **Editor Phase 6** — AI generation (titles, descriptions, tags via Gemini), bulk generation, listing evaluation (AI quality scoring with hover tooltips)
+
+### Remaining
+
+- [ ] **Editor Phase 7** — Advanced file handling (folder scanning, auto-assignment)
+- [ ] **Editor Phase 8** — Templates & profiles (save/reuse listing configs)
+
+---
+
+## Phase 5: Enhancements (Post-Launch)
 
 **Goal:** Add value, increase retention
 
 ### Ideas
 
-- [ ] **Templates** - Save and reuse listing templates
-- [ ] **Scheduled uploads** - Queue for specific time
-- [ ] **Analytics dashboard** - Upload success rates
-- [ ] **Multi-shop support** - Switch between Etsy shops
-- [ ] **Other platforms** - Amazon Handmade, Shopify
-- [ ] **AI descriptions** - Generate descriptions from title
+- [x] **AI generation** — Generate titles, descriptions, tags from minimal input (1 credit/call)
+- [x] **AI evaluation** — Quality scoring for all listing fields (2 credits/eval)
+- [ ] **Templates** — Save and reuse listing templates (Editor Phase 8)
+- [ ] **Scheduled uploads** — Queue for specific time
+- [ ] **Analytics dashboard** — Upload success rates
+- [ ] **Multi-shop support** — Switch between Etsy shops
+- [ ] **Other platforms** — Amazon Handmade, Shopify
+- [ ] **Etsy field automation Phase 2** — Colors, personalization, listing type, ads toggles
+- [ ] **Etsy field automation Phase 3** — Shipping profiles, return policies, processing time
 
 ---
 
-## Timeline Estimates
+## Resolved Decisions
 
-| Phase | Effort | Dependencies |
-|-------|--------|--------------|
-| Phase 1 | 2-3 days | Backend decision |
-| Phase 2 | 2-3 days | Phase 1 complete |
-| Phase 3 | 2-3 days | Phase 2 complete |
-| Phase 4 | Ongoing | Post-launch |
-
-**Total MVP:** ~1 week of focused development
-
----
-
-## Open Questions
-
-### Backend Architecture
-
-**Option A: Extend GovToolsPro API**
-```
-Pros:
-- Faster to implement
-- Shared auth infrastructure
-- Single codebase to maintain
-
-Cons:
-- Products become coupled
-- Harder to scale independently
-- Mixed concerns
-```
-
-**Option B: New Standalone API**
-```
-Pros:
-- Clean separation
-- Independent scaling
-- Clear ownership
-
-Cons:
-- Duplicate auth code
-- More infrastructure
-- Longer setup time
-```
-
-**Recommendation:** Start with Option A for MVP, migrate to Option B if product grows
-
-### Naming
-
-- Extension: **BulkListingPro** ✓
-- Domain: bulklistingpro.com?
-- API subdomain: api.bulklistingpro.com?
-
-### Pricing Validation
-
-Need to validate:
-- Is $0.15-0.20 per listing competitive?
-- What do competitors charge?
-- Would subscription model work better?
+| Decision | Choice |
+|----------|--------|
+| Backend architecture | Extend GovToolsPro API (shared backend) |
+| AI provider | Gemini 2.0 Flash via backend proxy |
+| Pricing | 2 credits/listing, 1 credit/AI generation, 2 credits/evaluation |
+| Browser control | Native Host + CDP (user logs in themselves) |
+| Editor library | jspreadsheet CE v4 + jsuites v5 (MIT) |
 
 ---
 

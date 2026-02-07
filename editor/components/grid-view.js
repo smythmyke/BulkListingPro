@@ -17,6 +17,25 @@ const RENEWAL_LABELS = { automatic: 'Automatic', manual: 'Manual' };
 const STATE_OPTIONS = ['draft', 'active'];
 const STATE_LABELS = { draft: 'Draft', active: 'Published' };
 
+const COLUMN_TOOLTIPS = [
+  'Select rows for batch actions',
+  'Listing title (required, max 140 chars)',
+  'Listing description (required)',
+  'Price in USD (min $0.20)',
+  'Product category',
+  'Comma-separated tags (max 13, each max 20 chars)',
+  'Who made this item',
+  'Product or supply',
+  'Original or AI-generated content',
+  'When the item was made',
+  'Auto or manual renewal ($0.20/renewal)',
+  'Draft or published',
+  'Comma-separated materials',
+  'Available quantity',
+  'Stock keeping unit (optional)',
+  'Click to add images (0/5 to 5/5)',
+];
+
 const COLUMNS = [
   { type: 'checkbox', title: 'Sel', width: 40, name: '_selected' },
   { type: 'text', title: 'Title', width: 250, name: 'title', wordWrap: true },
@@ -33,7 +52,18 @@ const COLUMNS = [
   { type: 'text', title: 'Materials', width: 180, name: 'materials' },
   { type: 'numeric', title: 'Qty', width: 60, name: 'quantity' },
   { type: 'text', title: 'SKU', width: 100, name: 'sku' },
+  { type: 'text', title: 'Imgs', width: 55, name: '_images', readOnly: true },
 ];
+
+export const IMAGES_COL = COLUMNS.length - 1;
+
+function countImages(listing) {
+  let count = 0;
+  for (let i = 1; i <= 5; i++) {
+    if (listing[`image_${i}`]) count++;
+  }
+  return count;
+}
 
 function listingsToRows(listings) {
   return listings.map(l => [
@@ -51,7 +81,8 @@ function listingsToRows(listings) {
     l.listing_state || 'draft',
     (l.materials || []).join(', '),
     l.quantity || 999,
-    l.sku || ''
+    l.sku || '',
+    `${countImages(l)}/5`
   ]);
 }
 
@@ -108,6 +139,8 @@ export function initGrid(container, listings, onChange) {
     minDimensions: [COLUMNS.length, 50],
   });
 
+  applyHeaderTooltips(container);
+  setupImageColumnClick(container);
   return gridInstance;
 }
 
@@ -154,6 +187,37 @@ export function deleteGridRows(rowIndices) {
   if (!gridInstance || rowIndices.length === 0) return;
   const sorted = [...rowIndices].sort((a, b) => b - a);
   sorted.forEach(i => gridInstance.deleteRow(i));
+}
+
+function setupImageColumnClick(container) {
+  container.addEventListener('click', (e) => {
+    const td = e.target.closest('td');
+    if (!td) return;
+    const tr = td.parentElement;
+    const tbody = tr.closest('tbody');
+    if (!tbody) return;
+    const colIndex = td.cellIndex - 1;
+    if (colIndex !== IMAGES_COL) return;
+    const rowIndex = Array.from(tbody.children).indexOf(tr);
+    if (rowIndex < 0 || !onChangeCallback) return;
+    onChangeCallback('imageClick', { y: rowIndex });
+  });
+}
+
+export function updateCell(col, row, value) {
+  if (!gridInstance) return;
+  suppressEvents = true;
+  gridInstance.setValueFromCoords(col, row, value);
+  suppressEvents = false;
+}
+
+function applyHeaderTooltips(container) {
+  const headerCells = container.querySelectorAll('thead td');
+  headerCells.forEach((td, i) => {
+    if (COLUMN_TOOLTIPS[i]) {
+      td.title = COLUMN_TOOLTIPS[i];
+    }
+  });
 }
 
 function handleCellChange(instance, cell, x, y, value) {

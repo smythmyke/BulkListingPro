@@ -1,5 +1,6 @@
 import { CATEGORIES, CATEGORY_ATTRIBUTES } from '../../services/listingUtils.js';
 import { validateListing, getCharCountClass } from './validator.js';
+import { getImageSrc, hasImage, formatFileSize } from './image-handler.js';
 
 let _idCounter = 0;
 
@@ -63,16 +64,20 @@ function renderTagChips(tags) {
 function renderImageSlots(listing) {
   const slots = [];
   for (let i = 1; i <= 5; i++) {
-    const key = `image_${i}`;
-    const value = listing[key] || '';
-    const hasImage = value && (value.startsWith('data:') || value.startsWith('http'));
+    const value = listing[`image_${i}`] || '';
+    const filled = hasImage(value);
+    const src = getImageSrc(value);
+    const meta = listing[`_image_${i}_meta`];
+    const hasWarning = meta && (meta.fileSize > 10 * 1024 * 1024 || (meta.width && meta.height && Math.min(meta.width, meta.height) < 1000));
+    const warningClass = filled && hasWarning ? ' has-warning' : '';
+    const dimTitle = meta ? `${meta.width}x${meta.height} | ${formatFileSize(meta.fileSize)}` : '';
     slots.push(`
-      <div class="image-slot${hasImage ? ' has-image' : ''}" data-image-index="${i}" data-listing-id="${listing.id}">
-        ${hasImage
-          ? `<img src="${escapeHtml(value)}" alt="Image ${i}"><button class="image-slot-remove" data-image-index="${i}" data-listing-id="${listing.id}">&times;</button>`
+      <div class="image-slot${filled ? ' has-image' : ''}${warningClass}" data-image-index="${i}" data-listing-id="${listing.id}" ${filled ? 'draggable="true"' : ''} ${dimTitle ? `title="${escapeHtml(dimTitle)}"` : ''}>
+        ${filled
+          ? `<img src="${escapeHtml(src)}" alt="Image ${i}"><span class="image-slot-number">${i}</span><button class="image-slot-remove" data-image-index="${i}" data-listing-id="${listing.id}">&times;</button>`
           : `<span class="image-slot-placeholder">${i}</span>`
         }
-        <input type="file" class="image-slot-input" data-image-index="${i}" data-listing-id="${listing.id}" accept="image/*" hidden>
+        <input type="file" class="image-slot-input" data-image-index="${i}" data-listing-id="${listing.id}" accept="image/jpeg,image/png,image/gif,image/webp" multiple hidden>
       </div>
     `);
   }
@@ -83,15 +88,96 @@ function renderDigitalFileSlot(listing) {
   const value = listing.digital_file_1 || '';
   const hasFile = !!value;
   const fileName = listing._digital_file_name || (hasFile ? 'Digital file attached' : '');
+  const fileSize = listing._digital_file_size ? formatFileSize(listing._digital_file_size) : '';
   return `
-    <div class="digital-file-slot${hasFile ? ' has-file' : ''}" data-listing-id="${listing.id}">
+    <div class="digital-file-slot${hasFile ? ' has-file' : ''}" data-listing-id="${listing.id}" data-drop-zone="digital">
       ${hasFile
-        ? `<span class="digital-file-name">${escapeHtml(fileName)}</span><button class="digital-file-remove" data-listing-id="${listing.id}">&times;</button>`
-        : `<button class="btn btn-small digital-file-browse" data-listing-id="${listing.id}">Choose File</button><span class="digital-file-hint">Optional digital download file</span>`
+        ? `<div class="digital-file-info"><span class="digital-file-name">${escapeHtml(fileName)}</span>${fileSize ? `<span class="digital-file-size">(${fileSize})</span>` : ''}<button class="digital-file-remove" data-listing-id="${listing.id}">&times;</button></div>
+          <div class="digital-display-name-group"><input type="text" data-field="_digital_display_name" data-listing-id="${listing.id}" value="${escapeHtml(listing._digital_display_name || '')}" placeholder="Display name for buyer (optional)"></div>`
+        : `<button class="btn btn-small digital-file-browse" data-listing-id="${listing.id}">Choose File</button><span class="digital-file-hint">Drag & drop or click</span>`
       }
       <input type="file" class="digital-file-input" data-listing-id="${listing.id}" hidden>
     </div>
   `;
+}
+
+function aiButtonState(listing, field) {
+  const hasTitle = !!(listing.title && listing.title.trim());
+  const hasDesc = !!(listing.description && listing.description.trim());
+  const hasTags = listing.tags && listing.tags.length > 0;
+
+  let enabled = false;
+  let tip = '';
+  if (field === 'title') {
+    enabled = hasDesc || hasTags;
+    tip = enabled ? 'Generate title suggestions' : 'Add a description or tags first';
+  } else if (field === 'description') {
+    enabled = hasTitle || hasTags;
+    tip = enabled ? 'Generate a description' : 'Add a title or tags first';
+  } else if (field === 'tags') {
+    enabled = hasTitle || hasDesc;
+    tip = enabled ? 'Generate tag suggestions' : 'Add a title or description first';
+  }
+  return { enabled, tip };
+}
+
+function renderAiBtn(listing, field) {
+  const { enabled, tip } = aiButtonState(listing, field);
+  return `<button class="ai-gen-btn${enabled ? '' : ' disabled'}" data-ai-field="${field}" data-listing-id="${listing.id}" title="${escapeHtml(tip)}" ${enabled ? '' : 'disabled'}>AI</button>`;
+}
+
+function renderEvalBtn(listing) {
+  const hasTitle = !!(listing.title && listing.title.trim());
+  return `<button class="eval-btn${hasTitle ? '' : ' disabled'}" data-listing-id="${listing.id}" title="${hasTitle ? 'Evaluate listing quality (2 credits)' : 'Add a title first'}" ${hasTitle ? '' : 'disabled'}>Evaluate (2 credits)</button>`;
+}
+
+function renderScoreChip(listing, field) {
+  const evalData = listing[`_eval_${field}`];
+  if (!evalData) return '';
+  const score = field === 'tags' ? Math.round(evalData.reduce((sum, t) => sum + (t.score || 0), 0) / (evalData.length || 1)) : evalData.score;
+  const colorClass = score >= 7 ? 'good' : score >= 4 ? 'ok' : 'poor';
+
+  let tooltipContent = '';
+  if (field === 'tags') {
+    const weak = evalData.filter(t => t.score < 7).length;
+    tooltipContent = weak > 0 ? `${weak} tag${weak !== 1 ? 's' : ''} could be improved. Hover over highlighted tags to see suggestions.` : 'All tags look strong.';
+  } else {
+    tooltipContent = escapeHtml(evalData.reasoning || '');
+    if (evalData.improvement) {
+      tooltipContent += `<span class="eval-tooltip-improvement">${escapeHtml(evalData.improvement)}</span>`;
+    }
+  }
+
+  return ` <span class="eval-score-chip ${colorClass}">${score}/10<span class="eval-tooltip">${tooltipContent}</span></span>`;
+}
+
+function getTagEvalMap(listing) {
+  if (!listing._eval_tags || !Array.isArray(listing._eval_tags)) return null;
+  const map = {};
+  for (const t of listing._eval_tags) {
+    map[t.tag.toLowerCase()] = t;
+  }
+  return map;
+}
+
+function renderTagChipsWithEval(tags, listing) {
+  if (!tags || tags.length === 0) return '';
+  const evalMap = getTagEvalMap(listing);
+  return tags.map((tag, i) => {
+    let extraClass = '';
+    let tooltip = '';
+    if (evalMap) {
+      const evalData = evalMap[tag.toLowerCase()];
+      if (evalData) {
+        if (evalData.score < 4) extraClass = ' eval-poor';
+        else if (evalData.score < 7) extraClass = ' eval-weak';
+        if (evalData.score < 9) {
+          tooltip = `<span class="tag-eval-tooltip">${evalData.score}/10 - ${escapeHtml(evalData.reason)}${evalData.replacement ? `<span class="tag-eval-replacement" data-eval-action="swap-tag" data-old-tag="${escapeHtml(tag)}" data-new-tag="${escapeHtml(evalData.replacement)}" data-listing-id="${listing.id}">&#8594; ${escapeHtml(evalData.replacement)}</span>` : ''}</span>`;
+        }
+      }
+    }
+    return `<span class="tag-chip${extraClass}" data-tag-index="${i}">${escapeHtml(tag)} <button class="tag-remove" data-tag-index="${i}">&times;</button>${tooltip}</span>`;
+  }).join('');
 }
 
 function descLineCount(text) {
@@ -128,29 +214,31 @@ export function renderListingCard(listing, index, collapsed = false) {
   const collapsedClass = collapsed ? ' collapsed' : '';
 
   return `
-    <div class="listing-card ${cardBorderClass}${collapsedClass}" data-listing-id="${listing.id}" data-index="${index}">
+    <div class="listing-card ${cardBorderClass}${collapsedClass}" data-listing-id="${listing.id}" data-index="${index}" draggable="true">
       <div class="card-header" data-action="toggle" data-listing-id="${listing.id}">
+        <span class="drag-handle" title="Drag to reorder">&#9776;</span>
         <input type="checkbox" class="card-select" data-listing-id="${listing.id}" ${listing._selected ? 'checked' : ''}>
         <span class="card-chevron">${collapsed ? '&#9654;' : '&#9660;'}</span>
         <span class="card-number">#${index + 1}</span>
         <span class="card-title-preview ${titleClass}">${titlePreview}</span>
         <span class="validation-badge ${badgeClass}"></span>
+        ${renderEvalBtn(listing)}
         <button class="card-remove" data-action="remove" data-listing-id="${listing.id}">&times;</button>
       </div>
       <div class="card-body">
         <div class="form-group">
-          <label>Title <span class="required">*</span></label>
+          <label>Title <span class="required">*</span> ${renderAiBtn(listing, 'title')}${renderScoreChip(listing, 'title')}</label>
           <input type="text" data-field="title" data-listing-id="${listing.id}" value="${escapeHtml(listing.title)}" maxlength="140" placeholder="Listing title (required)" class="${!listing.title && (listing.description || listing.price) ? 'field-error' : ''}">
           <div class="char-counter ${titleCountClass}">${titleLen}/140</div>
         </div>
         <div class="form-group">
-          <label>Description <span class="required">*</span></label>
+          <label>Description <span class="required">*</span> ${renderAiBtn(listing, 'description')}${renderScoreChip(listing, 'description')}</label>
           <textarea data-field="description" data-listing-id="${listing.id}" rows="8" placeholder="Listing description (required)" class="${!listing.description && (listing.title || listing.price) ? 'field-error' : ''}">${escapeHtml(listing.description)}</textarea>
           <div class="desc-counter">${descLineCount(listing.description)} line${descLineCount(listing.description) !== 1 ? 's' : ''}</div>
         </div>
         <div class="form-row">
           <div class="form-group-half">
-            <label>Price ($) <span class="required">*</span></label>
+            <label>Price ($) <span class="required">*</span>${renderScoreChip(listing, 'price')}</label>
             <input type="number" data-field="price" data-listing-id="${listing.id}" value="${listing.price}" step="0.01" min="0.20" placeholder="0.00" class="${!listing.price && (listing.title || listing.description) ? 'field-error' : ''}">
           </div>
           <div class="form-group-half">
@@ -161,10 +249,11 @@ export function renderListingCard(listing, index, collapsed = false) {
           </div>
         </div>
         <div class="form-group">
-          <label>Images (up to 5)</label>
+          <label>Images (up to 5)${renderScoreChip(listing, 'images')}</label>
           <div class="image-slots" data-listing-id="${listing.id}">
             ${renderImageSlots(listing)}
           </div>
+          <span class="image-url-paste" data-listing-id="${listing.id}">Paste image URL</span>
         </div>
         <div class="form-group">
           <label>Digital File</label>
@@ -179,10 +268,11 @@ export function renderListingCard(listing, index, collapsed = false) {
         <div class="form-group">
           <label>Tags</label>
           <div class="tags-input-wrapper" data-tags-wrapper="${listing.id}">
-            ${renderTagChips(listing.tags)}
+            ${renderTagChipsWithEval(listing.tags, listing)}
             <input type="text" class="tag-input-field" data-field="tag_input" data-listing-id="${listing.id}" placeholder="${tagsCount >= 13 ? 'Max tags reached' : 'Type and press Enter'}" ${tagsCount >= 13 ? 'disabled' : ''}>
           </div>
-          <div class="tags-counter ${tagsCount >= 13 ? 'full' : ''}">${tagsCount}/13 tags</div>
+          <div class="tags-counter ${tagsCount >= 13 ? 'full' : ''}">${tagsCount}/13 tags ${renderAiBtn(listing, 'tags')}${renderScoreChip(listing, 'tags')} <button class="tag-library-btn" data-listing-id="${listing.id}">Library</button></div>
+          <div class="tag-suggestions" data-suggestions-for="${listing.id}"></div>
         </div>
         <details class="advanced-options">
           <summary>Advanced Options</summary>

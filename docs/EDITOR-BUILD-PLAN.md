@@ -1,7 +1,7 @@
 # Listing Editor — Full Tab Build Plan
 
 > **Created:** February 6, 2026
-> **Status:** Planning
+> **Status:** Phase 6 + Listing Evaluation Complete — Phase 7 Next
 > **Goal:** In-browser hybrid editor (form + grid views) that replaces the XLSX template as the primary listing creation workflow
 
 ---
@@ -68,18 +68,18 @@ Etsy
 
 ### 1.1 Full Tab Setup
 
-- [ ] Create `editor/editor.html` with base layout (toolbar, view toggle, listing area, footer)
-- [ ] Create `editor/editor.css` with styles matching sidepanel theme
-- [ ] Create `editor/editor.js` with core data model and state management
-- [ ] Add `editor/editor.html` to `manifest.json` web_accessible_resources
-- [ ] Add "Open Editor" button to sidepanel
-- [ ] `chrome.tabs.create({ url: chrome.runtime.getURL('editor/editor.html') })` on click
-- [ ] Prevent opening multiple editor tabs (check for existing tab first)
+- [x] Create `editor/editor.html` with base layout (toolbar, view toggle, listing area, footer)
+- [x] Create `editor/editor.css` with styles matching sidepanel theme
+- [x] Create `editor/editor.js` with core data model and state management
+- [x] Add `editor/editor.html` to `manifest.json` web_accessible_resources
+- [x] Add "Open Editor" button to sidepanel
+- [x] `chrome.tabs.create({ url: chrome.runtime.getURL('editor/editor.html') })` on click
+- [x] Prevent opening multiple editor tabs (check for existing tab first)
 
 ### 1.2 Form View — Card-Based Editor
 
-- [ ] Create `editor/components/form-view.js`
-- [ ] Listing card component with fields:
+- [x] Create `editor/components/form-view.js`
+- [x] Listing card component with fields:
   - Title (text input, 140 char counter)
   - Description (textarea, line count)
   - Price (number input, auto-format to 2 decimals)
@@ -88,36 +88,36 @@ Etsy
   - Image slots (placeholder thumbnails, up to 5)
   - Digital file slot (placeholder)
   - Advanced options (collapsible): who_made, what_is_it, ai_content, when_made, materials, quantity, sku, renewal
-- [ ] "Add Listing" button — appends new blank card
-- [ ] "Remove Listing" button per card (with confirmation)
-- [ ] Listing counter in toolbar ("3 listings")
-- [ ] Scrollable card list with smooth animations
+- [x] "Add Listing" button — appends new blank card
+- [x] "Remove Listing" button per card (with confirmation)
+- [x] Listing counter in toolbar ("3 listings")
+- [x] Scrollable card list with smooth animations
 
 ### 1.3 Live Validation
 
-- [ ] Create `editor/components/validator.js`
-- [ ] Title: live character counter, yellow at 120+, red at 140, block at 141+
-- [ ] Price: reject < $0.20, strip `$` and commas on paste, format to `X.XX` on blur
-- [ ] Tags: per-tag 20-char limit, auto-trim whitespace, duplicate warning within listing
-- [ ] Category: required indicator, must be from valid list
-- [ ] Required fields (title, description, price, category): red outline if empty on validate
-- [ ] Per-card validation status icon (green check / red warning)
+- [x] Create `editor/components/validator.js`
+- [x] Title: live character counter, yellow at 120+, red at 140, block at 141+
+- [x] Price: reject < $0.20, strip `$` and commas on paste, format to `X.XX` on blur
+- [x] Tags: per-tag 20-char limit, auto-trim whitespace, duplicate warning within listing
+- [x] Category: required indicator, must be from valid list
+- [x] Required fields (title, description, price, category): red outline if empty on validate
+- [x] Per-card validation status icon (green check / red warning)
 
 ### 1.4 Data Persistence & Sync
 
-- [ ] Autosave to `chrome.storage.local` on every change (debounced 500ms)
-- [ ] Load saved data on editor open (resume work)
-- [ ] "Send to Queue" button — writes listings to storage, notifies sidepanel
-- [ ] Sidepanel reads editor listings into upload queue
-- [ ] Clear editor data option after successful queue transfer
-- [ ] Handle edge case: sidepanel closed when "Send to Queue" clicked
+- [x] Autosave to `chrome.storage.local` on every change (debounced 500ms)
+- [x] Load saved data on editor open (resume work)
+- [x] "Send to Queue" button — writes listings to storage, notifies sidepanel
+- [x] Sidepanel reads editor listings into upload queue
+- [x] Clear editor data option after successful queue transfer
+- [x] Handle edge case: sidepanel closed when "Send to Queue" clicked
 
 ### 1.5 Import Support
 
-- [ ] Drag/drop zone for XLSX/CSV files (reuse existing parse logic)
-- [ ] Parse spreadsheet into listing cards
-- [ ] Merge imported listings with existing editor listings (append)
-- [ ] Show import summary ("Imported 15 listings, 2 had validation warnings")
+- [x] Drag/drop zone for XLSX/CSV files (reuse existing parse logic)
+- [x] Parse spreadsheet into listing cards
+- [x] Merge imported listings with existing editor listings (append)
+- [x] Show import summary ("Imported 15 listings, 2 had validation warnings")
 
 ---
 
@@ -127,44 +127,44 @@ Etsy
 
 ### 2.1 Grid View
 
-- [ ] Integrate jspreadsheet CE library into `lib/`
-- [ ] Create `editor/components/grid-view.js` wrapper
-- [ ] Same columns as XLSX template (title, description, price, category, tags, etc.)
-- [ ] Dropdown cells for: category, who_made, what_is_it, ai_content, when_made, renewal
-- [ ] Numeric cells for: price, quantity
-- [ ] Column headers with tooltips (same notes as XLSX template)
-- [ ] Frozen first column (title) for horizontal scrolling
-- [ ] Copy/paste support (paste from Excel/Sheets works automatically)
-- [ ] Right-click context menu: insert row, delete row, duplicate row
+- [x] Integrate jspreadsheet CE library into `lib/`
+- [x] Create `editor/components/grid-view.js` wrapper
+- [x] Same columns as XLSX template (title, description, price, category, tags, etc.)
+- [x] Dropdown cells for: category, who_made, what_is_it, ai_content, when_made, renewal
+- [x] Numeric cells for: price, quantity
+- [x] Column headers with tooltips (same notes as XLSX template)
+- [x] Frozen first column (title) for horizontal scrolling
+- [x] Copy/paste support (paste from Excel/Sheets works automatically)
+- [x] Right-click context menu: insert row, delete row, duplicate row
 
 ### 2.2 View Toggle
 
-- [ ] Toolbar toggle: Form View / Grid View buttons
-- [ ] Shared data model — edits in one view reflect in the other
-- [ ] Preserve scroll position when switching back
-- [ ] Grid view syncs cell edits back to data model in real-time
+- [x] Toolbar toggle: Form View / Grid View buttons
+- [x] Shared data model — edits in one view reflect in the other
+- [x] Preserve scroll position when switching back
+- [x] Grid view syncs cell edits back to data model in real-time
 
 ### 2.3 Listing Management Tools
 
-- [ ] **Duplicate listing** — clone card/row with one click
-- [ ] **Reorder** — drag-to-reorder in form view, row drag in grid view
-- [ ] **Multi-select** — checkboxes for batch operations
-- [ ] **Batch delete** — remove selected listings
-- [ ] **Search/filter** — filter by category, status, or text match in title
-- [ ] **Sort** — sort by title, price, category, validation status
+- [x] **Duplicate listing** — clone card/row with one click (SKU auto-increment)
+- [x] **Reorder** — drag-to-reorder in form view (drag handles with above/below indicators)
+- [x] **Multi-select** — checkboxes in form view + checkbox column in grid view
+- [x] **Batch delete** — remove selected listings (with confirmation)
+- [x] **Search/filter** — filter by category, status, or text match in title/description/SKU/tags
+- [x] **Sort** — sort by title, price, category, validation status
 
 ### 2.4 Export
 
-- [ ] "Export XLSX" button — generates file using ExcelJS (same format as template)
-- [ ] "Export CSV" button — standard CSV download
-- [ ] Exported file includes all current editor listings
+- [x] "Export XLSX" button — generates file using XLSX lib
+- [x] "Export CSV" button — standard CSV download via PapaParse
+- [x] Exported file includes all current editor listings
 
 ### 2.5 Undo/Redo
 
-- [ ] Action history stack (max 50 actions)
-- [ ] Ctrl+Z / Ctrl+Y keyboard shortcuts
-- [ ] Undo/Redo buttons in toolbar
-- [ ] Track: field edits, add/remove listings, reorder, batch operations
+- [x] Action history stack (max 50 actions)
+- [x] Ctrl+Z / Ctrl+Y keyboard shortcuts
+- [x] Undo/Redo buttons in footer
+- [x] Track: field edits, add/remove listings, reorder, batch operations
 
 ---
 
@@ -174,35 +174,35 @@ Etsy
 
 ### 3.1 Image Drag/Drop
 
-- [ ] Create `editor/components/image-handler.js`
-- [ ] Drag/drop zone per listing card (5 image slots)
-- [ ] Drop multiple images — fills slots in order
-- [ ] Thumbnail preview generation (canvas resize to ~150px)
-- [ ] Click thumbnail to view full size in lightbox
-- [ ] Drag to reorder images within a listing
-- [ ] Remove image button (X overlay on hover)
-- [ ] Accepted formats: JPG, PNG, GIF, WEBP
+- [x] Create `editor/components/image-handler.js`
+- [x] Drag/drop zone per listing card (5 image slots)
+- [x] Drop multiple images — fills slots in order
+- [x] Thumbnail preview generation (canvas resize to ~150px)
+- [x] Click thumbnail to view full size in lightbox
+- [x] Drag to reorder images within a listing
+- [x] Remove image button (X overlay on hover)
+- [x] Accepted formats: JPG, PNG, GIF, WEBP
 
 ### 3.2 Image URL Support
 
-- [ ] Paste image URL into slot — fetch and preview
-- [ ] Support direct URLs (ending in .jpg/.png) and Dropbox/Google Drive links
-- [ ] Show loading spinner while fetching
-- [ ] Error state if URL is unreachable
+- [x] Paste image URL into slot — fetch and preview
+- [x] Support direct URLs (ending in .jpg/.png) and Dropbox/Google Drive links
+- [x] Show loading spinner while fetching
+- [x] Error state if URL is unreachable
 
 ### 3.3 Digital File Attachment
 
-- [ ] Drag/drop zone for digital file per listing
-- [ ] Show filename + file size after drop
-- [ ] Display name input (what buyer sees after purchase)
+- [x] Drag/drop zone for digital file per listing
+- [x] Show filename + file size after drop
+- [x] Display name input (what buyer sees after purchase)
 - [ ] Support local file paths (stored as path string for native host)
 
 ### 3.4 Image Validation
 
-- [ ] Warn if image is < 1000px on shortest side
-- [ ] Warn if image file is > 10MB
-- [ ] Reject non-image files dropped in image slots
-- [ ] Show image dimensions on hover
+- [x] Warn if image is < 1000px on shortest side
+- [x] Warn if image file is > 10MB
+- [x] Reject non-image files dropped in image slots
+- [x] Show image dimensions on hover
 
 ---
 
@@ -212,36 +212,36 @@ Etsy
 
 ### 4.1 Batch Validation
 
-- [ ] "Validate All" button in toolbar
-- [ ] Scan all listings for issues, generate report
-- [ ] Issue categories: errors (blocks upload), warnings (allow but flag)
-- [ ] Jump-to-error — click issue to scroll to the problematic listing/field
-- [ ] Validation summary badge in toolbar ("3 errors, 5 warnings")
+- [x] "Validate All" button in toolbar (More menu)
+- [x] Scan all listings for issues, generate report
+- [x] Issue categories: errors (blocks upload), warnings (allow but flag)
+- [x] Jump-to-error — click issue to scroll to the problematic listing/field
+- [x] Validation summary badge in toolbar ("3 errors, 5 warnings")
 
 ### 4.2 Autoformat
 
-- [ ] Title: auto-capitalize first letter of each word (optional toggle)
-- [ ] Title: strip leading/trailing whitespace
-- [ ] Title: collapse multiple spaces to single space
-- [ ] Description: preserve intentional line breaks, strip excessive blank lines
-- [ ] Price: auto-format `5` → `5.00`, `$5.99` → `5.99`
-- [ ] Tags: lowercase, trim whitespace, remove duplicates silently
-- [ ] Materials: trim whitespace, remove empty entries
+- [x] Title: auto-capitalize first letter of each word ("Title Case All Titles" menu action)
+- [x] Title: strip leading/trailing whitespace (on blur + Autoformat All)
+- [x] Title: collapse multiple spaces to single space
+- [x] Description: preserve intentional line breaks, strip excessive blank lines (on blur + Autoformat All)
+- [x] Price: auto-format `5` → `5.00`, `$5.99` → `5.99`
+- [x] Tags: lowercase, trim whitespace, remove duplicates silently
+- [x] Materials: trim whitespace, remove empty entries
 
 ### 4.3 Cross-Listing Checks
 
-- [ ] Duplicate title detection across batch (exact and fuzzy)
-- [ ] Duplicate tag set warning (two listings with identical tags hurts SEO)
-- [ ] Price outlier detection (one listing at $0.20 when others are $5+)
-- [ ] Missing image warning (listings without any images)
-- [ ] Incomplete listing highlight (missing optional but recommended fields)
+- [x] Duplicate title detection across batch (exact match = error, Jaccard > 0.8 = warning)
+- [x] Duplicate tag set warning (two listings with identical tags hurts SEO)
+- [x] Price outlier detection (< 20% of median batch price)
+- [x] Missing image warning (listings without any images)
+- [x] Incomplete listing highlight (no tags and no images)
 
-### 4.4 Field-Specific Intelligence
+### 4.4 Field-Specific Intelligence (Deferred)
 
-- [ ] SKU: warn on spaces or special characters, suggest format
-- [ ] Quantity: default 999 for digital, warn if set to 1 (common mistake)
-- [ ] Materials: auto-complete from previously entered materials (stored in chrome.storage)
-- [ ] Category: show category description tooltip on hover
+- [ ] SKU: warn on spaces or special characters, suggest format *(deferred — low priority)*
+- [ ] Quantity: default 999 for digital, warn if set to 1 (common mistake) *(deferred)*
+- [ ] Materials: auto-complete from previously entered materials (stored in chrome.storage) *(deferred — per user)*
+- [ ] Category: show category description tooltip on hover *(deferred — needs category description data)*
 
 ---
 
@@ -251,42 +251,42 @@ Etsy
 
 ### 5.1 Tag Library Integration
 
-- [ ] Create `editor/components/tag-manager.js`
-- [ ] "Tag Library" button per listing — opens tag picker panel
-- [ ] Shows saved tag sets from Account tab, grouped by category
-- [ ] Click a tag set to apply all tags to current listing
-- [ ] Individual tag toggle (add/remove single tags from saved sets)
-- [ ] Auto-filter tag library to match listing's selected category
+- [x] Create `editor/components/tag-manager.js`
+- [x] "Tag Library" button per listing — opens tag picker panel
+- [x] Shows saved tag sets from Account tab, grouped by category
+- [x] Click a tag set to apply all tags to current listing
+- [x] Individual tag toggle (add/remove single tags from saved sets)
+- [x] Auto-filter tag library to match listing's selected category
 
 ### 5.2 Category-Based Suggestions
 
-- [ ] When category is selected, show suggested tags below tag input
-- [ ] Click suggestion to add it as a tag
-- [ ] Suggestions sourced from tag library + built-in category defaults
-- [ ] "Add All Suggestions" button
+- [x] When category is selected, show suggested tags below tag input
+- [x] Click suggestion to add it as a tag
+- [x] Suggestions sourced from tag library + built-in category defaults
+- [x] "Add All Suggestions" button
 
 ### 5.3 Competitor Tag Import
 
-- [ ] "Import from URL" button in tag section
-- [ ] Paste Etsy listing URL → extract tags (reuse existing scraper)
-- [ ] Show extracted tags with checkboxes
-- [ ] Apply selected tags to current listing
-- [ ] Option: apply to all listings in batch
+- [x] "Import from URL" button in tag section
+- [x] Paste Etsy listing URL → extract tags (reuse existing scraper)
+- [x] Show extracted tags with checkboxes
+- [x] Apply selected tags to current listing
+- [x] Option: apply to all listings in batch
 
 ### 5.4 Batch Tag Operations
 
-- [ ] "Apply tags to all" — add a set of tags to every listing
-- [ ] "Apply tags to selected" — add tags to checked listings only
-- [ ] "Remove tag from all" — batch remove a specific tag
-- [ ] Tag frequency analysis panel — shows which tags are used most/least across batch
-- [ ] Smart deduplication — warn if multiple listings share exact same tag set
+- [x] "Apply tags to all" — add a set of tags to every listing
+- [x] "Apply tags to selected" — add tags to checked listings only
+- [x] "Remove tag from all" — batch remove a specific tag
+- [x] Tag frequency analysis panel — shows which tags are used most/least across batch
+- [x] Smart deduplication — warn if multiple listings share exact same tag set
 
 ### 5.5 Tag Optimization
 
-- [ ] Character count per tag (visual bar, green/yellow/red)
-- [ ] Duplicate detection within a single listing
-- [ ] "Similar tag" warning (e.g., "planner" and "planners" — suggest keeping one)
-- [ ] Tag count indicator per listing (X/13 used)
+- [x] Character count per tag (visual bar, green/yellow/red)
+- [x] Duplicate detection within a single listing
+- [x] "Similar tag" warning (e.g., "planner" and "planners" — suggest keeping one)
+- [x] Tag count indicator per listing (X/13 used)
 
 ---
 
@@ -296,56 +296,65 @@ Etsy
 
 ### 6.1 Infrastructure
 
-- [ ] Create `editor/components/ai-generator.js`
-- [ ] AI API integration (Claude API or OpenAI — TBD)
-- [ ] API key management (backend proxied to avoid exposing keys)
-- [ ] Credit model: 1 credit per AI generation, or bundled (TBD)
-- [ ] Rate limiting and error handling
-- [ ] Loading states with progress indicators
+- [x] Create `editor/components/ai-generator.js`
+- [x] AI API integration (Gemini 2.0 Flash via backend proxy)
+- [x] API key management (backend proxied to avoid exposing keys)
+- [x] Credit model: 1 credit per AI generation
+- [x] Rate limiting and error handling
+- [x] Loading states with progress indicators
 
 ### 6.2 Title Generation
 
-- [ ] "Generate Title" button per listing
-- [ ] Input: description + category + optional keywords
-- [ ] Output: 3 title suggestions (user picks one or edits)
-- [ ] SEO-optimized: front-loads important keywords, respects 140-char limit
-- [ ] Style options: "Descriptive", "SEO-heavy", "Minimal"
+- [x] "Generate Title" button per listing (AI button on title label)
+- [x] Input: description + category + optional keywords
+- [x] Output: 3 title suggestions (user picks one or edits)
+- [x] SEO-optimized: front-loads important keywords, respects 140-char limit
+- [x] Style options: "Descriptive", "SEO-heavy", "Minimal"
 
 ### 6.3 Description Generation
 
-- [ ] "Generate Description" button per listing
-- [ ] Input: title + category + images (if available) + optional notes
-- [ ] Output: structured description with sections:
-  - Hook/intro line
-  - What's included
-  - Features/specs
-  - How to use / file formats
-  - Call to action
-- [ ] Tone presets: "Professional", "Casual/Friendly", "Luxury/Premium"
-- [ ] Edit in-place after generation
+- [x] "Generate Description" button per listing (AI button on description label)
+- [x] Input: title + category + tags
+- [x] Output: structured description with sections
+- [x] Style presets via bulk modal
+- [x] Edit in-place after generation
 
 ### 6.4 Tag Generation
 
-- [ ] "Generate Tags" button per listing
-- [ ] Input: title + description + category
-- [ ] Output: 13 optimized tags, ranked by estimated search volume
-- [ ] Merge with existing tags (don't overwrite user-entered tags)
-- [ ] Show confidence score per tag
+- [x] "Generate Tags" button per listing (AI button on tags label)
+- [x] Input: title + description + category
+- [x] Output: 13 optimized tags
+- [x] Merge with existing tags (don't overwrite user-entered tags)
+- [ ] Show confidence score per tag *(deferred — eval scores serve similar purpose)*
 
 ### 6.5 Bulk AI Generation
 
-- [ ] "AI Generate All" button in toolbar
-- [ ] Scope selector: titles only, descriptions only, tags only, or all
-- [ ] Apply to: all listings, selected listings, or listings missing the field
-- [ ] Progress bar with per-listing status
-- [ ] Review modal before applying — user approves or edits each suggestion
-- [ ] Estimated credit cost shown before starting
+- [x] "AI Generate All" button in toolbar (More menu)
+- [x] Scope selector: titles only, descriptions only, tags only, or all
+- [x] Apply to: all listings, selected listings, or listings missing the field
+- [x] Progress bar with per-listing status
+- [x] Estimated credit cost shown before starting
+- [ ] Review modal before applying *(deferred — auto-applies with undo support instead)*
 
 ### 6.6 Smart Suggestions
 
-- [ ] As user types title, suggest completions based on category trends
-- [ ] After description is entered, auto-suggest tags (passive, non-intrusive)
-- [ ] "Improve" button — refine existing title/description with AI (rewrite, not replace)
+- [ ] As user types title, suggest completions based on category trends *(deferred)*
+- [ ] After description is entered, auto-suggest tags (passive, non-intrusive) *(deferred)*
+- [ ] "Improve" button — refine existing title/description with AI (rewrite, not replace) *(deferred)*
+
+### 6.7 Listing Evaluation (AI Quality Scoring)
+
+- [x] Backend endpoint: `POST /api/v1/evaluate-listing` (Gemini, 2 credits per eval)
+- [x] Service layer: `evaluateListing()` and `bulkEvaluate()` in ai-generator.js
+- [x] "Evaluate" button per listing card (orange, shows credit cost)
+- [x] Score chips on field labels (title, description, tags, price, images) — color-coded good/ok/poor
+- [x] Hover tooltips on score chips showing reasoning + improvement suggestions
+- [x] Tag-level scoring with weak/poor color highlighting
+- [x] Hover tooltips on weak tags with clickable replacement suggestions
+- [x] Tooltip usability: transition delays, gap-bridging pseudo-elements, viewport clamping
+- [x] Bulk evaluate modal (scope: all/selected/unevaluated, cost display, progress bar, cancel)
+- [x] Undo support for all apply actions (title suggestions, tag swaps)
+- [x] `_eval_*` keys cleaned from sendToQueue output
 
 ---
 
