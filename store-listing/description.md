@@ -10,48 +10,63 @@ BulkListingPro - Etsy Bulk Upload Tool
 
 ## Short Description (132 char max)
 
-Bulk upload digital product listings to Etsy from a spreadsheet. Save hours on listing creation with automated uploads.
+Bulk upload Etsy listings with AI-powered titles, tags & descriptions. Import spreadsheets, research competitors, upload in minutes.
 
 ## Detailed Description
 
-BulkListingPro automates Etsy listing creation so you can upload dozens
-of digital products in minutes instead of hours.
+BulkListingPro automates Etsy listing creation for digital product sellers. Upload dozens of SVG files, digital planners, printables, and templates in minutes instead of hours.
+
+NEW IN v0.5: Guided product tour for new users, full-page Listing Editor with AI tools, and tag intelligence.
 
 HOW IT WORKS
-1. Install the extension and log into Etsy
-2. Fill in the spreadsheet template (or use the built-in form)
-3. Click Upload — the extension creates each listing automatically
-4. Track progress with pause, skip, and cancel controls
+1. Import your spreadsheet (XLSX/CSV) or use the built-in form
+2. Edit listings in the full-page editor — form view or grid view
+3. Click Upload — listings are created automatically on Etsy
+4. Track progress with pause, skip, and resume controls
 
-FEATURES
-• Spreadsheet import — bulk upload from XLSX or CSV
-• Single listing form — quick entry with image drag-and-drop
-• URL support — reference images by web URL in spreadsheets
-• Category dropdowns — pre-filled with Etsy digital product categories
-• Tag management — up to 13 tags per listing
-• Progress tracking — real-time status for each listing
-• Pause / Resume / Cancel — full control over the upload process
-• Auto-save — resume interrupted uploads
+LISTING EDITOR
+• Form & Grid views — card-based editing or spreadsheet-style bulk edits
+• AI-powered generation — titles, descriptions, and tags with one click
+• Listing evaluation — SEO quality scores and actionable recommendations
+• Tag intelligence — category suggestions, competitor tag import, frequency analysis
+• Validation — catch missing fields, duplicates, similar tags, and price outliers
+• Undo/Redo — every action tracked, up to 50 steps (Ctrl+Z / Ctrl+Y)
+• Image management — drag-and-drop, reorder, lightbox preview
+• Export — save your work as XLSX or CSV anytime
 
-WHAT YOU NEED
+BULK UPLOAD FEATURES
+• Spreadsheet import — upload 10, 50, or 100+ listings at once
+• 24 digital product categories — SVG cut files, fonts, planners, templates, and more
+• Smart tag management — up to 13 tags per listing
+• Draft or Publish — choose to save as draft for review or publish immediately
+• Image support — drag-and-drop up to 5 images per listing
+• Progress tracking — real-time status with error details
+• Retry failed listings — one-click re-queue for failed uploads
+
+RESEARCH TOOLS
+• Capture competitor listings — extract tags, title, price, and description
+• Tag Library — save and reuse tag sets across listings
+• Use as Template — apply captured data to new listings instantly
+
+PERFECT FOR
+• SVG & cut file sellers (Cricut, Silhouette, Glowforge)
+• Digital planner creators
+• Printable art and wall art shops
+• Template sellers (Canva, social media, resume)
+• Font designers
+• Embroidery pattern shops
+
+REQUIREMENTS
 • Google Chrome on Windows
-• An Etsy seller account
-• That's it! No extra software required.
-
-POWER MODE (Optional)
-Install the free helper app to use local file paths in your spreadsheets
-(e.g., C:\Products\image.jpg). Most users don't need this.
-
-NOTE
-During uploads, Chrome shows a yellow "debugging" banner. This is normal
-and required for automation to work.
+• Etsy seller account
+• Free helper app for local file paths (optional, one-time install)
 
 PRICING
-Each listing upload costs 2 credits. Credit packs start at $1.99 for 50
-credits (~25 listings).
+2 credits per listing. Packs start at $1.99 for 50 credits (~25 listings).
+New users get 5 free credits to try it out!
 
-SUPPORT
-Report issues: https://github.com/smythmyke/BulkListingPro/issues
+SUPPORT & FEEDBACK
+https://github.com/smythmyke/BulkListingPro/issues
 
 ## Category
 

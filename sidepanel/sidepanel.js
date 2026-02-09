@@ -1,4 +1,6 @@
 import { STORAGE_KEYS, CATEGORY_ATTRIBUTES, sanitizeListing, readSpreadsheetFile, isLocalFilePath, collectLocalFilePaths } from '../services/listingUtils.js';
+import { applyCode, getReferralCode, getReferralStats, getAffiliateStatus, applyAffiliate, getStripeConnectUrl, getAffiliateDashboard } from '../services/affiliateService.js';
+import { startSidepanelTour, shouldAutoStart, showTourIntro } from '../services/tourService.js';
 
 const CREDITS_PER_LISTING = 2;
 
@@ -342,6 +344,10 @@ function setupEventListeners() {
   elements.tagsInput.addEventListener('focus', () => showSuggestionsForCategory(elements.categorySelect.value));
   elements.tagsInput.addEventListener('input', updateSuggestionStates);
   elements.openEditorBtn.addEventListener('click', openEditor);
+  document.getElementById('take-tour-link').addEventListener('click', (e) => {
+    e.preventDefault();
+    startSidepanelTour();
+  });
 }
 
 const ETSY_PATTERNS = [
@@ -419,7 +425,10 @@ async function checkAuth() {
     user = response.user;
     showMainSection();
     await loadCredits();
-    await checkWelcomeBonus();
+    loadReferralInfo();
+    loadAffiliateSection();
+    const showedWelcome = await checkWelcomeBonus();
+    if (!showedWelcome && await shouldAutoStart('sidepanel')) showTourIntro('sidepanel');
   } else {
     showAuthSection();
   }
@@ -427,14 +436,90 @@ async function checkAuth() {
 
 async function checkWelcomeBonus() {
   try {
-    const { bulklistingpro_welcome_bonus } = await chrome.storage.local.get('bulklistingpro_welcome_bonus');
+    const { bulklistingpro_welcome_bonus, bulklistingpro_code_prompt_shown } = await chrome.storage.local.get(['bulklistingpro_welcome_bonus', 'bulklistingpro_code_prompt_shown']);
     if (bulklistingpro_welcome_bonus) {
       await chrome.storage.local.remove('bulklistingpro_welcome_bonus');
-      showToast('Welcome! You received 10 free credits to get started!', 'success');
+      if (!bulklistingpro_code_prompt_shown) {
+        showWelcomeModal();
+        return true;
+      } else {
+        showToast('Welcome! You received 10 free credits to get started!', 'success');
+      }
     }
   } catch (err) {
     console.warn('Error checking welcome bonus:', err);
   }
+  return false;
+}
+
+function showWelcomeModal() {
+  const overlay = document.createElement('div');
+  overlay.className = 'welcome-modal-overlay';
+  overlay.innerHTML = `
+    <div class="welcome-modal">
+      <h3>Welcome to BulkListingPro!</h3>
+      <p>You received <strong>10 free credits</strong> to get started.</p>
+      <div class="welcome-code-section">
+        <label>Have a referral or affiliate code?</label>
+        <input type="text" id="welcome-code-input" placeholder="Enter code (e.g. AFF1234)" maxlength="20">
+        <span class="welcome-code-error" id="welcome-code-error"></span>
+      </div>
+      <div class="welcome-modal-buttons">
+        <button class="btn btn-primary" id="welcome-apply-btn">Apply Code</button>
+        <button class="btn btn-secondary" id="welcome-skip-btn">Skip</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  const codeInput = overlay.querySelector('#welcome-code-input');
+  const applyBtn = overlay.querySelector('#welcome-apply-btn');
+  const skipBtn = overlay.querySelector('#welcome-skip-btn');
+  const errorSpan = overlay.querySelector('#welcome-code-error');
+
+  async function handleApply() {
+    const code = codeInput.value.trim();
+    if (!code) {
+      errorSpan.textContent = 'Please enter a code';
+      return;
+    }
+
+    applyBtn.disabled = true;
+    applyBtn.textContent = 'Applying...';
+    errorSpan.textContent = '';
+
+    try {
+      const result = await applyCode(code);
+      if (result.success) {
+        overlay.remove();
+        await chrome.storage.local.set({ bulklistingpro_code_prompt_shown: true });
+        showToast(`${result.creditsAwarded} bonus credits added!`, 'success');
+        await loadCredits(true);
+        if (await shouldAutoStart('sidepanel')) showTourIntro('sidepanel');
+      } else {
+        errorSpan.textContent = result.error || 'Invalid code';
+        applyBtn.disabled = false;
+        applyBtn.textContent = 'Apply Code';
+      }
+    } catch (err) {
+      errorSpan.textContent = 'Failed to apply code. Try again later.';
+      applyBtn.disabled = false;
+      applyBtn.textContent = 'Apply Code';
+    }
+  }
+
+  applyBtn.addEventListener('click', handleApply);
+  codeInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handleApply();
+  });
+
+  skipBtn.addEventListener('click', async () => {
+    overlay.remove();
+    chrome.storage.local.set({ bulklistingpro_code_prompt_shown: true });
+    showToast('Welcome! You received 10 free credits to get started!', 'success');
+    if (await shouldAutoStart('sidepanel')) showTourIntro('sidepanel');
+  });
 }
 
 async function signIn() {
@@ -544,6 +629,239 @@ function updateStartButton() {
     elements.startUploadBtn.textContent = `Need ${requiredCredits - credits.available} more credits`;
   } else {
     elements.startUploadBtn.textContent = `Start Upload (${requiredCredits} credits)`;
+  }
+}
+
+async function loadReferralInfo() {
+  const section = document.getElementById('referral-section');
+  if (!section) return;
+
+  try {
+    const [codeResult, statsResult] = await Promise.allSettled([
+      getReferralCode(),
+      getReferralStats()
+    ]);
+
+    const code = codeResult.status === 'fulfilled' ? codeResult.value?.code : null;
+    const stats = statsResult.status === 'fulfilled' ? statsResult.value : null;
+
+    if (!code) {
+      section.innerHTML = '<p class="referral-loading">No referral code yet. Share BulkListingPro to earn credits!</p>';
+      return;
+    }
+
+    const referralCount = stats?.totalReferrals || 0;
+    const creditsEarned = stats?.creditsEarned || 0;
+
+    section.innerHTML = `
+      <div class="referral-code-row">
+        <span class="referral-code-display">${code}</span>
+        <button class="referral-copy-btn" id="copy-referral-btn">Copy</button>
+      </div>
+      <div class="referral-stats">${referralCount} referral${referralCount !== 1 ? 's' : ''} &bull; ${creditsEarned} credits earned</div>
+    `;
+
+    section.querySelector('#copy-referral-btn').addEventListener('click', () => {
+      navigator.clipboard.writeText(code).then(() => {
+        showToast('Referral code copied!', 'success');
+      });
+    });
+  } catch (err) {
+    console.warn('[Referral] Failed to load referral info:', err);
+    section.innerHTML = '<p class="referral-loading">Could not load referral info</p>';
+  }
+}
+
+async function loadAffiliateSection() {
+  const wrapper = document.getElementById('affiliate-section-wrapper');
+  if (!wrapper) return;
+
+  try {
+    const status = await getAffiliateStatus();
+    wrapper.style.display = '';
+
+    const applyDiv = document.getElementById('affiliate-apply');
+    const pendingDiv = document.getElementById('affiliate-pending');
+    const activeDiv = document.getElementById('affiliate-active');
+
+    applyDiv.style.display = 'none';
+    pendingDiv.style.display = 'none';
+    activeDiv.style.display = 'none';
+
+    if (!status.isAffiliate) {
+      applyDiv.style.display = '';
+    } else if (status.status === 'pending_stripe') {
+      pendingDiv.style.display = '';
+    } else if (status.status === 'active') {
+      activeDiv.style.display = '';
+
+      const codeEl = document.getElementById('affiliate-code');
+      if (codeEl) codeEl.textContent = status.affiliateCode || 'N/A';
+
+      try {
+        const dashboard = await getAffiliateDashboard();
+        const countEl = document.getElementById('affiliate-referral-count');
+        const earningsEl = document.getElementById('affiliate-earnings');
+        if (countEl) countEl.textContent = dashboard.stats?.totalReferrals || 0;
+        if (earningsEl) earningsEl.textContent = '$' + ((dashboard.stats?.totalEarnings || 0) / 100).toFixed(2);
+      } catch (err) {
+        console.error('[Affiliate] Error loading dashboard stats:', err);
+      }
+    }
+
+    initAffiliateEventListeners();
+  } catch (error) {
+    console.error('[Affiliate] Error loading section:', error);
+    wrapper.style.display = 'none';
+  }
+}
+
+function initAffiliateEventListeners() {
+  const applyBtn = document.getElementById('affiliate-apply-btn');
+  if (applyBtn && !applyBtn._initialized) {
+    applyBtn._initialized = true;
+    applyBtn.onclick = async () => {
+      try {
+        applyBtn.disabled = true;
+        applyBtn.textContent = 'Applying...';
+        const result = await applyAffiliate();
+        if (result.success) {
+          showToast('Application submitted! Now connect your Stripe account.', 'success');
+          await loadAffiliateSection();
+        } else {
+          showToast(result.error || 'Failed to apply', 'error');
+        }
+      } catch (error) {
+        console.error('[Affiliate] Error applying:', error);
+        showToast('Failed to apply', 'error');
+      } finally {
+        applyBtn.disabled = false;
+        applyBtn.textContent = 'Become an Affiliate';
+      }
+    };
+  }
+
+  const connectBtn = document.getElementById('affiliate-connect-stripe-btn');
+  if (connectBtn && !connectBtn._initialized) {
+    connectBtn._initialized = true;
+    connectBtn.onclick = async () => {
+      try {
+        connectBtn.disabled = true;
+        connectBtn.textContent = 'Connecting...';
+        const result = await getStripeConnectUrl();
+        if (result.url) {
+          window.open(result.url, '_blank');
+          showToast('Complete setup in the new tab, then return here.', 'info');
+        } else {
+          showToast('Failed to get Stripe Connect URL', 'error');
+        }
+      } catch (error) {
+        console.error('[Affiliate] Error getting Stripe URL:', error);
+        showToast('Failed to connect Stripe', 'error');
+      } finally {
+        connectBtn.disabled = false;
+        connectBtn.textContent = 'Connect Stripe Account';
+      }
+    };
+  }
+
+  const copyBtn = document.getElementById('copy-affiliate-code');
+  if (copyBtn && !copyBtn._initialized) {
+    copyBtn._initialized = true;
+    copyBtn.onclick = async () => {
+      const code = document.getElementById('affiliate-code')?.textContent;
+      if (code && code !== '...' && code !== 'N/A') {
+        try {
+          await navigator.clipboard.writeText(code);
+          showToast('Affiliate code copied!', 'success');
+        } catch (err) {
+          console.error('[Affiliate] Failed to copy:', err);
+        }
+      }
+    };
+  }
+
+  const dashboardBtn = document.getElementById('view-affiliate-dashboard');
+  if (dashboardBtn && !dashboardBtn._initialized) {
+    dashboardBtn._initialized = true;
+    dashboardBtn.onclick = () => showAffiliateDashboard();
+  }
+}
+
+async function showAffiliateDashboard() {
+  try {
+    const dashboard = await getAffiliateDashboard();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'affiliate-dashboard-overlay';
+    overlay.innerHTML = `
+      <div class="affiliate-dashboard-modal">
+        <h2>
+          <span>Affiliate Dashboard</span>
+          <button class="close-btn" id="close-affiliate-dashboard">&times;</button>
+        </h2>
+        <div class="dashboard-stats">
+          <div class="dashboard-stat">
+            <span class="dashboard-stat-value">${dashboard.stats?.totalReferrals || 0}</span>
+            <span class="dashboard-stat-label">Total Referrals</span>
+          </div>
+          <div class="dashboard-stat">
+            <span class="dashboard-stat-value">${dashboard.stats?.activeReferrals || 0}</span>
+            <span class="dashboard-stat-label">Active (6mo)</span>
+          </div>
+          <div class="dashboard-stat">
+            <span class="dashboard-stat-value">$${((dashboard.stats?.totalEarnings || 0) / 100).toFixed(2)}</span>
+            <span class="dashboard-stat-label">Total Earned</span>
+          </div>
+          <div class="dashboard-stat">
+            <span class="dashboard-stat-value">${dashboard.affiliateCode || 'N/A'}</span>
+            <span class="dashboard-stat-label">Your Code</span>
+          </div>
+        </div>
+        <div class="activity-section">
+          <h3>Recent Commissions</h3>
+          ${dashboard.recentCommissions?.length > 0 ? `
+            <ul class="activity-list">
+              ${dashboard.recentCommissions.map(c => `
+                <li class="activity-item">
+                  <span class="activity-date">${c.date}</span>
+                  <span class="activity-amount">+$${(c.amount / 100).toFixed(2)}</span>
+                </li>
+              `).join('')}
+            </ul>
+          ` : '<p class="activity-empty">No commissions yet</p>'}
+        </div>
+        <div class="activity-section">
+          <h3>Recent Referrals</h3>
+          ${dashboard.recentReferrals?.length > 0 ? `
+            <ul class="activity-list">
+              ${dashboard.recentReferrals.map(r => `
+                <li class="activity-item">
+                  <span class="activity-date">${r.date} - ${r.initials}</span>
+                  <span style="color: ${r.isActive ? '#10b981' : '#999'}">${r.isActive ? 'Active' : 'Expired'}</span>
+                </li>
+              `).join('')}
+            </ul>
+          ` : '<p class="activity-empty">No referrals yet</p>'}
+        </div>
+        <p class="dashboard-footer">Payouts are automatic via Stripe Connect.</p>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    const closeModal = () => overlay.remove();
+    document.getElementById('close-affiliate-dashboard').onclick = closeModal;
+    overlay.onclick = (e) => {
+      if (e.target === overlay) closeModal();
+    };
+    const onEscape = (e) => {
+      if (e.key === 'Escape') { closeModal(); document.removeEventListener('keydown', onEscape); }
+    };
+    document.addEventListener('keydown', onEscape);
+  } catch (error) {
+    console.error('[Affiliate] Error showing dashboard:', error);
+    showToast('Failed to load dashboard', 'error');
   }
 }
 
@@ -1335,6 +1653,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         showToast('Debugging was stopped. Upload paused.', 'error');
         isPaused = true;
         elements.pauseBtn.textContent = 'Resume';
+      } else if (message.status === 'out_of_credits') {
+        if (message.creditsRemaining !== undefined) {
+          const oldCreds = credits.available;
+          credits.available = message.creditsRemaining;
+          updateCreditsDisplay(oldCreds);
+        }
+        showToast('Upload stopped — ran out of credits', 'error');
+        showCreditsModal();
+        showResults();
       } else if (message.status === 'cancelled') {
         showResults();
       }

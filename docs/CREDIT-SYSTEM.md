@@ -10,22 +10,22 @@ Credits are the monetization mechanism for BulkListingPro. Users purchase credit
 
 | Pack | Credits | Price | Per Credit | Per Listing |
 |------|---------|-------|------------|-------------|
-| Starter | 25 | $4.99 | $0.20 | $0.20 |
-| Pro | 100 | $14.99 | $0.15 | $0.15 |
-| Business | 500 | $49.99 | $0.10 | $0.10 |
+| Starter | 50 | $1.99 | $0.04 | $0.08 |
+| Standard | 150 | $4.99 | $0.03 | $0.07 |
+| Pro | 400 | $11.99 | $0.03 | $0.06 |
+| Power | 1000 | $24.99 | $0.025 | $0.05 |
 
 ### Free Tier
 
-- **5 free credits** on signup
-- Allows users to test the extension
+- **10 free credits** on signup
+- Allows users to test the extension (~5 listings)
 - No credit card required
 
 ### Credit Usage
 
 | Action | Credits | Notes |
 |--------|---------|-------|
-| Upload 1 listing | 1 | Base cost |
-| Bulk upload (10+) | 0.8 each | 20% discount |
+| Upload 1 listing | 2 | Flat rate |
 | Failed upload | 0 | Refunded automatically |
 
 ## Credit Flow
@@ -122,7 +122,7 @@ POST /api/payments/create-checkout
 Headers: Authorization: Bearer <token>
 Body:
 {
-  "creditPack": "pro", // starter, pro, business
+  "creditPack": "pro", // starter, standard, pro, power
   "successUrl": "chrome-extension://xxx/credits.html?success=true",
   "cancelUrl": "chrome-extension://xxx/credits.html?canceled=true"
 }
@@ -171,19 +171,23 @@ Document ID: User's email (lowercase)
 
 ### Products (Stripe Dashboard)
 
-Create three products:
+Create four products:
 
 1. **BulkListingPro - Starter Pack**
+   - Price: $1.99
+   - Metadata: `credits: 50`
+
+2. **BulkListingPro - Standard Pack**
    - Price: $4.99
-   - Metadata: `credits: 25`
+   - Metadata: `credits: 150`
 
-2. **BulkListingPro - Pro Pack**
-   - Price: $14.99
-   - Metadata: `credits: 100`
+3. **BulkListingPro - Pro Pack**
+   - Price: $11.99
+   - Metadata: `credits: 400`
 
-3. **BulkListingPro - Business Pack**
-   - Price: $49.99
-   - Metadata: `credits: 500`
+4. **BulkListingPro - Power Pack**
+   - Price: $24.99
+   - Metadata: `credits: 1000`
 
 ### Webhook Events
 
@@ -252,23 +256,24 @@ If a listing upload fails AFTER credit deduction:
 
 ```
 ┌────────────────────┐
-│  💳 25 credits     │
-│  [$4.99 for 25]    │
+│  💳 50 credits     │
+│  [$1.99 for 50]    │
 └────────────────────┘
 ```
 
 ### Purchase Modal
 
 ```
-┌─────────────────────────────────────┐
-│         Buy Credits                  │
-├─────────────────────────────────────┤
-│  ○ Starter   25 credits    $4.99    │
-│  ● Pro      100 credits   $14.99    │
-│  ○ Business 500 credits   $49.99    │
-├─────────────────────────────────────┤
-│         [Buy Now]                    │
-└─────────────────────────────────────┘
+┌──────────────────────────────────────┐
+│         Buy Credits                   │
+├──────────────────────────────────────┤
+│  ○ Starter    50 credits    $1.99    │
+│  ● Standard  150 credits    $4.99    │
+│  ○ Pro       400 credits   $11.99    │
+│  ○ Power    1000 credits   $24.99    │
+├──────────────────────────────────────┤
+│         [Buy Now]                     │
+└──────────────────────────────────────┘
 ```
 
 ### Low Credits Warning

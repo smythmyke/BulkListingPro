@@ -28,9 +28,11 @@ $includeItems = @(
     "background",
     "content",
     "sidepanel",
+    "editor",
     "popup",
     "services",
-    "assets"
+    "assets",
+    "templates"
 )
 
 # Copy files to dist
@@ -44,6 +46,13 @@ foreach ($item in $includeItems) {
             Copy-Item $source $dest
         }
     }
+}
+
+# Remove test CSVs from templates
+$testCsvs = Get-ChildItem (Join-Path $distDir "templates") -Filter "*test*" -ErrorAction SilentlyContinue
+foreach ($csv in $testCsvs) {
+    Remove-Item $csv.FullName
+    Write-Host "  Removed test file: $($csv.Name)" -ForegroundColor Yellow
 }
 
 # Write modified manifest (without key)

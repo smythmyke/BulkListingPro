@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="editor.css">
   <link rel="stylesheet" href="lib/jsuites.css">
   <link rel="stylesheet" href="lib/jspreadsheet.css">
+  <link rel="stylesheet" href="../sidepanel/lib/driver.css">
 </head>
 <body>
   <div id="app">
@@ -49,13 +50,15 @@
         <button id="import-btn" class="btn btn-secondary">Import</button>
         <input type="file" id="import-file-input" accept=".xlsx,.xls,.csv" hidden>
         <button id="send-to-queue-btn" class="btn btn-primary" disabled>Send to Queue</button>
+        <button id="tour-btn" class="toolbar-btn" title="Take a Tour">?</button>
         <button id="close-editor-btn" class="btn btn-close" title="Close Editor">&times;</button>
       </div>
     </div>
 
     <div class="import-zone" id="import-zone">
       <p>Drag & drop XLSX or CSV to import listings</p>
-      <p class="small">or use the Import button above</p>
+      <p class="small">or click here to browse files</p>
+      <input type="file" id="import-file-input" accept=".xlsx,.csv" hidden>
     </div>
 
     <div class="search-bar" id="search-bar">
@@ -180,6 +183,7 @@
         </select>
       </div>
       <div class="ai-bulk-cost" id="ai-bulk-cost">Estimated cost: 0 credits</div>
+      <div class="ai-bulk-credit-warning" id="ai-bulk-credit-warning" style="display:none;">Not enough credits. Buy more from the sidepanel Account tab.</div>
       <div class="ai-bulk-progress" id="ai-bulk-progress" style="display:none;">
         <div class="ai-progress-bar"><div class="ai-progress-fill" id="ai-progress-fill"></div></div>
         <span class="ai-progress-text" id="ai-progress-text">0 / 0</span>
@@ -207,6 +211,7 @@
         </select>
       </div>
       <div class="ai-bulk-cost" id="eval-bulk-cost">Estimated cost: 0 credits (0 listings x 2 credits)</div>
+      <div class="ai-bulk-credit-warning" id="eval-bulk-credit-warning" style="display:none;">Not enough credits. Buy more from the sidepanel Account tab.</div>
       <div class="ai-bulk-progress" id="eval-bulk-progress" style="display:none;">
         <div class="ai-progress-bar"><div class="ai-progress-fill" id="eval-progress-fill"></div></div>
         <span class="ai-progress-text" id="eval-progress-text">0 / 0</span>
@@ -229,6 +234,7 @@
 
   <script src="../sidepanel/lib/xlsx.full.min.js"></script>
   <script src="../sidepanel/lib/papaparse.min.js"></script>
+  <script src="../sidepanel/lib/driver.js.iife.js"></script>
   <script src="lib/jsuites.js"></script>
   <script src="lib/jspreadsheet.js"></script>
   <script src="editor.js" type="module"></script>

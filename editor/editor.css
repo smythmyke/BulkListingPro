@@ -174,6 +174,25 @@ body.grid-active .editor-footer {
   gap: 8px;
 }
 
+.toolbar-btn {
+  background: none;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 4px 10px;
+  color: #999;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toolbar-btn:hover {
+  color: #F56400;
+  border-color: #F56400;
+  background: #fff8f5;
+}
+
 .btn-close {
   background: none;
   border: 1px solid #ccc;
@@ -201,6 +220,7 @@ body.grid-active .editor-footer {
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  cursor: pointer;
 }
 
 .import-zone::before {
@@ -1749,13 +1769,13 @@ body.lightbox-open {
 }
 
 .ai-gen-btn {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
-  padding: 1px 6px;
+  padding: 2px 10px;
   border: 1px solid #F56400;
-  background: transparent;
-  color: #F56400;
-  border-radius: 3px;
+  background: #F56400;
+  color: white;
+  border-radius: 4px;
   cursor: pointer;
   margin-left: 4px;
   transition: all 0.15s ease;
@@ -1764,30 +1784,32 @@ body.lightbox-open {
 }
 
 .ai-gen-btn:hover {
-  background: #F56400;
+  background: #d45500;
+  border-color: #d45500;
   color: white;
 }
 
 .ai-gen-btn.disabled,
 .ai-gen-btn:disabled {
-  opacity: 0.35;
   cursor: not-allowed;
+  background: #ccc;
   border-color: #ccc;
-  color: #ccc;
+  color: white;
   pointer-events: auto;
 }
 
 .ai-gen-btn.disabled:hover,
 .ai-gen-btn:disabled:hover {
-  background: transparent;
-  color: #ccc;
+  background: #ccc;
+  border-color: #ccc;
+  color: white;
 }
 
 .ai-gen-btn.loading {
   pointer-events: none;
-  opacity: 0.6;
+  background: #ccc;
   border-color: #ccc;
-  color: #999;
+  color: white;
 }
 
 .ai-panel-backdrop {
@@ -2039,6 +2061,17 @@ body.lightbox-open {
   color: #F56400;
   text-align: center;
   margin-top: 8px;
+}
+.ai-bulk-credit-warning {
+  background: #fff5f5;
+  border: 1px solid #fc8181;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #c53030;
+  text-align: center;
+  margin-top: 6px;
 }
 
 .ai-bulk-progress {
@@ -2320,4 +2353,126 @@ body.lightbox-open {
     flex-direction: column;
     gap: 0;
   }
+}
+
+/* Tour Popover Brand Overrides */
+.blp-tour-popover .driver-popover-next-btn,
+.blp-tour-popover .driver-popover-close-btn[aria-label="Close"] {
+  background-color: #F56400;
+  color: white;
+  border: none;
+  text-shadow: none;
+}
+
+.blp-tour-popover .driver-popover-next-btn:hover {
+  background-color: #d45500;
+}
+
+.blp-tour-popover .driver-popover-prev-btn {
+  color: #F56400;
+}
+
+.blp-tour-popover .driver-popover-progress-text {
+  color: #F56400;
+  font-weight: 500;
+}
+
+.blp-tour-popover .driver-popover-title {
+  font-size: 15px;
+}
+
+.blp-tour-popover .driver-popover-description {
+  font-size: 13px;
+  color: #555;
+}
+
+/* Tour Intro Modal */
+.welcome-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.welcome-modal {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 340px;
+  width: 90%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  animation: modalIn 0.3s ease-out;
+}
+
+.welcome-modal h3 {
+  margin: 0 0 8px 0;
+  color: #333;
+  font-size: 18px;
+}
+
+.welcome-modal p {
+  margin: 0 0 16px 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.welcome-modal-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.welcome-modal-buttons .btn {
+  flex: 1;
+}
+
+.tour-intro-header {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.tour-intro-header h3 {
+  color: #F56400;
+}
+
+.tour-intro-features {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.tour-intro-feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #f9f9f9;
+  border-radius: 8px;
+}
+
+.tour-intro-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+.tour-intro-feature strong {
+  display: block;
+  font-size: 13px;
+  color: #333;
+  margin-bottom: 2px;
+}
+
+.tour-intro-feature span {
+  font-size: 12px;
+  color: #666;
+  line-height: 1.4;
 }

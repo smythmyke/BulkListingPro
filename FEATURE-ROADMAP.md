@@ -12,9 +12,6 @@
 | CSV/Spreadsheet Integration | ✅ | XLSX/CSV import working |
 | Safety Heartbeat | ✅ | Captcha/verification detection, auto-pause |
 | Progress Persistence | ✅ | Resumes after crash/close |
-| Digital Downloads Focus | ✅ | 24 categories supported |
-| SVG & Crafting Bundles | ✅ | Cutting Machine Files, Embroidery, 3D Printer, Knitting |
-| Template Categories | ✅ | Social Media, Resume, Menu, Newsletter, etc. |
 | Retry Failed Listings | ✅ | Re-queue failed items with one click |
 | Publish vs Draft Toggle | ✅ | Choose save mode before upload |
 | Error Categorization | ✅ | Verification, timeout, network, DOM errors |

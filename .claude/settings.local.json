@@ -8,7 +8,13 @@
       "Bash(git push)",
       "Bash(tasklist:*)",
       "Bash(powershell.exe -Command \"Stop-Process -Name chrome -Force -ErrorAction SilentlyContinue; Start-Sleep -Seconds 2; \\(Get-Process chrome -ErrorAction SilentlyContinue\\).Count\")",
-      "Bash(powershell.exe -Command \"\\(Get-CimInstance Win32_Process -Filter \"\"Name=''chrome.exe''\"\" | Select-Object -First 1\\).CommandLine\")"
+      "Bash(powershell.exe -Command \"\\(Get-CimInstance Win32_Process -Filter \"\"Name=''chrome.exe''\"\" | Select-Object -First 1\\).CommandLine\")",
+      "WebSearch",
+      "Bash(unzip:*)",
+      "Bash(gcloud config get-value:*)",
+      "Bash(gcloud run deploy:*)",
+      "WebFetch(domain:driverjs.com)",
+      "WebFetch(domain:lottiefiles.com)"
     ]
   }
 }

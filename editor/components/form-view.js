@@ -110,20 +110,20 @@ function aiButtonState(listing, field) {
   let tip = '';
   if (field === 'title') {
     enabled = hasDesc || hasTags;
-    tip = enabled ? 'Generate title suggestions' : 'Add a description or tags first';
+    tip = enabled ? 'Generate title suggestions (1 credit)' : 'Add a description or tags first';
   } else if (field === 'description') {
     enabled = hasTitle || hasTags;
-    tip = enabled ? 'Generate a description' : 'Add a title or tags first';
+    tip = enabled ? 'Generate a description (1 credit)' : 'Add a title or tags first';
   } else if (field === 'tags') {
     enabled = hasTitle || hasDesc;
-    tip = enabled ? 'Generate tag suggestions' : 'Add a title or description first';
+    tip = enabled ? 'Generate tag suggestions (1 credit)' : 'Add a title or description first';
   }
   return { enabled, tip };
 }
 
 function renderAiBtn(listing, field) {
   const { enabled, tip } = aiButtonState(listing, field);
-  return `<button class="ai-gen-btn${enabled ? '' : ' disabled'}" data-ai-field="${field}" data-listing-id="${listing.id}" title="${escapeHtml(tip)}" ${enabled ? '' : 'disabled'}>AI</button>`;
+  return `<button class="ai-gen-btn${enabled ? '' : ' disabled'}" data-ai-field="${field}" data-listing-id="${listing.id}" title="${escapeHtml(tip)}" ${enabled ? '' : 'disabled'}>AI · 1 credit</button>`;
 }
 
 function renderEvalBtn(listing) {

@@ -359,6 +359,29 @@ async function handleDirectUpload(payload, sendResponse) {
           results.details.push({ index: i, title: listing.title, status: 'success' });
 
           const creditResult = await creditsService.useCredits(CREDITS_PER_LISTING, 'etsy_listing');
+
+          if (!creditResult.success) {
+            chrome.runtime.sendMessage({
+              type: 'UPLOAD_PROGRESS',
+              index: i,
+              total: listings.length,
+              title: listing.title,
+              status: 'complete',
+              creditsRemaining: creditResult.creditsRemaining || 0
+            }).catch(() => {});
+
+            for (let j = i + 1; j < listings.length; j++) {
+              results.failed++;
+              results.details.push({ index: j, title: listings[j].title, status: 'failed', error: 'Insufficient credits' });
+            }
+            chrome.runtime.sendMessage({
+              type: 'UPLOAD_PROGRESS',
+              status: 'out_of_credits',
+              creditsRemaining: creditResult.creditsRemaining || 0
+            }).catch(() => {});
+            break;
+          }
+
           chrome.runtime.sendMessage({
             type: 'UPLOAD_PROGRESS',
             index: i,

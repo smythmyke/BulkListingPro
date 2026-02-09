@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BulkListingPro</title>
   <link rel="stylesheet" href="sidepanel.css">
+  <link rel="stylesheet" href="lib/driver.css">
 </head>
 <body>
   <div id="app">
@@ -503,6 +504,46 @@
           </div>
         </div>
 
+        <!-- Referral Section -->
+        <div class="account-section">
+          <div class="section-header">Referral Code</div>
+          <div id="referral-section" class="referral-card">
+            <p class="referral-loading">Loading referral info...</p>
+          </div>
+        </div>
+
+        <!-- Affiliate Program Section -->
+        <div class="account-section" id="affiliate-section-wrapper" style="display:none">
+          <div class="section-header">Affiliate Program</div>
+          <div id="affiliate-section" class="referral-card">
+            <div id="affiliate-apply" class="affiliate-state">
+              <p class="affiliate-desc">Earn 10% commission on every credit pack sold through your link for 6 months. Payouts via Stripe.</p>
+              <button class="btn btn-primary btn-small" id="affiliate-apply-btn">Become an Affiliate</button>
+            </div>
+            <div id="affiliate-pending" class="affiliate-state" style="display:none">
+              <p class="affiliate-desc">Almost there! Connect your Stripe account to start earning commissions.</p>
+              <button class="btn btn-primary btn-small" id="affiliate-connect-stripe-btn">Connect Stripe Account</button>
+            </div>
+            <div id="affiliate-active" class="affiliate-state" style="display:none">
+              <div class="referral-code-row">
+                <span class="referral-code-display" id="affiliate-code">...</span>
+                <button class="referral-copy-btn" id="copy-affiliate-code">Copy</button>
+              </div>
+              <div class="affiliate-stats-row">
+                <div class="affiliate-stat">
+                  <span class="affiliate-stat-value" id="affiliate-referral-count">0</span>
+                  <span class="affiliate-stat-label">Referrals</span>
+                </div>
+                <div class="affiliate-stat">
+                  <span class="affiliate-stat-value" id="affiliate-earnings">$0</span>
+                  <span class="affiliate-stat-label">Earned</span>
+                </div>
+              </div>
+              <button class="btn btn-secondary btn-small" id="view-affiliate-dashboard">View Dashboard</button>
+            </div>
+          </div>
+        </div>
+
         <!-- Tag Library Section -->
         <div class="account-section">
           <div class="section-header">Tag Library</div>
@@ -520,6 +561,8 @@
             <a href="https://smythmyke.github.io/BulkListingPro/terms-of-service.html" target="_blank" class="account-link">Terms of Service</a>
             <span class="link-divider">•</span>
             <a href="https://github.com/smythmyke/BulkListingPro/issues" target="_blank" class="account-link">Report Issue</a>
+            <span class="link-divider">&bull;</span>
+            <a href="#" id="take-tour-link" class="account-link">Take a Tour</a>
           </div>
         </div>
       </div><!-- End tab-account -->
@@ -550,6 +593,7 @@
 
   <script src="lib/xlsx.full.min.js"></script>
   <script src="lib/papaparse.min.js"></script>
+  <script src="lib/driver.js.iife.js"></script>
   <script src="sidepanel.js" type="module"></script>
 </body>
 </html>

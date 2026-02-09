@@ -6,6 +6,7 @@ import { openImageDB } from '../services/imageStore.js';
 import { loadTagLibrary, mapFormCategoryToInternal, getSuggestionsForCategory, fetchCompetitorTags, getTagFrequency } from './components/tag-manager.js';
 import { processImageFiles, processImageURL, removeImage, removeAllImages, getFullResolutionImages, reorderImages, showLightbox, closeLightbox, processDigitalFile, removeDigitalFile, hasImage } from './components/image-handler.js';
 import { generateForListing, bulkGenerate, evaluateListing, bulkEvaluate } from './components/ai-generator.js';
+import { startEditorTour, shouldAutoStart, showTourIntro } from '../services/tourService.js';
 
 let listings = [];
 let expandedIds = new Set();
@@ -83,6 +84,7 @@ const els = {
   aiBulkScope: document.getElementById('ai-bulk-scope'),
   aiBulkStyle: document.getElementById('ai-bulk-style'),
   aiBulkCost: document.getElementById('ai-bulk-cost'),
+  aiBulkCreditWarning: document.getElementById('ai-bulk-credit-warning'),
   aiBulkProgress: document.getElementById('ai-bulk-progress'),
   aiProgressFill: document.getElementById('ai-progress-fill'),
   aiProgressText: document.getElementById('ai-progress-text'),
@@ -93,9 +95,11 @@ const els = {
   evalBulkCancel: document.getElementById('eval-bulk-cancel'),
   evalBulkScope: document.getElementById('eval-bulk-scope'),
   evalBulkCost: document.getElementById('eval-bulk-cost'),
+  evalBulkCreditWarning: document.getElementById('eval-bulk-credit-warning'),
   evalBulkProgress: document.getElementById('eval-bulk-progress'),
   evalProgressFill: document.getElementById('eval-progress-fill'),
-  evalProgressText: document.getElementById('eval-progress-text')
+  evalProgressText: document.getElementById('eval-progress-text'),
+  tourBtn: document.getElementById('tour-btn')
 };
 
 document.addEventListener('DOMContentLoaded', init);
@@ -114,6 +118,7 @@ async function init() {
   setupEventListeners();
   setupTabTracking();
   setupStorageListener();
+  if (await shouldAutoStart('editor')) showTourIntro('editor');
 }
 
 function setupTabTracking() {
@@ -329,6 +334,7 @@ function setupEventListeners() {
   els.sendToQueueBtn.addEventListener('click', sendToQueue);
   els.sendToQueueBottomBtn.addEventListener('click', sendToQueue);
   els.closeEditorBtn.addEventListener('click', closeEditor);
+  els.tourBtn.addEventListener('click', startEditorTour);
   els.undoBtn.addEventListener('click', undo);
   els.redoBtn.addEventListener('click', redo);
   els.validationBadge.addEventListener('click', runBatchValidation);
@@ -366,6 +372,17 @@ function setupEventListeners() {
   els.filterStatus.addEventListener('change', applyFilters);
   els.sortBy.addEventListener('change', applyFilters);
 
+  const importFileInput = document.getElementById('import-file-input');
+
+  els.importZone.addEventListener('click', () => {
+    importFileInput.value = '';
+    importFileInput.click();
+  });
+  importFileInput.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) {
+      importFile(e.target.files[0]);
+    }
+  });
   els.importZone.addEventListener('dragover', (e) => {
     e.preventDefault();
     els.importZone.classList.add('drag-over');
@@ -2130,17 +2147,24 @@ async function handleAiGenerate(listingId, field, btn) {
   const listing = findListingById(listingId);
   if (!listing) return;
 
+  const available = await getAvailableCredits();
+  if (available < 1) {
+    showToast('Not enough credits. Buy more from the sidepanel Account tab.', 'error');
+    return;
+  }
+
   btn.classList.add('loading');
   btn.textContent = '...';
 
   try {
     const result = await generateForListing(listing, [field]);
     btn.classList.remove('loading');
-    btn.textContent = 'AI';
+    btn.textContent = 'AI \u00b7 1 credit';
+    await decrementLocalCredits(1);
     showAiResults(listingId, field, result);
   } catch (err) {
     btn.classList.remove('loading');
-    btn.textContent = 'AI';
+    btn.textContent = 'AI \u00b7 1 credit';
     handleAiError(err);
   }
 }
@@ -2287,7 +2311,7 @@ function handleAiError(err) {
   if (err.error === 'not_authenticated') {
     showToast('Sign in required to use AI generation', 'error');
   } else if (err.error === 'insufficient_credits') {
-    showToast(`Not enough credits (${err.creditsRemaining || 0} remaining)`, 'error');
+    showToast(`Not enough credits (${err.creditsRemaining || 0} remaining). Buy more from the sidepanel Account tab.`, 'error');
   } else if (err.error === 'unavailable') {
     showToast('AI service temporarily unavailable', 'error');
   } else {
@@ -2335,11 +2359,38 @@ function getBulkTargetListings() {
   return [...listings];
 }
 
-function updateBulkCost() {
+async function getAvailableCredits() {
+  try {
+    const stored = await chrome.storage.local.get(['bulklistingpro_credits']);
+    return (stored.bulklistingpro_credits && stored.bulklistingpro_credits.available) || 0;
+  } catch (e) {
+    return 0;
+  }
+}
+
+async function decrementLocalCredits(amount) {
+  const stored = await chrome.storage.local.get(['bulklistingpro_credits']);
+  const credits = stored.bulklistingpro_credits || { available: 0, used: 0 };
+  credits.available = Math.max(0, credits.available - amount);
+  credits.used = (credits.used || 0) + amount;
+  await chrome.storage.local.set({ bulklistingpro_credits: credits });
+  chrome.runtime.sendMessage({ type: 'CHECK_CREDITS' }).catch(() => {});
+}
+
+async function updateBulkCost() {
   const target = getBulkTargetListings();
   const hasFields = els.aiBulkTitles.checked || els.aiBulkDescriptions.checked || els.aiBulkTags.checked;
   const count = hasFields ? target.length : 0;
   els.aiBulkCost.textContent = `Estimated cost: ${count} credit${count !== 1 ? 's' : ''} (${count} listing${count !== 1 ? 's' : ''})`;
+  const available = await getAvailableCredits();
+  if (count > 0 && count > available) {
+    els.aiBulkCreditWarning.textContent = `Not enough credits (${available} available, ${count} needed). Buy more from the sidepanel Account tab.`;
+    els.aiBulkCreditWarning.style.display = '';
+    els.aiBulkStart.disabled = true;
+  } else {
+    els.aiBulkCreditWarning.style.display = 'none';
+    els.aiBulkStart.disabled = false;
+  }
 }
 
 async function startBulkGenerate() {
@@ -2412,7 +2463,12 @@ async function startBulkGenerate() {
   closeAiBulkModal();
   bulkCancelFn = null;
 
-  if (failed > 0) {
+  if (applied > 0) await decrementLocalCredits(applied);
+
+  const creditsFailed = results.some(r => !r.success && r.error && r.error.error === 'insufficient_credits');
+  if (creditsFailed) {
+    showToast(`Generated for ${applied} listing(s) — ran out of credits. Buy more from the sidepanel Account tab.`, 'error');
+  } else if (failed > 0) {
     showToast(`Generated for ${applied} listing(s), ${failed} failed`, applied > 0 ? 'success' : 'error');
   } else {
     showToast(`Generated content for ${applied} listing(s)`, 'success');
@@ -2427,13 +2483,20 @@ async function handleEvaluateListing(lid, btn) {
   const listing = findListingById(lid);
   if (!listing) return;
 
+  const available = await getAvailableCredits();
+  if (available < 2) {
+    showToast('Not enough credits (2 needed). Buy more from the sidepanel Account tab.', 'error');
+    return;
+  }
+
   btn.classList.add('loading');
   btn.textContent = '...';
 
   try {
     const result = await evaluateListing(listing);
     btn.classList.remove('loading');
-    btn.textContent = 'Evaluate';
+    btn.textContent = 'Evaluate (2 credits)';
+    await decrementLocalCredits(2);
 
     if (result.title) listing._eval_title = result.title;
     if (result.description) listing._eval_description = result.description;
@@ -2447,7 +2510,7 @@ async function handleEvaluateListing(lid, btn) {
     showToast('Listing evaluated', 'success');
   } catch (err) {
     btn.classList.remove('loading');
-    btn.textContent = 'Evaluate';
+    btn.textContent = 'Evaluate (2 credits)';
     handleAiError(err);
   }
 }
@@ -2509,11 +2572,20 @@ function getEvalBulkTargetListings() {
   return [...listings];
 }
 
-function updateEvalBulkCost() {
+async function updateEvalBulkCost() {
   const target = getEvalBulkTargetListings();
   const count = target.length;
   const cost = count * 2;
   els.evalBulkCost.textContent = `Estimated cost: ${cost} credit${cost !== 1 ? 's' : ''} (${count} listing${count !== 1 ? 's' : ''} x 2 credits)`;
+  const available = await getAvailableCredits();
+  if (cost > 0 && cost > available) {
+    els.evalBulkCreditWarning.textContent = `Not enough credits (${available} available, ${cost} needed). Buy more from the sidepanel Account tab.`;
+    els.evalBulkCreditWarning.style.display = '';
+    els.evalBulkStart.disabled = true;
+  } else {
+    els.evalBulkCreditWarning.style.display = 'none';
+    els.evalBulkStart.disabled = false;
+  }
 }
 
 async function startBulkEvaluate() {
@@ -2560,7 +2632,12 @@ async function startBulkEvaluate() {
   closeEvalBulkModal();
   evalBulkCancelFn = null;
 
-  if (failed > 0) {
+  if (applied > 0) await decrementLocalCredits(applied * 2);
+
+  const creditsFailed = results.some(r => !r.success && r.error && r.error.error === 'insufficient_credits');
+  if (creditsFailed) {
+    showToast(`Evaluated ${applied} listing(s) — ran out of credits. Buy more from the sidepanel Account tab.`, 'error');
+  } else if (failed > 0) {
     showToast(`Evaluated ${applied} listing(s), ${failed} failed`, applied > 0 ? 'success' : 'error');
   } else {
     showToast(`Evaluated ${applied} listing(s)`, 'success');

@@ -2294,3 +2294,377 @@ body {
   padding: 12px;
   font-style: italic;
 }
+
+/* Welcome Modal */
+.welcome-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.welcome-modal {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 320px;
+  width: 90%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  animation: modalIn 0.3s ease-out;
+}
+
+.welcome-modal h3 {
+  margin: 0 0 8px 0;
+  color: #333;
+  font-size: 18px;
+}
+
+.welcome-modal p {
+  margin: 0 0 16px 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.welcome-code-section {
+  margin-bottom: 16px;
+}
+
+.welcome-code-section label {
+  display: block;
+  font-size: 13px;
+  color: #555;
+  margin-bottom: 6px;
+}
+
+.welcome-code-section input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  text-transform: uppercase;
+}
+
+.welcome-code-section input:focus {
+  outline: none;
+  border-color: #F56400;
+  box-shadow: 0 0 0 2px rgba(245, 100, 0, 0.15);
+}
+
+.welcome-code-error {
+  display: block;
+  font-size: 12px;
+  color: #dc3545;
+  margin-top: 4px;
+  min-height: 16px;
+}
+
+.welcome-modal-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.welcome-modal-buttons .btn {
+  flex: 1;
+}
+
+/* Referral Section */
+.referral-card {
+  padding: 14px;
+  background: #f9f9f9;
+  border-radius: 10px;
+}
+
+.referral-code-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.referral-code-display {
+  font-family: 'Courier New', monospace;
+  font-size: 16px;
+  font-weight: 700;
+  color: #F56400;
+  letter-spacing: 1px;
+  flex: 1;
+}
+
+.referral-copy-btn {
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.referral-copy-btn:hover {
+  border-color: #F56400;
+  color: #F56400;
+}
+
+.referral-stats {
+  font-size: 12px;
+  color: #888;
+}
+
+.referral-loading {
+  font-size: 13px;
+  color: #999;
+  font-style: italic;
+}
+
+/* Affiliate Section */
+.affiliate-state {
+  display: block;
+}
+
+.affiliate-desc {
+  font-size: 13px;
+  color: #666;
+  margin: 0 0 12px 0;
+  line-height: 1.4;
+}
+
+.affiliate-stats-row {
+  display: flex;
+  gap: 12px;
+  margin: 10px 0 12px;
+}
+
+.affiliate-stat {
+  flex: 1;
+  text-align: center;
+  padding: 10px;
+  background: #f0f0f0;
+  border-radius: 8px;
+}
+
+.affiliate-stat-value {
+  display: block;
+  font-size: 22px;
+  font-weight: 700;
+  color: #F56400;
+}
+
+.affiliate-stat-label {
+  display: block;
+  font-size: 11px;
+  color: #888;
+  margin-top: 2px;
+}
+
+/* Affiliate Dashboard Modal */
+.affiliate-dashboard-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  backdrop-filter: blur(4px);
+}
+
+.affiliate-dashboard-modal {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  width: 90%;
+  max-width: 400px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.affiliate-dashboard-modal h2 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.affiliate-dashboard-modal .close-btn {
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  padding: 4px 8px;
+  color: #999;
+  line-height: 1;
+}
+
+.affiliate-dashboard-modal .close-btn:hover {
+  color: #333;
+}
+
+.affiliate-dashboard-modal .dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.affiliate-dashboard-modal .dashboard-stat {
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 14px;
+  text-align: center;
+}
+
+.affiliate-dashboard-modal .dashboard-stat-value {
+  display: block;
+  font-size: 24px;
+  font-weight: 700;
+  color: #F56400;
+}
+
+.affiliate-dashboard-modal .dashboard-stat-label {
+  font-size: 11px;
+  color: #888;
+}
+
+.affiliate-dashboard-modal .activity-section {
+  margin-top: 16px;
+}
+
+.affiliate-dashboard-modal .activity-section h3 {
+  font-size: 13px;
+  color: #666;
+  margin: 0 0 8px 0;
+}
+
+.affiliate-dashboard-modal .activity-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.affiliate-dashboard-modal .activity-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+  font-size: 13px;
+}
+
+.affiliate-dashboard-modal .activity-item:last-child {
+  border-bottom: none;
+}
+
+.affiliate-dashboard-modal .activity-date {
+  color: #999;
+}
+
+.affiliate-dashboard-modal .activity-amount {
+  font-weight: 600;
+  color: #10b981;
+}
+
+.affiliate-dashboard-modal .activity-empty {
+  color: #999;
+  font-size: 13px;
+  margin: 0;
+}
+
+.affiliate-dashboard-modal .dashboard-footer {
+  margin-top: 16px;
+  font-size: 12px;
+  color: #999;
+}
+
+/* Tour Popover Brand Overrides */
+.blp-tour-popover .driver-popover-next-btn,
+.blp-tour-popover .driver-popover-close-btn[aria-label="Close"] {
+  background-color: #F56400;
+  color: white;
+  border: none;
+  text-shadow: none;
+}
+
+.blp-tour-popover .driver-popover-next-btn:hover {
+  background-color: #d45500;
+}
+
+.blp-tour-popover .driver-popover-prev-btn {
+  color: #F56400;
+}
+
+.blp-tour-popover .driver-popover-progress-text {
+  color: #F56400;
+  font-weight: 500;
+}
+
+.blp-tour-popover .driver-popover-title {
+  font-size: 15px;
+}
+
+.blp-tour-popover .driver-popover-description {
+  font-size: 13px;
+  color: #555;
+}
+
+/* Tour Intro Modal */
+.tour-intro-modal {
+  max-width: 340px;
+}
+
+.tour-intro-header {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.tour-intro-header h3 {
+  color: #F56400;
+}
+
+.tour-intro-features {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.tour-intro-feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #f9f9f9;
+  border-radius: 8px;
+}
+
+.tour-intro-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+.tour-intro-feature strong {
+  display: block;
+  font-size: 13px;
+  color: #333;
+  margin-bottom: 2px;
+}
+
+.tour-intro-feature span {
+  font-size: 12px;
+  color: #666;
+  line-height: 1.4;
+}

@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Listing Status Lottie Prototype</title>
+  <script src="https://unpkg.com/@lottiefiles/lottie-player@2.0.8/dist/lottie-player.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      padding: 24px;
+      color: #333;
+    }
+
+    h1 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #222;
+    }
+
+    .legend {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+      padding: 12px 16px;
+      background: white;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #555;
+    }
+
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .listings-container {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: 900px;
+    }
+
+    /* --- Card --- */
+    .listing-card {
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      overflow: hidden;
+      transition: box-shadow 0.2s ease;
+    }
+
+    .listing-card:hover {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .listing-card.expanded {
+      border-color: #ccc;
+    }
+
+    /* --- Card Header (always visible) --- */
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .card-header:hover {
+      background: #fafafa;
+    }
+
+    .card-number {
+      font-size: 12px;
+      font-weight: 700;
+      color: #999;
+      min-width: 24px;
+    }
+
+    .status-indicator {
+      position: relative;
+      width: 36px;
+      height: 36px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .status-indicator lottie-player {
+      width: 36px;
+      height: 36px;
+    }
+
+    .status-indicator .static-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .static-icon.empty {
+      background: #f0f0f0;
+      color: #bbb;
+    }
+
+    .static-icon.partial {
+      background: #fff3e0;
+      color: #F56400;
+    }
+
+    .card-title {
+      flex: 1;
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .card-title.empty {
+      color: #bbb;
+      font-style: italic;
+    }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .completeness-bar {
+      width: 60px;
+      height: 6px;
+      background: #eee;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .completeness-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.4s ease;
+    }
+
+    .completeness-fill.empty { width: 0%; background: #ccc; }
+    .completeness-fill.low { width: 25%; background: #F56400; }
+    .completeness-fill.mid { width: 60%; background: #F5A623; }
+    .completeness-fill.high { width: 85%; background: #4CAF50; }
+    .completeness-fill.full { width: 100%; background: #4CAF50; }
+
+    .completeness-pct {
+      font-size: 11px;
+      font-weight: 600;
+      color: #999;
+      min-width: 28px;
+      text-align: right;
+    }
+
+    .eval-score-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 10px;
+      white-space: nowrap;
+    }
+
+    .eval-score-badge.good {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    .eval-score-badge.ok {
+      background: #fff3e0;
+      color: #e65100;
+    }
+
+    .eval-score-badge.poor {
+      background: #fce4ec;
+      color: #c62828;
+    }
+
+    .expand-arrow {
+      font-size: 12px;
+      color: #bbb;
+      transition: transform 0.2s ease;
+    }
+
+    .listing-card.expanded .expand-arrow {
+      transform: rotate(90deg);
+    }
+
+    /* --- Card Body (expanded only) --- */
+    .card-body {
+      display: none;
+      padding: 0 16px 16px 16px;
+      border-top: 1px solid #f0f0f0;
+    }
+
+    .listing-card.expanded .card-body {
+      display: block;
+    }
+
+    .field-group {
+      margin-top: 12px;
+    }
+
+    .field-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 4px;
+    }
+
+    .field-score {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 8px;
+    }
+
+    .field-score.good { background: #e8f5e9; color: #2e7d32; }
+    .field-score.ok { background: #fff3e0; color: #e65100; }
+    .field-score.poor { background: #fce4ec; color: #c62828; }
+
+    .field-value {
+      font-size: 13px;
+      color: #333;
+      line-height: 1.5;
+    }
+
+    .field-value.empty {
+      color: #ccc;
+      font-style: italic;
+    }
+
+    .tags-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .tag-chip {
+      font-size: 12px;
+      padding: 2px 8px;
+      background: #f0f0f0;
+      border-radius: 4px;
+      color: #555;
+    }
+
+    .image-slots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .image-slot {
+      width: 48px;
+      height: 48px;
+      border-radius: 4px;
+      background: #f0f0f0;
+      border: 1px dashed #ddd;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ccc;
+      font-size: 18px;
+    }
+
+    .image-slot.filled {
+      background: #e8e8e8;
+      border-style: solid;
+      border-color: #ddd;
+      color: #999;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #f0f0f0;
+    }
+
+    .btn-sm {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-ai {
+      background: #F56400;
+      color: white;
+    }
+
+    .btn-eval {
+      background: #6c5ce7;
+      color: white;
+    }
+
+    /* --- Transition animation for status indicator --- */
+    @keyframes status-pop {
+      0% { transform: scale(0.8); opacity: 0.5; }
+      50% { transform: scale(1.15); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .status-indicator.animate {
+      animation: status-pop 0.4s ease;
+    }
+
+    /* --- Info panel --- */
+    .info-panel {
+      margin-top: 24px;
+      padding: 16px;
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.7;
+      color: #555;
+    }
+
+    .info-panel h2 {
+      font-size: 14px;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .info-panel code {
+      background: #f5f5f5;
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-size: 12px;
+    }
+
+    .info-panel ul {
+      padding-left: 20px;
+      margin: 8px 0;
+    }
+
+    .size-note {
+      margin-top: 16px;
+      padding: 12px 16px;
+      background: #fffde7;
+      border: 1px solid #fff9c4;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Listing Status Indicator — Lottie Prototype</h1>
+
+  <div class="legend">
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#e0e0e0"></div> Empty
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#F5A623"></div> Partial
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#4CAF50"></div> Complete
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#6c5ce7"></div> Evaluated
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#FFD700"></div> High Score
+    </div>
+  </div>
+
+  <div class="listings-container" id="listings"></div>
+
+  <div class="info-panel">
+    <h2>Implementation Notes</h2>
+    <ul>
+      <li><strong>Player:</strong> <code>@lottiefiles/lottie-player</code> — 73 KB gzipped (web component, loaded from CDN)</li>
+      <li><strong>Animations:</strong> Each animation JSON is 5–30 KB. For 4–5 states, total ~60–100 KB in assets</li>
+      <li><strong>Play strategy:</strong> Animations play once on state transition, then hold final frame. No persistent looping</li>
+      <li><strong>Collapsed view:</strong> 36px indicator with completeness bar — always visible</li>
+      <li><strong>Expanded view:</strong> Same indicator, plus per-field score chips</li>
+      <li><strong>Fallback:</strong> If Lottie fails to load, static CSS icons shown (gray circle, orange dot, green check)</li>
+    </ul>
+
+    <h2>Alternatives Considered</h2>
+    <ul>
+      <li><strong>CSS-only:</strong> 0 KB overhead but limited expressiveness — pulse, bounce, color transitions only</li>
+      <li><strong>APNG/WebP:</strong> No library needed, but no playback control (can't play-once-then-stop)</li>
+      <li><strong>Rive:</strong> 60 KB runtime, interactive state machines, but smaller free library</li>
+    </ul>
+
+    <h2>Bundle Impact for Chrome Extension</h2>
+    <ul>
+      <li>lottie-player.js: ~73 KB gzipped — loaded only in editor page, not in sidepanel or background</li>
+      <li>4–5 animation JSON files: ~80 KB total — bundled in <code>editor/animations/</code></li>
+      <li>Total impact: ~150 KB — acceptable for the editor page (already loads jspreadsheet at ~200 KB)</li>
+    </ul>
+  </div>
+
+  <div class="size-note">
+    <strong>Try it:</strong> Click any card header to expand/collapse. The Lottie animations play once on load.
+    In the real implementation, they'd play once on state <em>transition</em> (e.g. when a listing goes from partial to complete) and then hold the final frame.
+  </div>
+
+<script>
+const LISTINGS = [
+  {
+    id: 1,
+    title: '',
+    description: '',
+    tags: [],
+    price: '',
+    images: 0,
+    status: 'empty',
+    completeness: 0,
+    evalScore: null,
+    expanded: false
+  },
+  {
+    id: 2,
+    title: 'Vintage Botanical Print Set',
+    description: '',
+    tags: ['botanical', 'vintage', 'printable'],
+    price: '4.99',
+    images: 2,
+    status: 'partial',
+    completeness: 45,
+    evalScore: null,
+    expanded: false
+  },
+  {
+    id: 3,
+    title: 'Digital Wedding Invitation Template — Elegant Floral Design',
+    description: 'Beautiful floral wedding invitation template. Fully editable in Canva. Includes RSVP card, details card, and thank you card.',
+    tags: ['wedding invitation', 'digital template', 'canva template', 'floral wedding', 'editable invite', 'printable invitation', 'elegant wedding', 'boho wedding', 'wedding suite', 'rsvp card', 'save the date', 'instant download', 'diy wedding'],
+    price: '12.99',
+    images: 8,
+    status: 'complete',
+    completeness: 100,
+    evalScore: null,
+    expanded: true
+  },
+  {
+    id: 4,
+    title: 'Minimalist Resume Template for Google Docs',
+    description: 'Clean, modern resume template. Easy to edit in Google Docs. ATS-friendly format with matching cover letter.',
+    tags: ['resume template', 'cv template', 'google docs', 'minimalist resume', 'professional resume', 'job application', 'ats friendly', 'cover letter', 'modern resume'],
+    price: '7.99',
+    images: 5,
+    status: 'evaluated',
+    completeness: 100,
+    evalScore: 8.2,
+    fieldScores: { title: 9, description: 8, tags: 7, price: 8, images: 9 },
+    expanded: false
+  },
+  {
+    id: 5,
+    title: 'Budget Planner Spreadsheet',
+    description: 'Track your finances.',
+    tags: ['budget', 'planner', 'spreadsheet'],
+    price: '2.99',
+    images: 1,
+    status: 'evaluated',
+    completeness: 75,
+    evalScore: 4.1,
+    fieldScores: { title: 5, description: 3, tags: 4, price: 5, images: 3 },
+    expanded: true
+  }
+];
+
+// Lottie animation sources for each state
+const LOTTIE_ANIMS = {
+  complete: 'https://assets-v2.lottiefiles.com/a/b36cb88a-1150-11ee-8f49-9b6c0bfe85bb/Y50UE4gUwg.lottie',
+  star: 'https://assets-v2.lottiefiles.com/a/baded9dc-117c-11ee-b99d-877aaef79fb6/TXD1KKgVNs.json',
+};
+
+function scoreClass(score) {
+  if (score >= 7) return 'good';
+  if (score >= 4) return 'ok';
+  return 'poor';
+}
+
+function completenessClass(pct) {
+  if (pct === 0) return 'empty';
+  if (pct <= 30) return 'low';
+  if (pct <= 65) return 'mid';
+  if (pct < 100) return 'high';
+  return 'full';
+}
+
+function renderStatusIndicator(listing) {
+  if (listing.status === 'evaluated' && listing.evalScore >= 7) {
+    return `<lottie-player src="${LOTTIE_ANIMS.star}" mode="normal" speed="1" style="width:36px;height:36px" autoplay></lottie-player>`;
+  }
+  if (listing.status === 'complete' || (listing.status === 'evaluated' && listing.evalScore >= 4)) {
+    return `<lottie-player src="${LOTTIE_ANIMS.complete}" mode="normal" speed="1" style="width:36px;height:36px" autoplay></lottie-player>`;
+  }
+  if (listing.status === 'partial') {
+    return `<div class="static-icon partial">~</div>`;
+  }
+  if (listing.status === 'evaluated' && listing.evalScore < 4) {
+    return `<div class="static-icon partial">!</div>`;
+  }
+  return `<div class="static-icon empty">—</div>`;
+}
+
+function renderFieldScore(listing, field) {
+  if (!listing.fieldScores) return '';
+  const s = listing.fieldScores[field];
+  if (s == null) return '';
+  return `<span class="field-score ${scoreClass(s)}">${s}/10</span>`;
+}
+
+function renderCard(listing) {
+  const expanded = listing.expanded ? ' expanded' : '';
+  const titleText = listing.title || 'Untitled listing';
+  const titleClass = listing.title ? '' : ' empty';
+
+  const tagsHtml = listing.tags.length > 0
+    ? listing.tags.map(t => `<span class="tag-chip">${t}</span>`).join('')
+    : '<span class="field-value empty">No tags</span>';
+
+  const imageSlots = [];
+  for (let i = 0; i < 5; i++) {
+    imageSlots.push(`<div class="image-slot${i < listing.images ? ' filled' : ''}">${i < listing.images ? '&#x1f5bc;' : '+'}</div>`);
+  }
+
+  const evalBadge = listing.evalScore != null
+    ? `<span class="eval-score-badge ${scoreClass(listing.evalScore)}">${listing.evalScore.toFixed(1)}</span>`
+    : '';
+
+  return `
+    <div class="listing-card${expanded}" data-id="${listing.id}">
+      <div class="card-header" onclick="toggleCard(${listing.id})">
+        <span class="card-number">#${listing.id}</span>
+        <div class="status-indicator">
+          ${renderStatusIndicator(listing)}
+        </div>
+        <span class="card-title${titleClass}">${titleText}</span>
+        <div class="card-meta">
+          ${evalBadge}
+          <div class="completeness-bar">
+            <div class="completeness-fill ${completenessClass(listing.completeness)}" style="width:${listing.completeness}%"></div>
+          </div>
+          <span class="completeness-pct">${listing.completeness}%</span>
+          <span class="expand-arrow">&#9654;</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="field-group">
+          <div class="field-label">Title ${renderFieldScore(listing, 'title')} <button class="btn-sm btn-ai" style="margin-left:auto">AI &middot; 1 credit</button></div>
+          <div class="field-value${listing.title ? '' : ' empty'}">${listing.title || 'No title'}</div>
+        </div>
+        <div class="field-group">
+          <div class="field-label">Description ${renderFieldScore(listing, 'description')} <button class="btn-sm btn-ai" style="margin-left:auto">AI &middot; 1 credit</button></div>
+          <div class="field-value${listing.description ? '' : ' empty'}">${listing.description || 'No description'}</div>
+        </div>
+        <div class="field-group">
+          <div class="field-label">Tags (${listing.tags.length}/13) ${renderFieldScore(listing, 'tags')} <button class="btn-sm btn-ai" style="margin-left:auto">AI &middot; 1 credit</button></div>
+          <div class="tags-container">${tagsHtml}</div>
+        </div>
+        <div class="field-group">
+          <div class="field-label">Price ${renderFieldScore(listing, 'price')}</div>
+          <div class="field-value${listing.price ? '' : ' empty'}">${listing.price ? '$' + listing.price : 'No price'}</div>
+        </div>
+        <div class="field-group">
+          <div class="field-label">Images (${listing.images}/10) ${renderFieldScore(listing, 'images')}</div>
+          <div class="image-slots">${imageSlots.join('')}</div>
+        </div>
+        <div class="card-actions">
+          <button class="btn-sm btn-eval">Evaluate (2 credits)</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderAll() {
+  document.getElementById('listings').innerHTML = LISTINGS.map(renderCard).join('');
+}
+
+function toggleCard(id) {
+  const listing = LISTINGS.find(l => l.id === id);
+  if (listing) {
+    listing.expanded = !listing.expanded;
+    const card = document.querySelector(`.listing-card[data-id="${id}"]`);
+    if (card) card.classList.toggle('expanded');
+  }
+}
+
+renderAll();
+</script>
+</body>
+</html>
