@@ -1,6 +1,12 @@
-title,description,price,category,tag_1,tag_2,tag_3,who_made,what_is_it,ai_content,when_made,renewal,materials,quantity,sku
-All Defaults Test,Testing that missing fields get correct defaults,1.99,Digital Prints,test,defaults,digital,,,,,,,,
-Explicit Defaults Test - Friendly Text,All fields set using friendly dropdown text,2.49,Digital Prints,test,explicit,defaults,I did,A finished product,Created by me,Made to order,Automatic,,999,
-Non-Default Values - Friendly Text,Testing non-default selections with friendly text,3.99,Clip Art & Image Files,clipart,ai,supply,Another company or person,A supply or tool to make things,With an AI generator,2020 - 2026,Manual,cotton,50,SKU-003
-Materials and SKU Test,Testing materials parsing and SKU,4.99,Planners & Templates,planner,template,organizer,I did,A finished product,Created by me,Made to order,Automatic,"paper, ink, laminate",100,PLAN-004
-Code Values Still Work,Testing that raw code values still parse correctly,1.49,Digital Prints,test,code,values,another,supply,ai_gen,2010_2019,manual,,,CODE-005
+title,description,price,category,tag_1,tag_2,tag_3,who_made,what_is_it,ai_content,when_made,renewal,materials,quantity,sku,primary_color,secondary_color,personalization_instructions,personalization_char_limit,personalization_required,listing_type,featured,etsy_ads
+All Defaults Test,Testing that missing fields get correct defaults,1.99,Digital Prints,test,defaults,digital,,,,,,,,,,,,,,,,
+Explicit Defaults Test - Friendly Text,All fields set using friendly dropdown text,2.49,Digital Prints,test,explicit,defaults,I did,A finished product,Created by me,Made to order,Automatic,,999,,,,,,,digital,false,false
+Non-Default Values - Friendly Text,Testing non-default selections with friendly text,3.99,Clip Art & Image Files,clipart,ai,supply,Another company or person,A supply or tool to make things,With an AI generator,2020 - 2026,Manual,cotton,50,SKU-003,,,,,,digital,,
+Materials and SKU Test,Testing materials parsing and SKU,4.99,Planners & Templates,planner,template,organizer,I did,A finished product,Created by me,Made to order,Automatic,"paper, ink, laminate",100,PLAN-004,,,,,,digital,,
+Code Values Still Work,Testing that raw code values still parse correctly,1.49,Digital Prints,test,code,values,another,supply,ai_gen,2010_2019,manual,,,CODE-005,,,,,,digital,,
+Colors Test,Testing primary and secondary color typeaheads,2.99,Digital Prints,colors,test,art,,,,,,,,CLR-006,blue,gold,,,,digital,,
+Personalization Test,Testing personalization expand and fill,3.49,Digital Prints,personalize,custom,gift,,,,,,,,PERS-007,,,Enter the name you want on the print,50,true,digital,,
+Toggles Test,Testing featured and etsy ads toggles,4.49,Digital Prints,featured,promoted,listing,,,,,,,,TOG-008,,,,,false,digital,true,true
+Physical Listing Type,Testing physical listing type with dialog,5.99,Digital Prints,physical,test,type,,,,,,,,PHYS-009,red,black,,,,physical,false,false
+Full Phase 2 Test,All new fields populated together,6.49,Digital Prints,full,phase2,complete,I did,A finished product,Created by me,Made to order,Automatic,"canvas, wood",50,FULL-010,purple,silver,Enter personalization text here,100,true,digital,true,true
+Grey Color Friendly Test,Testing grey→gray friendly mapping,1.99,Digital Prints,color,grey,map,,,,,,,,GREY-011,grey,rose gold,,,,digital,,

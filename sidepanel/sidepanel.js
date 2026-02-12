@@ -25,6 +25,7 @@ let setupState = {
 let researchClipboard = null;
 let tagLibrary = {};
 let selectedTags = new Set();
+let lockedFields = new Set();
 
 
 const elements = {
@@ -135,7 +136,9 @@ const elements = {
   tagSuggestions: document.getElementById('tag-suggestions'),
   suggestionsContent: document.getElementById('suggestions-content'),
   hideSuggestionsBtn: document.getElementById('hide-suggestions-btn'),
-  openEditorBtn: document.getElementById('open-editor-btn')
+  openEditorBtn: document.getElementById('open-editor-btn'),
+  generateFullBtn: document.getElementById('generate-full-btn'),
+  generateHint: document.getElementById('generate-hint')
 };
 
 document.addEventListener('DOMContentLoaded', init);
@@ -344,6 +347,22 @@ function setupEventListeners() {
   elements.tagsInput.addEventListener('focus', () => showSuggestionsForCategory(elements.categorySelect.value));
   elements.tagsInput.addEventListener('input', updateSuggestionStates);
   elements.openEditorBtn.addEventListener('click', openEditor);
+  elements.generateFullBtn.addEventListener('click', handleGenerateFullListing);
+  elements.titleInput.addEventListener('input', updateGenerateButton);
+  elements.descriptionInput.addEventListener('input', updateGenerateButton);
+  document.querySelectorAll('.field-lock').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const field = btn.dataset.field;
+      btn.classList.toggle('locked');
+      if (btn.classList.contains('locked')) {
+        lockedFields.add(field);
+        btn.title = 'Unlock field for AI generation';
+      } else {
+        lockedFields.delete(field);
+        btn.title = 'Lock field from AI generation';
+      }
+    });
+  });
   document.getElementById('take-tour-link').addEventListener('click', (e) => {
     e.preventDefault();
     startSidepanelTour();
@@ -589,6 +608,7 @@ async function loadCredits(forceRefresh = false) {
     const oldCredits = credits.available;
     credits = response.credits;
     updateCreditsDisplay(oldCredits);
+    updateGenerateButton();
   }
 }
 
@@ -1227,6 +1247,169 @@ function hideSuggestions() {
   elements.tagSuggestions.classList.add('hidden');
 }
 
+function downscaleImage(dataUrl, maxDim = 800, quality = 0.7) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      let { width, height } = img;
+      if (width <= maxDim && height <= maxDim) {
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+        return;
+      }
+      const scale = maxDim / Math.max(width, height);
+      width = Math.round(width * scale);
+      height = Math.round(height * scale);
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+}
+
+function countWords(text) {
+  if (!text) return 0;
+  return text.trim().split(/\s+/).filter(w => w.length > 0).length;
+}
+
+function updateGenerateButton() {
+  const total = countWords(elements.titleInput.value) + countWords(elements.descriptionInput.value);
+  const hasWords = total >= 5;
+  const hasCredits = credits.available >= 2;
+
+  elements.generateFullBtn.disabled = !(hasWords && hasCredits);
+
+  if (!hasCredits) {
+    elements.generateHint.textContent = 'Need 2 credits to generate';
+    elements.generateHint.classList.remove('ready');
+  } else if (!hasWords) {
+    elements.generateHint.textContent = `Enter at least 5 words in title or description (${total}/5)`;
+    elements.generateHint.classList.remove('ready');
+  } else {
+    elements.generateHint.textContent = 'Ready to generate';
+    elements.generateHint.classList.add('ready');
+  }
+}
+
+async function handleGenerateFullListing() {
+  const total = countWords(elements.titleInput.value) + countWords(elements.descriptionInput.value);
+  if (total < 5) {
+    showToast('Enter at least 5 words in title or description', 'error');
+    return;
+  }
+  if (credits.available < 2) {
+    showToast('Need 2 credits to generate', 'error');
+    return;
+  }
+
+  const btn = elements.generateFullBtn;
+  const originalText = btn.textContent;
+  btn.classList.add('btn-loading');
+  btn.disabled = true;
+  btn.textContent = 'Generating...';
+
+  try {
+    const images = await Promise.all(
+      listingImages.slice(0, 3).map(img => downscaleImage(img.dataUrl))
+    );
+    const tags = elements.tagsInput.value.split(',').map(t => t.trim()).filter(t => t);
+
+    const result = await generateFullListing({
+      category: elements.categorySelect.value,
+      title: elements.titleInput.value,
+      description: elements.descriptionInput.value,
+      tags,
+      images,
+      lockedFields: Array.from(lockedFields),
+      style: 'descriptive'
+    });
+
+    if (result.title && !lockedFields.has('title')) {
+      elements.titleInput.value = result.title;
+    }
+    if (result.description && !lockedFields.has('description')) {
+      elements.descriptionInput.value = result.description;
+    }
+    if (result.tags && !lockedFields.has('tags')) {
+      elements.tagsInput.value = result.tags.join(', ');
+    }
+    if (result.price?.suggested) {
+      document.getElementById('price').value = result.price.suggested.toFixed(2);
+    }
+    if (result.materials) {
+      document.getElementById('materials').value = result.materials.join(', ');
+    }
+
+    if (result.creditsRemaining !== undefined) {
+      const oldCredits = credits.available;
+      credits.available = result.creditsRemaining;
+      updateCreditsDisplay(oldCredits);
+    }
+
+    showToast('Listing generated!', 'success');
+  } catch (err) {
+    if (err.error === 'not_authenticated') {
+      showToast('Sign in required to generate', 'error');
+    } else if (err.error === 'insufficient_credits') {
+      showToast('Not enough credits', 'error');
+      showCreditsModal();
+    } else if (err.error === 'unavailable') {
+      showToast('AI service temporarily unavailable', 'error');
+    } else {
+      showToast(err.message || 'Generation failed', 'error');
+    }
+  } finally {
+    btn.classList.remove('btn-loading');
+    btn.textContent = originalText;
+    updateGenerateButton();
+  }
+}
+
+async function generateFullListing(payload) {
+  const result = await chrome.storage.local.get(['bulklistingpro_token', 'authToken', 'sessionToken']);
+  const token = result.bulklistingpro_token || result.authToken || result.sessionToken || null;
+  if (!token) {
+    throw { error: 'not_authenticated', message: 'Sign in required' };
+  }
+
+  const API_BASE = 'https://business-search-api-815700675676.us-central1.run.app';
+  const response = await fetch(`${API_BASE}/api/v1/generate-full-listing`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+      'X-Extension-Id': chrome.runtime.id || 'bulklistingpro',
+      'X-Extension-Version': chrome.runtime.getManifest?.()?.version || '1.0.0'
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    let data = {};
+    try { data = await response.json(); } catch (e) {}
+
+    if (response.status === 401) {
+      throw { error: 'not_authenticated', message: 'Sign in required' };
+    }
+    if (response.status === 402) {
+      throw { error: 'insufficient_credits', message: data.message || 'Not enough credits', creditsRemaining: data.creditsRemaining || 0 };
+    }
+    if (response.status === 503) {
+      throw { error: 'unavailable', message: 'AI service temporarily unavailable' };
+    }
+    throw { error: 'api_error', message: data.message || 'Generation failed' };
+  }
+
+  return await response.json();
+}
+
 function handleSingleListing(e) {
   e.preventDefault();
 
@@ -1248,6 +1431,14 @@ function handleSingleListing(e) {
     materials: (formData.get('materials') || '').split(',').map(m => m.trim()).filter(m => m),
     quantity: parseInt(formData.get('quantity')) || 999,
     sku: formData.get('sku') || '',
+    primary_color: formData.get('primary_color') || '',
+    secondary_color: formData.get('secondary_color') || '',
+    personalization_instructions: formData.get('personalization_instructions') || '',
+    personalization_char_limit: parseInt(formData.get('personalization_char_limit')) || '',
+    personalization_required: formData.get('personalization_required') === 'true',
+    listing_type: 'digital',
+    featured: formData.get('featured') === 'true',
+    etsy_ads: formData.get('etsy_ads') === 'true',
     status: 'pending',
     selected: true
   };
@@ -1278,6 +1469,12 @@ function handleSingleListing(e) {
   renderImagePreviews();
   digitalFile = null;
   clearDigitalFile();
+  lockedFields.clear();
+  document.querySelectorAll('.field-lock').forEach(btn => {
+    btn.classList.remove('locked');
+    btn.title = 'Lock field from AI generation';
+  });
+  updateGenerateButton();
   showToast('Listing added to queue', 'success');
 }
 
@@ -1485,6 +1682,14 @@ async function startUpload() {
     materials: item.materials || [],
     quantity: String(item.quantity || 999),
     sku: item.sku || '',
+    primary_color: item.primary_color || '',
+    secondary_color: item.secondary_color || '',
+    personalization_instructions: item.personalization_instructions || '',
+    personalization_char_limit: item.personalization_char_limit || '',
+    personalization_required: item.personalization_required || false,
+    listing_type: item.listing_type || 'digital',
+    featured: item.featured || false,
+    etsy_ads: item.etsy_ads || false,
     image_1: item.image_1 || '',
     image_2: item.image_2 || '',
     image_3: item.image_3 || '',
@@ -1512,13 +1717,36 @@ async function startUpload() {
   await loadCredits(true);
 }
 
+async function findOrOpenEtsyTab() {
+  const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (activeTab?.url?.includes('etsy.com')) return activeTab;
+
+  const etsyTabs = await chrome.tabs.query({ url: '*://*.etsy.com/*' });
+  if (etsyTabs.length > 0) {
+    await chrome.tabs.update(etsyTabs[0].id, { active: true });
+    return etsyTabs[0];
+  }
+
+  const newTab = await chrome.tabs.create({ url: 'https://www.etsy.com/your/shops/me/listing-editor/create' });
+  await new Promise(resolve => {
+    function listener(tabId, info) {
+      if (tabId === newTab.id && info.status === 'complete') {
+        chrome.tabs.onUpdated.removeListener(listener);
+        resolve();
+      }
+    }
+    chrome.tabs.onUpdated.addListener(listener);
+  });
+  return newTab;
+}
+
 async function runUpload(listings) {
-  elements.currentListing.textContent = 'Attaching to browser...';
+  elements.currentListing.textContent = 'Finding Etsy tab...';
 
   try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!tab || !tab.url?.includes('etsy.com')) {
-      throw new Error('Please navigate to Etsy first');
+    const tab = await findOrOpenEtsyTab();
+    if (!tab) {
+      throw new Error('Could not open Etsy tab');
     }
 
     elements.currentListing.textContent = 'Starting upload...';
@@ -1683,6 +1911,8 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
     if (newQueue.length > uploadQueue.length) {
       const added = newQueue.length - uploadQueue.length;
       uploadQueue = newQueue;
+      elements.resultsSection.classList.add('hidden');
+      elements.progressSection.classList.add('hidden');
       renderQueue();
       showToast(`${added} listing(s) received from editor`, 'success');
     }

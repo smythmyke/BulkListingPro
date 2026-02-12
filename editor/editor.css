@@ -433,6 +433,20 @@ body.grid-active .editor-footer {
   box-shadow: 0 0 0 3px rgba(245, 100, 0, 0.1);
 }
 
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  padding-top: 22px;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: auto;
+}
+
 .required {
   color: #dc3545;
   font-weight: 400;

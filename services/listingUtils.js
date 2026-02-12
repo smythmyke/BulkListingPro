@@ -59,6 +59,32 @@ export const WHEN_MADE_FRIENDLY = { 'made to order': 'made_to_order', '2020 - 20
 export const RENEWAL_FRIENDLY = { 'automatic': 'automatic', 'manual': 'manual' };
 export const LISTING_STATE_FRIENDLY = { 'draft': 'draft', 'active': 'active', 'published': 'active' };
 
+export const VALID_COLORS = [
+  'beige', 'black', 'blue', 'bronze', 'brown', 'clear', 'copper',
+  'gold', 'gray', 'green', 'orange', 'pink', 'purple', 'red',
+  'rose_gold', 'silver', 'white', 'yellow', 'rainbow'
+];
+
+export const COLOR_FRIENDLY = {
+  'grey': 'gray', 'rose gold': 'rose_gold', 'rosegold': 'rose_gold',
+  'beige': 'beige', 'black': 'black', 'blue': 'blue', 'bronze': 'bronze',
+  'brown': 'brown', 'clear': 'clear', 'copper': 'copper', 'gold': 'gold',
+  'gray': 'gray', 'green': 'green', 'orange': 'orange', 'pink': 'pink',
+  'purple': 'purple', 'red': 'red', 'silver': 'silver', 'white': 'white',
+  'yellow': 'yellow', 'rainbow': 'rainbow'
+};
+
+export const COLOR_DISPLAY = {
+  beige: 'Beige', black: 'Black', blue: 'Blue', bronze: 'Bronze',
+  brown: 'Brown', clear: 'Clear', copper: 'Copper', gold: 'Gold',
+  gray: 'Gray', green: 'Green', orange: 'Orange', pink: 'Pink',
+  purple: 'Purple', red: 'Red', rose_gold: 'Rose gold', silver: 'Silver',
+  white: 'White', yellow: 'Yellow', rainbow: 'Rainbow'
+};
+
+export const VALID_LISTING_TYPE = ['digital', 'physical'];
+export const LISTING_TYPE_FRIENDLY = { 'digital': 'digital', 'physical': 'physical', 'digital files': 'digital', 'a physical item': 'physical' };
+
 export const VALID_WHO_MADE = ['i_did', 'member', 'another'];
 export const VALID_WHAT_IS_IT = ['finished_product', 'supply'];
 export const VALID_AI_CONTENT = ['original', 'ai_gen'];
@@ -137,6 +163,19 @@ export function sanitizeListing(row, rowIndex) {
   const quantity = parseInt(row.quantity || row.Quantity || '999') || 999;
   const sku = (row.sku || row.SKU || '').toString().trim();
 
+  const primaryColorRaw = (row.primary_color || row.PrimaryColor || row['Primary Color'] || '').toString().trim();
+  const secondaryColorRaw = (row.secondary_color || row.SecondaryColor || row['Secondary Color'] || '').toString().trim();
+  const personalizationInstructions = (row.personalization_instructions || row.PersonalizationInstructions || row['Personalization Instructions'] || '').toString().trim();
+  const personalizationCharLimitRaw = (row.personalization_char_limit || row.PersonalizationCharLimit || row['Personalization Char Limit'] || '').toString().trim();
+  const personalizationCharLimit = personalizationCharLimitRaw ? (parseInt(personalizationCharLimitRaw) || '') : '';
+  const personalizationRequiredRaw = (row.personalization_required || row.PersonalizationRequired || row['Personalization Required'] || '').toString().trim().toLowerCase();
+  const personalizationRequired = personalizationRequiredRaw === 'true' || personalizationRequiredRaw === 'yes' || personalizationRequiredRaw === '1';
+  const listingTypeRaw = (row.listing_type || row.ListingType || row['Listing Type'] || '').toString().trim();
+  const featuredRaw = (row.featured || row.Featured || '').toString().trim().toLowerCase();
+  const featured = featuredRaw === 'true' || featuredRaw === 'yes' || featuredRaw === '1';
+  const etsyAdsRaw = (row.etsy_ads || row.EtsyAds || row['Etsy Ads'] || '').toString().trim().toLowerCase();
+  const etsyAds = etsyAdsRaw === 'true' || etsyAdsRaw === 'yes' || etsyAdsRaw === '1';
+
   const listing = {
     id: String(Date.now() + rowIndex),
     title,
@@ -153,6 +192,14 @@ export function sanitizeListing(row, rowIndex) {
     materials,
     quantity,
     sku,
+    primary_color: resolveField(primaryColorRaw, COLOR_FRIENDLY, VALID_COLORS, ''),
+    secondary_color: resolveField(secondaryColorRaw, COLOR_FRIENDLY, VALID_COLORS, ''),
+    personalization_instructions: personalizationInstructions,
+    personalization_char_limit: personalizationCharLimit,
+    personalization_required: personalizationRequired,
+    listing_type: resolveField(listingTypeRaw, LISTING_TYPE_FRIENDLY, VALID_LISTING_TYPE, 'digital'),
+    featured,
+    etsy_ads: etsyAds,
     image_1: row.image_1 || row.Image1 || row['Image 1'] || '',
     image_2: row.image_2 || row.Image2 || row['Image 2'] || '',
     image_3: row.image_3 || row.Image3 || row['Image 3'] || '',

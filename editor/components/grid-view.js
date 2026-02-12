@@ -1,4 +1,4 @@
-import { CATEGORIES } from '../../services/listingUtils.js';
+import { CATEGORIES, VALID_COLORS, COLOR_DISPLAY, VALID_LISTING_TYPE } from '../../services/listingUtils.js';
 
 let gridInstance = null;
 let onChangeCallback = null;
@@ -16,6 +16,12 @@ const RENEWAL_OPTIONS = ['automatic', 'manual'];
 const RENEWAL_LABELS = { automatic: 'Automatic', manual: 'Manual' };
 const STATE_OPTIONS = ['draft', 'active'];
 const STATE_LABELS = { draft: 'Draft', active: 'Published' };
+const COLOR_OPTIONS = ['', ...VALID_COLORS];
+const COLOR_LABELS = { '': 'None', ...COLOR_DISPLAY };
+const LISTING_TYPE_OPTIONS = ['digital', 'physical'];
+const LISTING_TYPE_LABELS = { digital: 'Digital', physical: 'Physical' };
+const BOOLEAN_OPTIONS = ['false', 'true'];
+const BOOLEAN_LABELS = { 'false': 'No', 'true': 'Yes' };
 
 const COLUMN_TOOLTIPS = [
   'Select rows for batch actions',
@@ -33,6 +39,14 @@ const COLUMN_TOOLTIPS = [
   'Comma-separated materials',
   'Available quantity',
   'Stock keeping unit (optional)',
+  'Primary color (Etsy typeahead)',
+  'Secondary color (Etsy typeahead)',
+  'Personalization instructions text',
+  'Max characters for personalization',
+  'Require personalization from buyer',
+  'Digital or physical listing',
+  'Feature this listing in shop',
+  'Promote with Etsy Ads',
   'Click to add images (0/5 to 5/5)',
 ];
 
@@ -52,6 +66,14 @@ const COLUMNS = [
   { type: 'text', title: 'Materials', width: 180, name: 'materials' },
   { type: 'numeric', title: 'Qty', width: 60, name: 'quantity' },
   { type: 'text', title: 'SKU', width: 100, name: 'sku' },
+  { type: 'dropdown', title: 'Primary Color', width: 120, name: 'primary_color', source: COLOR_OPTIONS },
+  { type: 'dropdown', title: 'Secondary Color', width: 120, name: 'secondary_color', source: COLOR_OPTIONS },
+  { type: 'text', title: 'Personalization', width: 200, name: 'personalization_instructions', wordWrap: true },
+  { type: 'numeric', title: 'Char Limit', width: 80, name: 'personalization_char_limit' },
+  { type: 'dropdown', title: 'Pers. Req', width: 80, name: 'personalization_required', source: BOOLEAN_OPTIONS },
+  { type: 'dropdown', title: 'Type', width: 90, name: 'listing_type', source: LISTING_TYPE_OPTIONS },
+  { type: 'dropdown', title: 'Featured', width: 80, name: 'featured', source: BOOLEAN_OPTIONS },
+  { type: 'dropdown', title: 'Etsy Ads', width: 80, name: 'etsy_ads', source: BOOLEAN_OPTIONS },
   { type: 'text', title: 'Imgs', width: 55, name: '_images', readOnly: true },
 ];
 
@@ -82,6 +104,14 @@ function listingsToRows(listings) {
     (l.materials || []).join(', '),
     l.quantity || 999,
     l.sku || '',
+    l.primary_color || '',
+    l.secondary_color || '',
+    l.personalization_instructions || '',
+    l.personalization_char_limit || '',
+    l.personalization_required ? 'true' : 'false',
+    l.listing_type || 'digital',
+    l.featured ? 'true' : 'false',
+    l.etsy_ads ? 'true' : 'false',
     `${countImages(l)}/5`
   ]);
 }
@@ -102,7 +132,15 @@ function rowToListingUpdate(rowData) {
     listing_state: rowData[11] || 'draft',
     materials: (rowData[12] || '').split(',').map(m => m.trim()).filter(m => m),
     quantity: parseInt(rowData[13]) || 999,
-    sku: rowData[14] || ''
+    sku: rowData[14] || '',
+    primary_color: rowData[15] || '',
+    secondary_color: rowData[16] || '',
+    personalization_instructions: rowData[17] || '',
+    personalization_char_limit: parseInt(rowData[18]) || '',
+    personalization_required: rowData[19] === 'true',
+    listing_type: rowData[20] || 'digital',
+    featured: rowData[21] === 'true',
+    etsy_ads: rowData[22] === 'true'
   };
 }
 

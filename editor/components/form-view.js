@@ -1,4 +1,4 @@
-import { CATEGORIES, CATEGORY_ATTRIBUTES } from '../../services/listingUtils.js';
+import { CATEGORIES, CATEGORY_ATTRIBUTES, VALID_COLORS, COLOR_DISPLAY } from '../../services/listingUtils.js';
 import { validateListing, getCharCountClass } from './validator.js';
 import { getImageSrc, hasImage, formatFileSize } from './image-handler.js';
 
@@ -22,6 +22,14 @@ export function createBlankListing() {
     materials: [],
     quantity: 999,
     sku: '',
+    primary_color: '',
+    secondary_color: '',
+    personalization_instructions: '',
+    personalization_char_limit: '',
+    personalization_required: false,
+    listing_type: 'digital',
+    featured: false,
+    etsy_ads: false,
     status: 'pending',
     selected: true
   };
@@ -47,6 +55,15 @@ function craftTypeVisible(category) {
 function craftTypeOptions(selected) {
   const opts = ['Scrapbooking', 'Card making & stationery', 'Collage', "Kids' crafts"];
   return opts.map(o => `<option value="${escapeHtml(o)}" ${o === selected ? 'selected' : ''}>${escapeHtml(o)}</option>`).join('');
+}
+
+function colorOptions(selected) {
+  let html = `<option value="" ${!selected ? 'selected' : ''}>None</option>`;
+  for (const code of VALID_COLORS) {
+    const sel = code === selected ? 'selected' : '';
+    html += `<option value="${code}" ${sel}>${COLOR_DISPLAY[code] || code}</option>`;
+  }
+  return html;
 }
 
 function selectOption(options, selected) {
@@ -323,6 +340,50 @@ export function renderListingCard(listing, index, collapsed = false) {
           <div class="form-group">
             <label>SKU</label>
             <input type="text" data-field="sku" data-listing-id="${listing.id}" value="${escapeHtml(listing.sku)}" placeholder="Optional">
+          </div>
+          <div class="form-row">
+            <div class="form-group-half">
+              <label>Primary Color</label>
+              <select data-field="primary_color" data-listing-id="${listing.id}">
+                ${colorOptions(listing.primary_color)}
+              </select>
+            </div>
+            <div class="form-group-half">
+              <label>Secondary Color</label>
+              <select data-field="secondary_color" data-listing-id="${listing.id}">
+                ${colorOptions(listing.secondary_color)}
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Personalization Instructions</label>
+            <textarea data-field="personalization_instructions" data-listing-id="${listing.id}" rows="2" placeholder="e.g. Enter name for print">${escapeHtml(listing.personalization_instructions)}</textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group-half">
+              <label>Personalization Char Limit</label>
+              <input type="number" data-field="personalization_char_limit" data-listing-id="${listing.id}" value="${listing.personalization_char_limit || ''}" min="1" placeholder="Optional">
+            </div>
+            <div class="form-group-half">
+              <label class="checkbox-label">
+                <input type="checkbox" data-field="personalization_required" data-listing-id="${listing.id}" ${listing.personalization_required ? 'checked' : ''}>
+                Personalization Required
+              </label>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group-half">
+              <label class="checkbox-label">
+                <input type="checkbox" data-field="featured" data-listing-id="${listing.id}" ${listing.featured ? 'checked' : ''}>
+                Featured
+              </label>
+            </div>
+            <div class="form-group-half">
+              <label class="checkbox-label">
+                <input type="checkbox" data-field="etsy_ads" data-listing-id="${listing.id}" ${listing.etsy_ads ? 'checked' : ''}>
+                Etsy Ads
+              </label>
+            </div>
           </div>
         </details>
       </div>

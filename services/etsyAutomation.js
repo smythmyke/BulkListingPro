@@ -119,9 +119,12 @@ class EtsyAutomationService {
       await this.fillAboutTab(listing);
       await this.fillPriceTab(listing);
       await this.fillCategoryAttributes(listing);
+      await this.fillColors(listing);
+      await this.fillPersonalization(listing);
       await this.fillTags(listing);
       await this.fillMaterials(listing);
       await this.fillSettingsTab(listing);
+      await this.fillToggles(listing);
       await this.saveListing(listing.listing_state !== 'active');
 
       return { success: true, title: listing.title };
@@ -298,8 +301,27 @@ class EtsyAutomationService {
   }
 
   async fillItemDetails(listing) {
-    await this.clickByText('Digital files');
+    const listingType = listing.listing_type || 'digital';
+    if (listingType === 'digital') {
+      await this.clickByText('Digital files');
+    } else {
+      await this.clickByText('A physical item');
+    }
     await this.interruptibleDelay(DELAYS.medium);
+
+    const hasDialog = await cdpService.evaluate(`
+      (() => {
+        const dialog = document.querySelector('[role="dialog"]');
+        if (dialog && dialog.textContent.includes('change your listing type')) {
+          const confirmBtn = [...dialog.querySelectorAll('button')].find(b =>
+            b.textContent.includes('Change type') || b.textContent.includes('Yes')
+          );
+          if (confirmBtn) { confirmBtn.click(); return true; }
+        }
+        return false;
+      })()
+    `);
+    if (hasDialog) await this.interruptibleDelay(DELAYS.long);
 
     const whoMadeText = { i_did: 'I did', member: 'A member of my shop', another: 'Another company or person' };
     await this.clickByText(whoMadeText[listing.who_made] || 'I did');
@@ -614,6 +636,218 @@ class EtsyAutomationService {
           } else {
             const input = document.querySelector('#listing-materials-input');
             if (input) input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', keyCode: 13, bubbles: true }));
+          }
+        })()
+      `);
+      await this.interruptibleDelay(DELAYS.short);
+    }
+  }
+
+  async fillColors(listing) {
+    if (!listing.primary_color && !listing.secondary_color) return;
+
+    const colors = [
+      { field: 'primary_color', label: 'primary color' },
+      { field: 'secondary_color', label: 'secondary color' }
+    ];
+
+    const displayNames = {
+      beige: 'Beige', black: 'Black', blue: 'Blue', bronze: 'Bronze',
+      brown: 'Brown', clear: 'Clear', copper: 'Copper', gold: 'Gold',
+      gray: 'Gray', green: 'Green', orange: 'Orange', pink: 'Pink',
+      purple: 'Purple', red: 'Red', rose_gold: 'Rose gold', silver: 'Silver',
+      white: 'White', yellow: 'Yellow', rainbow: 'Rainbow'
+    };
+
+    for (const { field, label } of colors) {
+      const colorValue = listing[field];
+      if (!colorValue) continue;
+
+      const displayName = displayNames[colorValue] || colorValue;
+
+      const opened = await cdpService.evaluate(`
+        (() => {
+          const wrappers = document.querySelectorAll('[data-attribute-wrapper="true"]');
+          for (const wrapper of wrappers) {
+            if (wrapper.textContent.toLowerCase().includes(${JSON.stringify(label)})) {
+              wrapper.scrollIntoView({ block: 'center' });
+              const trigger = wrapper.querySelector('input.wt-input') ||
+                              wrapper.querySelector('input[type="text"]');
+              if (!trigger) return { found: false, reason: 'no input in wrapper' };
+              trigger.scrollIntoView({ block: 'center' });
+              trigger.click();
+              trigger.focus();
+              return { found: true };
+            }
+          }
+          return { found: false, reason: 'no color wrapper' };
+        })()
+      `);
+
+      if (!opened?.found) {
+        console.log('Color field "' + label + '" not found, skipping (' + (opened?.reason || 'unknown') + ')');
+        continue;
+      }
+
+      await this.interruptibleDelay(DELAYS.long);
+
+      let selected = null;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        selected = await cdpService.evaluate(`
+          (() => {
+            const colorName = ${JSON.stringify(displayName.toLowerCase())};
+            const menuItems = document.querySelectorAll('button[role="menuitemradio"]');
+            for (const item of menuItems) {
+              if (item.textContent.trim().toLowerCase().includes(colorName)) {
+                item.scrollIntoView({ block: 'center' });
+                item.click();
+                return { selected: true, value: item.textContent.trim() };
+              }
+            }
+            return { selected: false, menuCount: menuItems.length };
+          })()
+        `);
+        if (selected?.selected) break;
+        console.log('Color attempt ' + attempt + ': ' + (selected?.menuCount || 0) + ' menu items found');
+        await this.interruptibleDelay(DELAYS.long);
+      }
+
+      if (selected?.selected) {
+        console.log(label + ': ' + selected.value);
+      } else {
+        console.warn('Could not select color "' + displayName + '" for ' + label);
+      }
+
+      await this.interruptibleDelay(DELAYS.short);
+      await cdpService.evaluate(`document.body.click()`);
+      await this.interruptibleDelay(DELAYS.short);
+    }
+  }
+
+  async fillPersonalization(listing) {
+    if (!listing.personalization_instructions) return;
+
+    const expanded = await cdpService.evaluate(`
+      (() => {
+        const btns = document.querySelectorAll('button');
+        for (const btn of btns) {
+          if (btn.textContent.includes('Add personalization')) {
+            btn.scrollIntoView({ block: 'center' });
+            btn.click();
+            return true;
+          }
+        }
+        const textareas = document.querySelectorAll('textarea');
+        for (const ta of textareas) {
+          if (ta.name && ta.name.includes('personalization')) return true;
+          const label = ta.closest('.wt-mb-xs-2, .wt-mb-xs-3, [class*="personalization"]');
+          if (label) return true;
+        }
+        return false;
+      })()
+    `);
+
+    if (!expanded) {
+      console.warn('Personalization section not found');
+      return;
+    }
+    await this.interruptibleDelay(DELAYS.long);
+
+    await cdpService.evaluate(`
+      (() => {
+        const textareas = document.querySelectorAll('textarea');
+        for (const ta of textareas) {
+          const nearby = ta.closest('[class*="personalization"]') ||
+                         ta.parentElement?.parentElement;
+          const label = nearby?.querySelector('label');
+          if (label && label.textContent.toLowerCase().includes('instruction')) {
+            ta.scrollIntoView({ block: 'center' });
+            ta.focus();
+            ta.value = ${JSON.stringify(listing.personalization_instructions)};
+            ta.dispatchEvent(new Event('input', { bubbles: true }));
+            return true;
+          }
+        }
+        const ta = document.querySelector('textarea[name*="personalization"], textarea[id*="personalization"]');
+        if (ta) {
+          ta.focus();
+          ta.value = ${JSON.stringify(listing.personalization_instructions)};
+          ta.dispatchEvent(new Event('input', { bubbles: true }));
+          return true;
+        }
+        return false;
+      })()
+    `);
+    await this.interruptibleDelay(DELAYS.short);
+
+    if (listing.personalization_char_limit) {
+      await cdpService.evaluate(`
+        (() => {
+          const input = document.getElementById('field-personalization-personalizationCharCountMax');
+          if (input) {
+            input.scrollIntoView({ block: 'center' });
+            input.focus();
+            input.value = ${JSON.stringify(String(listing.personalization_char_limit))};
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+        })()
+      `);
+      await this.interruptibleDelay(DELAYS.short);
+    }
+
+    const wantOptional = !listing.personalization_required;
+    await cdpService.evaluate(`
+      (() => {
+        const cb = document.getElementById('field-personalization-personalizationIsRequired');
+        if (!cb) return false;
+        const isOptional = cb.checked;
+        const wantOptional = ${JSON.stringify(wantOptional)};
+        if (isOptional !== wantOptional) {
+          const label = document.querySelector('label[for="field-personalization-personalizationIsRequired"]');
+          if (label) label.click();
+          else cb.click();
+        }
+        return true;
+      })()
+    `);
+    await this.interruptibleDelay(DELAYS.short);
+  }
+
+  async fillToggles(listing) {
+    if (!listing.featured && !listing.etsy_ads) return;
+
+    await cdpService.evaluate(`
+      (() => {
+        const fieldset = document.getElementById('field-featuredRank') ||
+                         document.getElementById('field-shouldAdvertise');
+        if (fieldset) fieldset.scrollIntoView({ block: 'center' });
+      })()
+    `);
+    await this.interruptibleDelay(DELAYS.medium);
+
+    if (listing.featured) {
+      await cdpService.evaluate(`
+        (() => {
+          const cb = document.getElementById('listing-featured-rank-checkbox');
+          if (cb && !cb.checked) {
+            const label = document.querySelector('label[for="listing-featured-rank-checkbox"]');
+            if (label) label.click();
+            else cb.click();
+          }
+        })()
+      `);
+      await this.interruptibleDelay(DELAYS.short);
+    }
+
+    if (listing.etsy_ads) {
+      await cdpService.evaluate(`
+        (() => {
+          const cb = document.getElementById('listing-is-promoted-checkbox');
+          if (cb && !cb.checked) {
+            const label = document.querySelector('label[for="listing-is-promoted-checkbox"]');
+            if (label) label.click();
+            else cb.click();
           }
         })()
       `);

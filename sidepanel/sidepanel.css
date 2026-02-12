@@ -399,6 +399,95 @@ body {
   margin-top: 6px;
 }
 
+/* Generate Full Listing */
+.generate-section {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #eee;
+  text-align: center;
+}
+
+.btn-generate {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(108, 92, 231, 0.3);
+}
+
+.btn-generate:hover:not(:disabled) {
+  background: linear-gradient(135deg, #5a4bd1 0%, #8e85f5 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(108, 92, 231, 0.4);
+}
+
+.btn-generate:disabled {
+  background: #ddd;
+  color: #999;
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-generate.btn-loading {
+  background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+  color: white;
+}
+
+.generate-hint {
+  font-size: 12px;
+  color: #999;
+  margin-top: 6px;
+}
+
+.generate-hint.ready {
+  color: #6c5ce7;
+}
+
+/* Field Lock Icons */
+.single-listing .form-group label:has(.field-lock) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.field-lock {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  color: #ccc;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+}
+
+.field-lock:hover {
+  color: #999;
+  background: #f0f0f0;
+}
+
+.field-lock.locked {
+  color: #6c5ce7;
+  background: #f0edff;
+}
+
+.field-lock:not(.locked) .lock-shackle {
+  transform: translateY(-2px);
+  opacity: 0.5;
+}
+
+.lock-icon {
+  transition: all 0.2s ease;
+}
+
+.lock-shackle {
+  transition: all 0.2s ease;
+}
+
 /* Single Listing Form */
 .single-listing {
   margin-top: 16px;
@@ -481,6 +570,54 @@ body {
   outline: none;
   border-color: #F56400;
   box-shadow: 0 0 0 3px rgba(245, 100, 0, 0.1);
+}
+
+.form-row {
+  display: flex;
+  gap: 12px;
+}
+
+.form-group-half {
+  flex: 1;
+  margin-bottom: 12px;
+}
+
+.form-group-half label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.form-group-half input,
+.form-group-half select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  background: white;
+}
+
+.form-group-half input:focus,
+.form-group-half select:focus {
+  outline: none;
+  border-color: #F56400;
+  box-shadow: 0 0 0 3px rgba(245, 100, 0, 0.1);
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  padding-top: 22px;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: auto;
 }
 
 /* Queue Section */

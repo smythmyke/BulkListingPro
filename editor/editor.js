@@ -777,6 +777,10 @@ function handleFieldInput(e) {
     listing.sku = e.target.value;
   } else if (field === '_digital_display_name') {
     listing._digital_display_name = e.target.value;
+  } else if (field === 'personalization_instructions') {
+    listing.personalization_instructions = e.target.value;
+  } else if (field === 'personalization_char_limit') {
+    listing.personalization_char_limit = parseInt(e.target.value) || '';
   }
 
   updateCardValidation(id);
@@ -831,6 +835,18 @@ function handleFieldChange(e) {
     listing.renewal = e.target.value;
   } else if (field === 'listing_state') {
     listing.listing_state = e.target.value;
+  } else if (field === 'primary_color') {
+    listing.primary_color = e.target.value;
+  } else if (field === 'secondary_color') {
+    listing.secondary_color = e.target.value;
+  } else if (field === 'personalization_required') {
+    listing.personalization_required = e.target.checked;
+  } else if (field === 'listing_type') {
+    listing.listing_type = e.target.value;
+  } else if (field === 'featured') {
+    listing.featured = e.target.checked;
+  } else if (field === 'etsy_ads') {
+    listing.etsy_ads = e.target.checked;
   } else if (field === 'price') {
     const formatted = formatPrice(e.target.value);
     if (formatted) {
@@ -1499,7 +1515,10 @@ async function sendToQueue() {
     if (updated.length > 0) listings = updated;
   }
 
-  const invalid = listings.filter(l => !validateListing(l).valid);
+  const selected = listings.filter(l => l._selected);
+  const toSend = selected.length > 0 ? selected : listings;
+
+  const invalid = toSend.filter(l => !validateListing(l).valid);
   if (invalid.length > 0) {
     showToast(`${invalid.length} listing(s) have errors — fix them first`, 'error');
     if (currentView === 'form') {
@@ -1509,7 +1528,7 @@ async function sendToQueue() {
     return;
   }
 
-  if (listings.length === 0) {
+  if (toSend.length === 0) {
     showToast('No listings to send', 'error');
     return;
   }
@@ -1518,7 +1537,7 @@ async function sendToQueue() {
     const data = await chrome.storage.local.get(STORAGE_KEYS.QUEUE);
     const existingQueue = data[STORAGE_KEYS.QUEUE] || [];
 
-    const queueListings = await Promise.all(listings.map(async l => {
+    const queueListings = await Promise.all(toSend.map(async l => {
       const fullImages = idbAvailable ? await getFullResolutionImages(l) : {};
       const entry = {
         ...l,
