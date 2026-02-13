@@ -1,4 +1,4 @@
-import { STORAGE_KEYS, CATEGORY_ATTRIBUTES, sanitizeListing, readSpreadsheetFile, isLocalFilePath, collectLocalFilePaths } from '../services/listingUtils.js';
+import { STORAGE_KEYS, CATEGORIES, CATEGORY_ATTRIBUTES, sanitizeListing, readSpreadsheetFile, isLocalFilePath, collectLocalFilePaths } from '../services/listingUtils.js';
 import { applyCode, getReferralCode, getReferralStats, getAffiliateStatus, applyAffiliate, getStripeConnectUrl, getAffiliateDashboard } from '../services/affiliateService.js';
 import { startSidepanelTour, shouldAutoStart, showTourIntro } from '../services/tourService.js';
 
@@ -446,29 +446,25 @@ async function checkAuth() {
     await loadCredits();
     loadReferralInfo();
     loadAffiliateSection();
-    const showedWelcome = await checkWelcomeBonus();
-    if (!showedWelcome && await shouldAutoStart('sidepanel')) showTourIntro('sidepanel');
+    await checkWelcomeFlow();
   } else {
     showAuthSection();
   }
 }
 
-async function checkWelcomeBonus() {
+async function checkWelcomeFlow() {
   try {
-    const { bulklistingpro_welcome_bonus, bulklistingpro_code_prompt_shown } = await chrome.storage.local.get(['bulklistingpro_welcome_bonus', 'bulklistingpro_code_prompt_shown']);
-    if (bulklistingpro_welcome_bonus) {
-      await chrome.storage.local.remove('bulklistingpro_welcome_bonus');
-      if (!bulklistingpro_code_prompt_shown) {
-        showWelcomeModal();
-        return true;
-      } else {
-        showToast('Welcome! You received 10 free credits to get started!', 'success');
-      }
+    const { bulklistingpro_welcome_state } = await chrome.storage.local.get('bulklistingpro_welcome_state');
+    if (bulklistingpro_welcome_state === 'needs_welcome') {
+      showWelcomeModal();
+    } else if (bulklistingpro_welcome_state === 'needs_tour') {
+      showTourIntro('sidepanel');
+    } else if (await shouldAutoStart('sidepanel')) {
+      showTourIntro('sidepanel');
     }
   } catch (err) {
-    console.warn('Error checking welcome bonus:', err);
+    console.warn('Error checking welcome flow:', err);
   }
-  return false;
 }
 
 function showWelcomeModal() {
@@ -512,10 +508,10 @@ function showWelcomeModal() {
       const result = await applyCode(code);
       if (result.success) {
         overlay.remove();
-        await chrome.storage.local.set({ bulklistingpro_code_prompt_shown: true });
+        await chrome.storage.local.set({ bulklistingpro_welcome_state: 'needs_tour' });
         showToast(`${result.creditsAwarded} bonus credits added!`, 'success');
         await loadCredits(true);
-        if (await shouldAutoStart('sidepanel')) showTourIntro('sidepanel');
+        showTourIntro('sidepanel');
       } else {
         errorSpan.textContent = result.error || 'Invalid code';
         applyBtn.disabled = false;
@@ -535,9 +531,9 @@ function showWelcomeModal() {
 
   skipBtn.addEventListener('click', async () => {
     overlay.remove();
-    chrome.storage.local.set({ bulklistingpro_code_prompt_shown: true });
+    await chrome.storage.local.set({ bulklistingpro_welcome_state: 'needs_tour' });
     showToast('Welcome! You received 10 free credits to get started!', 'success');
-    if (await shouldAutoStart('sidepanel')) showTourIntro('sidepanel');
+    showTourIntro('sidepanel');
   });
 }
 
@@ -725,7 +721,7 @@ async function loadAffiliateSection() {
         if (countEl) countEl.textContent = dashboard.stats?.totalReferrals || 0;
         if (earningsEl) earningsEl.textContent = '$' + ((dashboard.stats?.totalEarnings || 0) / 100).toFixed(2);
       } catch (err) {
-        console.error('[Affiliate] Error loading dashboard stats:', err);
+        console.warn('[Affiliate] Dashboard stats unavailable:', err.message);
       }
     }
 
@@ -1871,6 +1867,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         uploadResults.push({ title: message.title, status: 'skipped', listing });
         currentUploadIndex = message.index + 1;
         saveUploadState();
+      } else if (message.status === 'retrying') {
+        elements.currentListing.textContent = `Retrying ${message.retryCount} failed listing(s)...`;
+        updateProgress(0, message.retryCount);
       } else if (message.status === 'verification_required') {
         elements.currentListing.textContent = 'Etsy verification required - complete it in browser';
         isPaused = true;
@@ -2187,6 +2186,7 @@ async function captureListingData() {
     if (response.success) {
       researchClipboard = response.data;
       await saveResearchClipboard();
+      addCapturedToEditor(response.data);
       displayCapturedData(researchClipboard);
       updateClipboardBar();
       showCaptureStatus('Listing data captured successfully!', 'success');
@@ -2514,7 +2514,7 @@ function mapEtsyCategoryToInternal(etsyCategory) {
 
   // Digital file types (most specific first)
   if (lower.includes('svg') || lower.includes('cut file') || lower.includes('cutting machine')) {
-    return 'Cutting Machine Files';
+    return 'Cutting Machine Files (SVG)';
   }
   if (lower.includes('embroidery')) {
     return 'Embroidery Machine Files';
@@ -2798,6 +2798,54 @@ async function saveResearchClipboard() {
     await chrome.storage.local.set({ [STORAGE_KEYS.RESEARCH_CLIPBOARD]: researchClipboard });
   } catch (err) {
     console.warn('Failed to save research clipboard:', err);
+  }
+}
+
+async function addCapturedToEditor(capturedData) {
+  try {
+    const mapped = mapEtsyCategoryToInternal(capturedData.category);
+    const category = (mapped && CATEGORIES.includes(mapped)) ? mapped : 'Digital Prints';
+    const tags = Array.isArray(capturedData.tags) ? capturedData.tags.slice(0, 13) : [];
+    const parsedPrice = parseFloat(capturedData.price);
+
+    const listing = {
+      id: `captured_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      title: (capturedData.title || '').slice(0, 140),
+      description: capturedData.description || '',
+      price: Number.isNaN(parsedPrice) ? '' : String(parsedPrice),
+      category,
+      tags,
+      who_made: 'i_did',
+      what_is_it: 'finished_product',
+      ai_content: 'original',
+      when_made: 'made_to_order',
+      renewal: 'automatic',
+      listing_state: 'draft',
+      materials: [],
+      quantity: 999,
+      sku: '',
+      primary_color: '',
+      secondary_color: '',
+      personalization_instructions: '',
+      personalization_char_limit: '',
+      personalization_required: false,
+      listing_type: 'digital',
+      featured: false,
+      etsy_ads: false,
+      status: 'pending',
+      selected: true,
+      _source_url: capturedData.url || '',
+      _source_shop: capturedData.shopName || '',
+      _captured_at: new Date().toISOString()
+    };
+
+    const data = await chrome.storage.local.get(STORAGE_KEYS.EDITOR_LISTINGS);
+    const existing = data[STORAGE_KEYS.EDITOR_LISTINGS] || [];
+    existing.push(listing);
+    await chrome.storage.local.set({ [STORAGE_KEYS.EDITOR_LISTINGS]: existing });
+    showToast('Listing added to editor', 'success');
+  } catch (err) {
+    console.warn('Failed to add captured listing to editor:', err);
   }
 }
 

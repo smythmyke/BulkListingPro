@@ -1553,7 +1553,7 @@ async function sendToQueue() {
       }
       delete entry._digital_file_size;
       Object.keys(entry).forEach(k => {
-        if (k.startsWith('_eval_')) delete entry[k];
+        if (k.startsWith('_eval_') || k.startsWith('_source_') || k.startsWith('_captured_')) delete entry[k];
       });
       return entry;
     }));
@@ -2153,11 +2153,25 @@ function removeBatchTag() {
   showToast(`Removed "${input.trim()}" from ${removed} listing(s)`, 'success');
 }
 
+function mergeExternalListings(storedListings) {
+  if (!Array.isArray(storedListings)) return;
+  const currentIds = new Set(listings.map(l => l.id));
+  const newListings = storedListings.filter(l => !currentIds.has(l.id));
+  if (newListings.length === 0) return;
+  listings.push(...newListings);
+  render();
+  scheduleSave();
+  showToast(`Captured listing${newListings.length > 1 ? 's' : ''} added`, 'success');
+}
+
 function setupStorageListener() {
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area === 'sync' && changes[STORAGE_KEYS.TAG_LIBRARY]) {
       tagLibrary = changes[STORAGE_KEYS.TAG_LIBRARY].newValue || {};
       if (currentView === 'form') updateTagSuggestions();
+    }
+    if (area === 'local' && changes[STORAGE_KEYS.EDITOR_LISTINGS]) {
+      mergeExternalListings(changes[STORAGE_KEYS.EDITOR_LISTINGS].newValue);
     }
   });
 }

@@ -81,7 +81,7 @@ class AuthService {
       };
 
       if (authData.isNewUser) {
-        storageData.bulklistingpro_welcome_bonus = true;
+        storageData.bulklistingpro_welcome_state = 'needs_welcome';
       }
 
       await chrome.storage.local.set(storageData);
@@ -109,6 +109,7 @@ class AuthService {
         'bulklistingpro_token',
         'bulklistingpro_user',
         'bulklistingpro_credits',
+        'bulklistingpro_welcome_state',
         'authToken'
       ]);
 

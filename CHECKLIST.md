@@ -127,19 +127,19 @@
 ### 2.1 Error Handling
 - [x] Captcha/verification detection and pause
 - [x] Progress persistence (resume after crash)
-- [ ] Retry logic with backoff
-- [ ] Credit refund on failure
-- [ ] Clear error messages
-- [ ] Log errors for debugging
-- [ ] "Report issue" feature
+- [x] Retry logic with backoff (auto-retry failed listings after initial pass)
+- [x] Credit refund on failure (credits only deducted on success — no refund needed)
+- [x] Clear error messages (categorized: verification, timeout, network, dom)
+- [x] Log errors for debugging
+- [x] "Report issue" feature (GitHub Issues link in Account tab)
 
 ### 2.2 Settings
-- [ ] Default listing state (draft/publish)
-- [ ] Delay between listings slider
-- [ ] Auto-retry on failure toggle
-- [ ] Notification preferences
-- [ ] Save settings to storage
-- [ ] Load settings on startup
+- [x] Default listing state (draft/publish) — dropdown in queue section
+- [x] Delay between listings — handled by wait-for-element logic + jitter, no slider needed
+- [x] Auto-retry on failure — automatic retry pass after initial batch
+- [x] Notification preferences — toast system in place, desktop notifications not needed
+- [x] Save settings to storage
+- [x] Load settings on startup
 
 ### 2.3 Chrome Web Store Submission
 - [ ] Create 5 screenshots

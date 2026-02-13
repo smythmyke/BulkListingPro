@@ -2758,7 +2758,7 @@ body {
 
 /* Tour Intro Modal */
 .tour-intro-modal {
-  max-width: 340px;
+  max-width: 370px;
 }
 
 .tour-intro-header {
@@ -2768,6 +2768,12 @@ body {
 
 .tour-intro-header h3 {
   color: #F56400;
+  font-size: 20px;
+}
+
+.tour-intro-header p {
+  font-size: 14px;
+  color: #666;
 }
 
 .tour-intro-features {
@@ -2780,28 +2786,67 @@ body {
 .tour-intro-feature {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  padding: 10px 12px;
-  background: #f9f9f9;
-  border-radius: 8px;
+  gap: 14px;
+  padding: 14px;
+  background: #fff;
+  border: 2px solid #eee;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  opacity: 0;
+  animation: tourFadeIn 0.4s ease forwards;
+  transition: border-color 0.35s ease, box-shadow 0.35s ease, background 0.35s ease;
+}
+
+.tour-intro-feature:nth-child(1) { animation-delay: 0.1s; }
+.tour-intro-feature:nth-child(2) { animation-delay: 0.3s; }
+.tour-intro-feature:nth-child(3) { animation-delay: 0.5s; }
+
+@keyframes tourFadeIn {
+  to { opacity: 1; }
+}
+
+.tour-intro-feature.flash {
+  border-color: #F56400;
+  box-shadow: 0 4px 20px rgba(245,100,0,0.25);
+  background: linear-gradient(135deg, #fff7f0, #fff);
 }
 
 .tour-intro-icon {
-  font-size: 20px;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
-  line-height: 1;
-  margin-top: 2px;
+  background: linear-gradient(135deg, #FFF3E8, #FFE0C2);
+  transition: background 0.3s ease;
+}
+
+.tour-intro-icon svg {
+  width: 24px;
+  height: 24px;
+  fill: #F56400;
+  transition: fill 0.3s ease;
+}
+
+.tour-intro-feature.flash .tour-intro-icon {
+  background: linear-gradient(135deg, #F56400, #FF8C42);
+}
+
+.tour-intro-feature.flash .tour-intro-icon svg {
+  fill: #fff;
 }
 
 .tour-intro-feature strong {
   display: block;
-  font-size: 13px;
-  color: #333;
-  margin-bottom: 2px;
+  font-size: 14.5px;
+  color: #222;
+  margin-bottom: 3px;
 }
 
 .tour-intro-feature span {
-  font-size: 12px;
-  color: #666;
-  line-height: 1.4;
+  font-size: 13px;
+  color: #555;
+  line-height: 1.45;
 }

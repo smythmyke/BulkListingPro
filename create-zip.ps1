@@ -1,5 +1,5 @@
 $source = 'C:\Projects\BulkListingPro-extension'
-$version = '0.1.0'
+$version = '0.7.1'
 $dest = "$source\BulkListingPro-v$version.zip"
 $temp = "$source\_temp_zip"
 
@@ -7,7 +7,7 @@ if (Test-Path $dest) { Remove-Item $dest }
 if (Test-Path $temp) { Remove-Item $temp -Recurse -Force }
 New-Item -ItemType Directory -Path $temp | Out-Null
 
-@('assets', 'background', 'content', 'popup', 'services', 'sidepanel', 'templates') | ForEach-Object {
+@('assets', 'background', 'content', 'editor', 'popup', 'services', 'sidepanel', 'templates') | ForEach-Object {
     $srcPath = Join-Path $source $_
     if (Test-Path $srcPath) { Copy-Item -Path $srcPath -Destination $temp -Recurse }
 }

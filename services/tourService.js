@@ -41,7 +41,10 @@ export async function shouldAutoStart(tourId) {
 export async function markComplete(tourId) {
   try {
     const key = TOUR_KEYS[tourId];
-    if (key) await chrome.storage.local.set({ [key]: true });
+    const updates = {};
+    if (key) updates[key] = true;
+    if (tourId === 'sidepanel') updates.bulklistingpro_welcome_state = 'complete';
+    await chrome.storage.local.set(updates);
   } catch (e) {
     console.warn('Failed to mark tour complete:', e);
   }
@@ -58,21 +61,27 @@ export function showTourIntro(tourId) {
       </div>
       <div class="tour-intro-features">
         <div class="tour-intro-feature">
-          <span class="tour-intro-icon">&#x2728;</span>
+          <div class="tour-intro-icon">
+            <svg viewBox="0 0 24 24"><path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61z"/></svg>
+          </div>
           <div>
             <strong>AI Listing Assistance</strong>
             <span>Generate optimized titles, descriptions, and tags with one click.</span>
           </div>
         </div>
         <div class="tour-intro-feature">
-          <span class="tour-intro-icon">&#x26A1;</span>
+          <div class="tour-intro-icon">
+            <svg viewBox="0 0 24 24"><path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z"/></svg>
+          </div>
           <div>
             <strong>Listing Automation</strong>
             <span>Import a spreadsheet and upload hundreds of listings hands-free.</span>
           </div>
         </div>
         <div class="tour-intro-feature">
-          <span class="tour-intro-icon">&#x1F50D;</span>
+          <div class="tour-intro-icon">
+            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          </div>
           <div>
             <strong>Competitor Research</strong>
             <span>Capture tags, titles, and prices from any Etsy listing instantly.</span>
@@ -87,6 +96,18 @@ export function showTourIntro(tourId) {
   `;
 
   document.body.appendChild(overlay);
+
+  const features = overlay.querySelectorAll('.tour-intro-feature');
+  let i = 0;
+  function flashNext() {
+    if (i > 0) features[i - 1].classList.remove('flash');
+    if (i < features.length) {
+      features[i].classList.add('flash');
+      i++;
+      setTimeout(flashNext, 700);
+    }
+  }
+  setTimeout(flashNext, 800);
 
   overlay.querySelector('#tour-intro-start').addEventListener('click', () => {
     overlay.remove();
