@@ -18,6 +18,8 @@
 
   "host_permissions": [
     "https://*.etsy.com/*",
+    "https://www.ebay.com/*",
+    "https://www.amazon.com/*",
     "https://business-search-api-815700675676.us-central1.run.app/*",
     "https://www.googleapis.com/*",
     "http://localhost:9222/*"
@@ -64,6 +66,16 @@
     {
       "matches": ["https://*.etsy.com/listing/*"],
       "js": ["content/etsy-scraper.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://www.ebay.com/itm/*"],
+      "js": ["content/ebay-scraper.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://www.amazon.com/*"],
+      "js": ["content/amazon-scraper.js"],
       "run_at": "document_idle"
     }
   ],

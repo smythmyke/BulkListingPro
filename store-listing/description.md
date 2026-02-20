@@ -16,7 +16,7 @@ Bulk upload Etsy listings with AI-powered titles, tags & descriptions. Import sp
 
 BulkListingPro automates Etsy listing creation for digital product sellers. Upload dozens of SVG files, digital planners, printables, and templates in minutes instead of hours.
 
-NEW IN v0.7: Auto-retry failed listings — transient failures are retried automatically before showing final results. Plus improved error handling and progress persistence.
+NEW IN v0.7.1: Redesigned welcome experience — guided tour intro with animated feature cards, unified onboarding flow, and referral/affiliate code entry for new users.
 
 HOW IT WORKS
 1. Import your spreadsheet (XLSX/CSV) or use the built-in form
@@ -43,6 +43,11 @@ BULK UPLOAD FEATURES
 • Progress tracking — real-time status with error details
 • Auto-retry failed listings — transient failures retried automatically, no manual intervention
 • Manual retry — re-queue any remaining failures with one click
+
+REFERRAL & AFFILIATE PROGRAM
+• Share your referral code — earn bonus credits when friends sign up
+• Affiliate program — earn commissions on referred purchases
+• Apply codes during signup or anytime from your account
 
 RESEARCH TOOLS
 • Capture competitor listings — extract tags, title, price, and description

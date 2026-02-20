@@ -148,9 +148,10 @@
 - [x] Create privacy policy → `store-listing/privacy-policy.html`
 - [x] Create terms of service → `store-listing/terms-of-service.html`
 - [x] Create packaging script → `create-zip.ps1`
-- [ ] Host legal pages on GitHub Pages
-  - URL: `https://smythmyke.github.io/BulkListingPro/store-listing/privacy-policy.html`
-  - URL: `https://smythmyke.github.io/BulkListingPro/store-listing/terms-of-service.html`
+- [ ] Enable GitHub Pages (Settings → Pages → Source: Deploy from branch, /docs folder)
+  - URL: `https://smythmyke.github.io/BulkListingPro/` (landing page)
+  - URL: `https://smythmyke.github.io/BulkListingPro/privacy-policy.html`
+  - URL: `https://smythmyke.github.io/BulkListingPro/terms-of-service.html`
 - [ ] Set up developer account ($5 fee)
 - [ ] Submit for review
 - [ ] Respond to any review feedback

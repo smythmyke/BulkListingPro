@@ -348,6 +348,17 @@ body.grid-active .editor-footer {
 .validation-badge.error { background: #dc3545; }
 .validation-badge.empty { background: #ccc; }
 
+.source-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
 .card-remove {
   background: none;
   border: none;

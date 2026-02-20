@@ -80,7 +80,7 @@ Response:
   "available": 25,
   "used": 10,
   "purchased": 30,
-  "freeCredits": 5
+  "freeCredits": 10
 }
 ```
 
@@ -145,7 +145,7 @@ Document ID: User's email (lowercase)
   available: 25,        // Current balance
   used: 10,             // Total ever used
   purchased: 30,        // Total ever purchased
-  freeCredits: 5,       // Initial free credits (never changes)
+  freeCredits: 10,      // Initial free credits (never changes)
   lastUpdated: Timestamp,
   createdAt: Timestamp
 }

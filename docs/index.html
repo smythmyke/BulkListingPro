@@ -3,35 +3,488 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BulkListingPro - Legal</title>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      max-width: 600px;
-      margin: 40px auto;
-      padding: 20px;
-      line-height: 1.6;
+  <title>BulkListingPro - Etsy Bulk Upload Tool | Upload Listings in Minutes</title>
+  <meta name="description" content="Bulk upload Etsy listings with AI-powered titles, tags & descriptions. Import spreadsheets, research competitors, and upload hundreds of listings in minutes.">
+  <meta name="keywords" content="Etsy bulk upload, Etsy listing tool, Etsy automation, bulk listing, digital products, SVG upload, Etsy seller tool">
+  <meta name="author" content="BulkListingPro">
+  <link rel="canonical" href="https://smythmyke.github.io/BulkListingPro/">
+  <meta name="theme-color" content="#F56400">
+
+  <link rel="icon" type="image/png" sizes="48x48" href="images/favicon-48.png">
+  <link rel="icon" type="image/png" sizes="128x128" href="images/favicon-128.png">
+  <link rel="apple-touch-icon" href="images/favicon-128.png">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://smythmyke.github.io/BulkListingPro/">
+  <meta property="og:title" content="BulkListingPro - Etsy Bulk Upload Tool">
+  <meta property="og:description" content="Bulk upload Etsy listings with AI-powered titles, tags & descriptions. Import spreadsheets and upload hundreds of listings in minutes.">
+  <meta property="og:image" content="https://smythmyke.github.io/BulkListingPro/images/og-image.png">
+  <meta property="og:site_name" content="BulkListingPro">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="BulkListingPro - Etsy Bulk Upload Tool">
+  <meta name="twitter:description" content="Bulk upload Etsy listings with AI-powered titles, tags & descriptions. Upload hundreds of listings in minutes.">
+  <meta name="twitter:image" content="https://smythmyke.github.io/BulkListingPro/images/og-image.png">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#fff7ed',
+              100: '#ffedd5',
+              200: '#fed7aa',
+              300: '#fdba74',
+              400: '#fb923c',
+              500: '#F56400',
+              600: '#ea580c',
+              700: '#c2410c',
+              800: '#9a3412',
+              900: '#7c2d12',
+            }
+          }
+        }
+      }
     }
-    h1 { color: #f56400; }
-    a { color: #f56400; }
-    ul { list-style: none; padding: 0; }
-    li { margin: 10px 0; }
+  </script>
+  <style>
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .animate-fade-in-up { animation: fadeInUp 0.6s ease-out both; }
+    .animate-fade-in { animation: fadeIn 0.5s ease-out both; }
+    .delay-100 { animation-delay: 0.1s; }
+    .delay-200 { animation-delay: 0.2s; }
+    .delay-300 { animation-delay: 0.3s; }
+    .delay-400 { animation-delay: 0.4s; }
+    .delay-500 { animation-delay: 0.5s; }
+    .tab-btn.active { background: linear-gradient(135deg, #F56400, #ea580c); color: white; }
+    .tab-content { display: none; }
+    .tab-content.active { display: grid; }
+    html { scroll-behavior: smooth; }
   </style>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "BulkListingPro",
+    "operatingSystem": "Chrome",
+    "applicationCategory": "BusinessApplication",
+    "applicationSubCategory": "Productivity",
+    "description": "Bulk upload Etsy listings with AI-powered titles, tags & descriptions. Import spreadsheets, research competitors, and upload hundreds of listings in minutes.",
+    "url": "https://smythmyke.github.io/BulkListingPro/",
+    "downloadUrl": "https://chromewebstore.google.com/detail/gmmjdkdgejglelaemhpdekcmeaaccnab",
+    "screenshot": "https://smythmyke.github.io/BulkListingPro/images/og-image.png",
+    "softwareVersion": "0.7.1",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD",
+      "description": "Free to install. Credit packs start at $1.99 for 50 credits (~25 listings). 10 free credits for new users."
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "5",
+      "ratingCount": "1"
+    },
+    "author": {
+      "@type": "Organization",
+      "name": "BulkListingPro"
+    }
+  }
+  </script>
 </head>
-<body>
-  <h1>BulkListingPro</h1>
-  <p>Bulk upload digital product listings to Etsy from a spreadsheet.</p>
+<body class="bg-white text-gray-900 antialiased">
 
-  <h2>Legal</h2>
-  <ul>
-    <li><a href="privacy-policy.html">Privacy Policy</a></li>
-    <li><a href="terms-of-service.html">Terms of Service</a></li>
-  </ul>
+  <!-- Header -->
+  <header class="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-100">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <a href="#" class="flex items-center gap-2">
+        <img src="images/logo.png" alt="BulkListingPro" class="w-8 h-8 rounded">
+        <span class="font-bold text-lg text-gray-900">BulkListingPro</span>
+      </a>
+      <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
+        <a href="#features" class="hover:text-brand-500 transition-colors">Features</a>
+        <a href="#how-it-works" class="hover:text-brand-500 transition-colors">How It Works</a>
+        <a href="#screenshots" class="hover:text-brand-500 transition-colors">Screenshots</a>
+        <a href="#pricing" class="hover:text-brand-500 transition-colors">Pricing</a>
+      </nav>
+      <a href="https://chromewebstore.google.com/detail/gmmjdkdgejglelaemhpdekcmeaaccnab" target="_blank" rel="noopener"
+         class="bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold px-5 py-2 rounded-lg transition-colors shadow-sm">
+        Install Free
+      </a>
+    </div>
+  </header>
 
-  <h2>Links</h2>
-  <ul>
-    <li><a href="https://github.com/smythmyke/BulkListingPro">GitHub Repository</a></li>
-    <li><a href="https://github.com/smythmyke/BulkListingPro/issues">Report Issues</a></li>
-  </ul>
+  <!-- Hero -->
+  <section class="pt-28 pb-20 sm:pt-36 sm:pb-28 bg-gradient-to-br from-orange-50 via-white to-amber-50">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="grid lg:grid-cols-2 gap-12 items-center">
+        <div class="animate-fade-in-up">
+          <div class="inline-flex items-center gap-2 bg-brand-50 text-brand-600 text-sm font-semibold px-3 py-1 rounded-full mb-6 border border-brand-200">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            Chrome Extension for Etsy Sellers
+          </div>
+          <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight text-gray-900">
+            Upload Etsy listings
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-500 to-amber-500">in minutes,</span>
+            not hours
+          </h1>
+          <p class="mt-6 text-lg sm:text-xl text-gray-600 max-w-xl leading-relaxed">
+            Import a spreadsheet, let AI generate your titles, tags & descriptions, then bulk upload to Etsy automatically. Built for digital product sellers.
+          </p>
+          <div class="mt-8 flex flex-col sm:flex-row gap-4">
+            <a href="https://chromewebstore.google.com/detail/gmmjdkdgejglelaemhpdekcmeaaccnab" target="_blank" rel="noopener"
+               class="inline-flex items-center justify-center gap-2 bg-brand-500 hover:bg-brand-600 text-white font-bold px-8 py-3.5 rounded-xl text-lg transition-all shadow-lg shadow-brand-500/25 hover:shadow-xl hover:shadow-brand-500/30">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+              Install for Chrome
+            </a>
+            <a href="#how-it-works"
+               class="inline-flex items-center justify-center gap-2 bg-white hover:bg-gray-50 text-gray-700 font-semibold px-8 py-3.5 rounded-xl text-lg transition-all border border-gray-200">
+              See How It Works
+            </a>
+          </div>
+          <p class="mt-4 text-sm text-gray-500">10 free credits included. No credit card required.</p>
+        </div>
+        <div class="animate-fade-in-up delay-200 lg:pl-8">
+          <div class="relative">
+            <div class="absolute -inset-4 bg-gradient-to-r from-brand-500/20 to-amber-400/20 rounded-2xl blur-xl"></div>
+            <img src="images/screenshots/upload-progress.png" alt="BulkListingPro uploading listings to Etsy" class="relative rounded-xl shadow-2xl border border-gray-200">
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Social Proof Bar -->
+  <section class="py-8 bg-gray-50 border-y border-gray-100">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="flex flex-wrap justify-center items-center gap-8 sm:gap-16 text-center">
+        <div>
+          <div class="text-2xl font-bold text-gray-900">24</div>
+          <div class="text-sm text-gray-500">Product Categories</div>
+        </div>
+        <div>
+          <div class="text-2xl font-bold text-gray-900">100+</div>
+          <div class="text-sm text-gray-500">Listings per Batch</div>
+        </div>
+        <div>
+          <div class="text-2xl font-bold text-gray-900">AI</div>
+          <div class="text-sm text-gray-500">Powered Generation</div>
+        </div>
+        <div>
+          <div class="text-2xl font-bold text-brand-500">$0.04</div>
+          <div class="text-sm text-gray-500">Per Listing</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section id="features" class="py-20 sm:py-28">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900">Everything you need to list at scale</h2>
+        <p class="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">From spreadsheet import to live Etsy listing in a few clicks. No copy-pasting, no repetitive forms.</p>
+      </div>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+
+        <div class="group p-6 rounded-2xl border border-gray-100 hover:border-brand-200 hover:shadow-lg hover:shadow-brand-500/5 transition-all">
+          <div class="w-12 h-12 rounded-xl bg-brand-50 text-brand-500 flex items-center justify-center mb-4 group-hover:bg-brand-500 group-hover:text-white transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-gray-900 mb-2">Spreadsheet Import</h3>
+          <p class="text-gray-600 text-sm leading-relaxed">Upload XLSX or CSV files with 10, 50, or 100+ listings at once. Download our template to get started fast.</p>
+        </div>
+
+        <div class="group p-6 rounded-2xl border border-gray-100 hover:border-brand-200 hover:shadow-lg hover:shadow-brand-500/5 transition-all">
+          <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-500 flex items-center justify-center mb-4 group-hover:bg-purple-500 group-hover:text-white transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-gray-900 mb-2">AI-Powered Generation</h3>
+          <p class="text-gray-600 text-sm leading-relaxed">Generate SEO-optimized titles, descriptions, and tags with one click. Bulk generate across all listings.</p>
+        </div>
+
+        <div class="group p-6 rounded-2xl border border-gray-100 hover:border-brand-200 hover:shadow-lg hover:shadow-brand-500/5 transition-all">
+          <div class="w-12 h-12 rounded-xl bg-green-50 text-green-500 flex items-center justify-center mb-4 group-hover:bg-green-500 group-hover:text-white transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-gray-900 mb-2">Listing Evaluation</h3>
+          <p class="text-gray-600 text-sm leading-relaxed">Get SEO quality scores and actionable recommendations for every field before you publish.</p>
+        </div>
+
+        <div class="group p-6 rounded-2xl border border-gray-100 hover:border-brand-200 hover:shadow-lg hover:shadow-brand-500/5 transition-all">
+          <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center mb-4 group-hover:bg-blue-500 group-hover:text-white transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-gray-900 mb-2">Tag Intelligence</h3>
+          <p class="text-gray-600 text-sm leading-relaxed">Category-based suggestions, competitor tag import, frequency analysis, and similar tag warnings.</p>
+        </div>
+
+        <div class="group p-6 rounded-2xl border border-gray-100 hover:border-brand-200 hover:shadow-lg hover:shadow-brand-500/5 transition-all">
+          <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center mb-4 group-hover:bg-amber-500 group-hover:text-white transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-gray-900 mb-2">Form & Grid Editor</h3>
+          <p class="text-gray-600 text-sm leading-relaxed">Card-based form view for detail work or spreadsheet-style grid for fast bulk edits. Switch anytime.</p>
+        </div>
+
+        <div class="group p-6 rounded-2xl border border-gray-100 hover:border-brand-200 hover:shadow-lg hover:shadow-brand-500/5 transition-all">
+          <div class="w-12 h-12 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center mb-4 group-hover:bg-rose-500 group-hover:text-white transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-gray-900 mb-2">Automated Upload</h3>
+          <p class="text-gray-600 text-sm leading-relaxed">Click upload and watch your listings go live. Progress tracking, auto-retry, pause/skip/resume controls.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section id="how-it-works" class="py-20 sm:py-28 bg-gray-50">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900">How it works</h2>
+        <p class="mt-4 text-lg text-gray-600">Three steps from spreadsheet to live Etsy listings.</p>
+      </div>
+      <div class="grid md:grid-cols-3 gap-8">
+
+        <div class="relative text-center p-8">
+          <div class="w-14 h-14 rounded-full bg-gradient-to-br from-brand-500 to-amber-500 text-white text-xl font-bold flex items-center justify-center mx-auto mb-6 shadow-lg shadow-brand-500/30">1</div>
+          <h3 class="text-xl font-bold text-gray-900 mb-3">Import your listings</h3>
+          <p class="text-gray-600 leading-relaxed">Upload an XLSX or CSV spreadsheet, or use the built-in form to create listings one at a time.</p>
+        </div>
+
+        <div class="relative text-center p-8">
+          <div class="w-14 h-14 rounded-full bg-gradient-to-br from-brand-500 to-amber-500 text-white text-xl font-bold flex items-center justify-center mx-auto mb-6 shadow-lg shadow-brand-500/30">2</div>
+          <h3 class="text-xl font-bold text-gray-900 mb-3">Edit & enhance</h3>
+          <p class="text-gray-600 leading-relaxed">Use the full-page editor with AI generation, tag suggestions, validation, and SEO scoring.</p>
+        </div>
+
+        <div class="relative text-center p-8">
+          <div class="w-14 h-14 rounded-full bg-gradient-to-br from-brand-500 to-amber-500 text-white text-xl font-bold flex items-center justify-center mx-auto mb-6 shadow-lg shadow-brand-500/30">3</div>
+          <h3 class="text-xl font-bold text-gray-900 mb-3">Upload to Etsy</h3>
+          <p class="text-gray-600 leading-relaxed">Click upload and BulkListingPro fills every field automatically. Track progress with pause and retry controls.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Screenshots -->
+  <section id="screenshots" class="py-20 sm:py-28">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900">See it in action</h2>
+        <p class="mt-4 text-lg text-gray-600">Real screenshots from the extension.</p>
+      </div>
+
+      <div class="flex flex-wrap justify-center gap-2 mb-10">
+        <button class="tab-btn active px-5 py-2 rounded-full text-sm font-semibold border border-gray-200 transition-all" data-tab="tab-upload">Upload Progress</button>
+        <button class="tab-btn px-5 py-2 rounded-full text-sm font-semibold border border-gray-200 text-gray-600 hover:border-brand-300 transition-all" data-tab="tab-automation">Etsy Automation</button>
+        <button class="tab-btn px-5 py-2 rounded-full text-sm font-semibold border border-gray-200 text-gray-600 hover:border-brand-300 transition-all" data-tab="tab-queue">Upload Queue</button>
+        <button class="tab-btn px-5 py-2 rounded-full text-sm font-semibold border border-gray-200 text-gray-600 hover:border-brand-300 transition-all" data-tab="tab-form">Listing Form</button>
+      </div>
+
+      <div id="tab-upload" class="tab-content active grid lg:grid-cols-2 gap-10 items-center">
+        <img src="images/screenshots/upload-progress.png" alt="Upload progress showing real-time listing creation" class="rounded-xl shadow-xl border border-gray-200">
+        <div>
+          <span class="inline-block bg-brand-50 text-brand-600 text-xs font-bold px-3 py-1 rounded-full mb-4">REAL-TIME TRACKING</span>
+          <h3 class="text-2xl font-bold text-gray-900 mb-4">Watch your listings go live</h3>
+          <ul class="space-y-3 text-gray-600">
+            <li class="flex items-start gap-3"><svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Real-time progress bar with listing count</li>
+            <li class="flex items-start gap-3"><svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Pause, skip, or cancel anytime</li>
+            <li class="flex items-start gap-3"><svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Auto-retry on transient failures</li>
+            <li class="flex items-start gap-3"><svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Credit usage shown per upload</li>
+          </ul>
+        </div>
+      </div>
+
+      <div id="tab-automation" class="tab-content grid lg:grid-cols-2 gap-10 items-center">
+        <img src="images/screenshots/etsy-automation.png" alt="BulkListingPro automating Etsy listing creation" class="rounded-xl shadow-xl border border-gray-200">
+        <div>
+          <span class="inline-block bg-purple-50 text-purple-600 text-xs font-bold px-3 py-1 rounded-full mb-4">BROWSER AUTOMATION</span>
+          <h3 class="text-2xl font-bold text-gray-900 mb-4">Fills every field for you</h3>
+          <ul class="space-y-3 text-gray-600">
+            <li class="flex items-start gap-3"><svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Title, description, tags, price, category</li>
+            <li class="flex items-start gap-3"><svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Images, digital files, materials, SKU</li>
+            <li class="flex items-start gap-3"><svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Colors, personalization, shop sections</li>
+            <li class="flex items-start gap-3"><svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Save as draft or publish immediately</li>
+          </ul>
+        </div>
+      </div>
+
+      <div id="tab-queue" class="tab-content grid lg:grid-cols-2 gap-10 items-center">
+        <img src="images/screenshots/upload-queue.png" alt="Upload queue with listings ready to publish" class="rounded-xl shadow-xl border border-gray-200">
+        <div>
+          <span class="inline-block bg-green-50 text-green-600 text-xs font-bold px-3 py-1 rounded-full mb-4">QUEUE MANAGEMENT</span>
+          <h3 class="text-2xl font-bold text-gray-900 mb-4">Queue, review, then upload</h3>
+          <ul class="space-y-3 text-gray-600">
+            <li class="flex items-start gap-3"><svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Preview listings before uploading</li>
+            <li class="flex items-start gap-3"><svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Credit cost displayed before starting</li>
+            <li class="flex items-start gap-3"><svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Select or deselect individual items</li>
+            <li class="flex items-start gap-3"><svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Clear queue with one click</li>
+          </ul>
+        </div>
+      </div>
+
+      <div id="tab-form" class="tab-content grid lg:grid-cols-2 gap-10 items-center">
+        <img src="images/screenshots/listing-form.png" alt="Listing creation form with all fields" class="rounded-xl shadow-xl border border-gray-200">
+        <div>
+          <span class="inline-block bg-amber-50 text-amber-600 text-xs font-bold px-3 py-1 rounded-full mb-4">SINGLE LISTINGS</span>
+          <h3 class="text-2xl font-bold text-gray-900 mb-4">Quick single listing mode</h3>
+          <ul class="space-y-3 text-gray-600">
+            <li class="flex items-start gap-3"><svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>All fields in one simple form</li>
+            <li class="flex items-start gap-3"><svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Drag-and-drop images</li>
+            <li class="flex items-start gap-3"><svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>24 digital product categories</li>
+            <li class="flex items-start gap-3"><svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Add to queue or upload directly</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Perfect For -->
+  <section class="py-20 sm:py-28 bg-gray-900 text-white">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl sm:text-4xl font-extrabold">Built for digital product sellers</h2>
+        <p class="mt-4 text-lg text-gray-400">If you sell digital downloads on Etsy, BulkListingPro saves you hours.</p>
+      </div>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="flex items-start gap-4 p-5 rounded-xl bg-gray-800/50 border border-gray-700">
+          <span class="text-2xl">&#9988;</span>
+          <div>
+            <h4 class="font-bold mb-1">SVG & Cut Files</h4>
+            <p class="text-sm text-gray-400">Cricut, Silhouette, Glowforge sellers with 50+ designs per set.</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-4 p-5 rounded-xl bg-gray-800/50 border border-gray-700">
+          <span class="text-2xl">&#128197;</span>
+          <div>
+            <h4 class="font-bold mb-1">Digital Planners</h4>
+            <p class="text-sm text-gray-400">GoodNotes, Notability templates with multiple variations.</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-4 p-5 rounded-xl bg-gray-800/50 border border-gray-700">
+          <span class="text-2xl">&#128444;</span>
+          <div>
+            <h4 class="font-bold mb-1">Printable Art</h4>
+            <p class="text-sm text-gray-400">Wall art, posters, and prints in multiple sizes and styles.</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-4 p-5 rounded-xl bg-gray-800/50 border border-gray-700">
+          <span class="text-2xl">&#128196;</span>
+          <div>
+            <h4 class="font-bold mb-1">Canva Templates</h4>
+            <p class="text-sm text-gray-400">Social media, resume, invitation, and business templates.</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-4 p-5 rounded-xl bg-gray-800/50 border border-gray-700">
+          <span class="text-2xl">&#128288;</span>
+          <div>
+            <h4 class="font-bold mb-1">Font Designers</h4>
+            <p class="text-sm text-gray-400">Font families with multiple weights and character sets.</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-4 p-5 rounded-xl bg-gray-800/50 border border-gray-700">
+          <span class="text-2xl">&#129525;</span>
+          <div>
+            <h4 class="font-bold mb-1">Embroidery Patterns</h4>
+            <p class="text-sm text-gray-400">Machine embroidery designs in multiple formats and sizes.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section id="pricing" class="py-20 sm:py-28">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900">Simple, pay-as-you-go pricing</h2>
+        <p class="mt-4 text-lg text-gray-600">2 credits per listing. No subscriptions. Buy what you need.</p>
+      </div>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-4xl mx-auto">
+
+        <div class="p-6 rounded-2xl border border-gray-200 text-center hover:border-brand-300 hover:shadow-lg transition-all">
+          <h3 class="font-bold text-gray-900 mb-1">Starter</h3>
+          <div class="text-3xl font-extrabold text-gray-900 my-3">$1.99</div>
+          <p class="text-sm text-gray-500 mb-4">50 credits</p>
+          <div class="text-sm font-medium text-brand-500">~25 listings</div>
+        </div>
+
+        <div class="p-6 rounded-2xl border-2 border-brand-500 text-center shadow-lg shadow-brand-500/10 relative">
+          <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand-500 text-white text-xs font-bold px-3 py-1 rounded-full">POPULAR</span>
+          <h3 class="font-bold text-gray-900 mb-1">Standard</h3>
+          <div class="text-3xl font-extrabold text-gray-900 my-3">$4.99</div>
+          <p class="text-sm text-gray-500 mb-4">150 credits</p>
+          <div class="text-sm font-medium text-brand-500">~75 listings</div>
+        </div>
+
+        <div class="p-6 rounded-2xl border border-gray-200 text-center hover:border-brand-300 hover:shadow-lg transition-all">
+          <h3 class="font-bold text-gray-900 mb-1">Pro</h3>
+          <div class="text-3xl font-extrabold text-gray-900 my-3">$11.99</div>
+          <p class="text-sm text-gray-500 mb-4">400 credits</p>
+          <div class="text-sm font-medium text-brand-500">~200 listings</div>
+        </div>
+
+        <div class="p-6 rounded-2xl border border-gray-200 text-center hover:border-brand-300 hover:shadow-lg transition-all">
+          <h3 class="font-bold text-gray-900 mb-1">Power</h3>
+          <div class="text-3xl font-extrabold text-gray-900 my-3">$24.99</div>
+          <p class="text-sm text-gray-500 mb-4">1000 credits</p>
+          <div class="text-sm font-medium text-brand-500">~500 listings</div>
+        </div>
+
+      </div>
+      <p class="text-center mt-8 text-sm text-gray-500">10 free credits for new users. Credits never expire.</p>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="py-20 sm:py-28 bg-gradient-to-br from-brand-500 to-amber-500">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 text-center">
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-white">Ready to list at scale?</h2>
+      <p class="mt-4 text-lg text-white/80">Install BulkListingPro, get 10 free credits, and upload your first batch today.</p>
+      <a href="https://chromewebstore.google.com/detail/gmmjdkdgejglelaemhpdekcmeaaccnab" target="_blank" rel="noopener"
+         class="mt-8 inline-flex items-center gap-2 bg-white text-brand-600 font-bold px-8 py-4 rounded-xl text-lg transition-all shadow-xl hover:shadow-2xl hover:scale-105">
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+        Install Free from Chrome Web Store
+      </a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="py-12 bg-gray-900 text-gray-400">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+        <div class="flex items-center gap-2">
+          <img src="images/logo.png" alt="BulkListingPro" class="w-6 h-6 rounded">
+          <span class="font-semibold text-white">BulkListingPro</span>
+        </div>
+        <nav class="flex flex-wrap justify-center gap-6 text-sm">
+          <a href="privacy-policy.html" class="hover:text-white transition-colors">Privacy Policy</a>
+          <a href="terms-of-service.html" class="hover:text-white transition-colors">Terms of Service</a>
+          <a href="https://github.com/smythmyke/BulkListingPro" target="_blank" rel="noopener" class="hover:text-white transition-colors">GitHub</a>
+          <a href="https://github.com/smythmyke/BulkListingPro/issues" target="_blank" rel="noopener" class="hover:text-white transition-colors">Support</a>
+        </nav>
+        <p class="text-sm">&copy; 2026 BulkListingPro. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active'); b.style.background = ''; b.style.color = ''; });
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab).classList.add('active');
+      });
+    });
+  </script>
 </body>
 </html>

@@ -15,6 +15,10 @@ export function validateListing(listing) {
 
   if (!listing.description || !listing.description.trim()) {
     errors.push('Description is required');
+  } else if (listing.description.length > 4800) {
+    errors.push(`Description exceeds 4800 characters (${listing.description.length})`);
+  } else if (listing.description.length > 4200) {
+    warnings.push(`Description is ${listing.description.length}/4800 characters`);
   }
 
   if (!listing.price && listing.price !== 0) {

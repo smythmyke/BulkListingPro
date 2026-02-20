@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Welcome Modal Options — B, C, E</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #1a1a2e;
+    color: #333;
+    padding: 30px;
+  }
+
+  .options-header {
+    text-align: center;
+    color: #fff;
+    margin-bottom: 40px;
+  }
+  .options-header h1 { font-size: 28px; margin-bottom: 8px; }
+  .options-header p { color: #aaa; font-size: 15px; }
+
+  .options-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 40px;
+    max-width: 1300px;
+    margin: 0 auto;
+  }
+
+  .option-wrapper {
+    background: #16213e;
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .option-label {
+    color: #F56400;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .option-desc {
+    color: #999;
+    font-size: 13px;
+    margin-bottom: 16px;
+    text-align: center;
+    max-width: 340px;
+  }
+  .replay-btn {
+    margin-top: 16px;
+    padding: 8px 20px;
+    background: #F56400;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .replay-btn:hover { background: #e05a00; }
+
+  /* ============================================ */
+  /* SHARED BASE MODAL STYLES                     */
+  /* ============================================ */
+  .modal-frame {
+    width: 370px;
+    background: #fff;
+    border-radius: 14px;
+    padding: 28px 24px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .modal-frame h3 {
+    text-align: center;
+    color: #F56400;
+    font-size: 20px;
+    margin-bottom: 4px;
+  }
+  .modal-frame .subtitle {
+    text-align: center;
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 20px;
+  }
+  .features { display: flex; flex-direction: column; gap: 12px; margin-bottom: 22px; }
+
+  .feature-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px;
+    border-radius: 10px;
+    background: #f9f9f9;
+    position: relative;
+    overflow: hidden;
+  }
+  .feature-icon-wrap {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .feature-icon-wrap svg {
+    width: 24px;
+    height: 24px;
+  }
+  .feature-card strong {
+    display: block;
+    font-size: 14.5px;
+    color: #222;
+    margin-bottom: 3px;
+  }
+  .feature-card .desc {
+    font-size: 13px;
+    color: #555;
+    line-height: 1.45;
+  }
+  .modal-buttons {
+    display: flex;
+    gap: 10px;
+  }
+  .modal-buttons .btn {
+    flex: 1;
+    padding: 11px 0;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-primary { background: #F56400; color: #fff; }
+  .btn-secondary { background: #eee; color: #555; }
+
+  /* ============================================ */
+  /* OPTION B: STAGGERED SLIDE + SHIMMER          */
+  /* ============================================ */
+  .optB .feature-card {
+    background: #fff;
+    border: 1px solid #eee;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  .optB .feature-icon-wrap {
+    background: linear-gradient(135deg, #F56400, #FF8C42);
+  }
+  .optB .feature-icon-wrap svg { fill: #fff; }
+
+  .optB.playing .feature-card {
+    animation: slideUp 0.5s ease forwards;
+  }
+  .optB.playing .feature-card:nth-child(1) { animation-delay: 0.1s; }
+  .optB.playing .feature-card:nth-child(2) { animation-delay: 0.3s; }
+  .optB.playing .feature-card:nth-child(3) { animation-delay: 0.5s; }
+
+  @keyframes slideUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .optB .feature-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+    opacity: 0;
+  }
+  .optB.playing .feature-card::after {
+    animation: shimmer 0.6s ease forwards;
+  }
+  .optB.playing .feature-card:nth-child(1)::after { animation-delay: 0.7s; }
+  .optB.playing .feature-card:nth-child(2)::after { animation-delay: 0.9s; }
+  .optB.playing .feature-card:nth-child(3)::after { animation-delay: 1.1s; }
+
+  @keyframes shimmer {
+    0% { left: -100%; opacity: 1; }
+    100% { left: 150%; opacity: 0; }
+  }
+
+  /* ============================================ */
+  /* OPTION C: SEQUENTIAL ENLARGE + GLOW          */
+  /* ============================================ */
+  .optC .feature-card {
+    background: #fff;
+    border: 1.5px solid #eee;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    transition: all 0.35s ease;
+    transform: scale(1);
+  }
+  .optC .feature-icon-wrap {
+    background: linear-gradient(135deg, #F56400, #FF8C42);
+  }
+  .optC .feature-icon-wrap svg { fill: #fff; }
+
+  .optC.playing .feature-card.highlight {
+    transform: scale(1.04);
+    border-color: #F56400;
+    box-shadow: 0 4px 20px rgba(245,100,0,0.25);
+    background: linear-gradient(135deg, #fff7f0, #fff);
+  }
+  .optC.playing .feature-card.highlight .feature-icon-wrap {
+    animation: iconPulse 0.4s ease;
+  }
+  @keyframes iconPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+  }
+
+  /* ============================================ */
+  /* OPTION E: SEQUENTIAL BORDER FLASH            */
+  /* ============================================ */
+  .optE .feature-card {
+    background: #fff;
+    border: 2px solid #eee;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    opacity: 0;
+    transition: border-color 0.35s ease, box-shadow 0.35s ease, background 0.35s ease;
+  }
+  .optE .feature-icon-wrap {
+    background: linear-gradient(135deg, #FFF3E8, #FFE0C2);
+    border-radius: 10px;
+  }
+  .optE .feature-icon-wrap svg { fill: #F56400; }
+
+  .optE.playing .feature-card {
+    animation: fadeIn 0.4s ease forwards;
+  }
+  .optE.playing .feature-card:nth-child(1) { animation-delay: 0.1s; }
+  .optE.playing .feature-card:nth-child(2) { animation-delay: 0.3s; }
+  .optE.playing .feature-card:nth-child(3) { animation-delay: 0.5s; }
+
+  @keyframes fadeIn {
+    to { opacity: 1; }
+  }
+
+  .optE .feature-card.flash {
+    border-color: #F56400;
+    box-shadow: 0 4px 20px rgba(245,100,0,0.25);
+    background: linear-gradient(135deg, #fff7f0, #fff);
+  }
+  .optE .feature-card.flash .feature-icon-wrap {
+    background: linear-gradient(135deg, #F56400, #FF8C42);
+    transition: background 0.3s ease;
+  }
+  .optE .feature-card.flash .feature-icon-wrap svg {
+    fill: #fff;
+    transition: fill 0.3s ease;
+  }
+
+</style>
+</head>
+<body>
+
+<div class="options-header">
+  <h1>Welcome Modal Options</h1>
+  <p>Click "Replay" on any option to see the animation again</p>
+</div>
+
+<div class="options-grid">
+
+  <!-- OPTION B: Staggered Slide + Shimmer -->
+  <div class="option-wrapper">
+    <div class="option-label">Option B: Slide + Shimmer</div>
+    <div class="option-desc">Cards slide up staggered, then a light shimmer sweeps across each one.</div>
+    <div class="modal-frame optB playing" id="optB">
+      <h3>Welcome to BulkListingPro</h3>
+      <p class="subtitle">The fastest way to list digital products on Etsy.</p>
+      <div class="features">
+        <div class="feature-card">
+          <div class="feature-icon-wrap">
+            <svg viewBox="0 0 24 24"><path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61z"/></svg>
+          </div>
+          <div><strong>AI Listing Assistance</strong><span class="desc">Generate optimized titles, descriptions, and tags with one click.</span></div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon-wrap">
+            <svg viewBox="0 0 24 24"><path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z"/></svg>
+          </div>
+          <div><strong>Listing Automation</strong><span class="desc">Import a spreadsheet and upload hundreds of listings hands-free.</span></div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon-wrap">
+            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          </div>
+          <div><strong>Competitor Research</strong><span class="desc">Capture tags, titles, and prices from any Etsy listing instantly.</span></div>
+        </div>
+      </div>
+      <div class="modal-buttons">
+        <button class="btn btn-primary">Quick Tour</button>
+        <button class="btn btn-secondary">Skip</button>
+      </div>
+    </div>
+    <button class="replay-btn" onclick="replay('optB')">Replay</button>
+  </div>
+
+  <!-- OPTION C: Sequential Enlarge + Glow -->
+  <div class="option-wrapper">
+    <div class="option-label">Option C: Sequential Highlight</div>
+    <div class="option-desc">Each card highlights and enlarges in sequence, then returns to normal.</div>
+    <div class="modal-frame optC playing" id="optC">
+      <h3>Welcome to BulkListingPro</h3>
+      <p class="subtitle">The fastest way to list digital products on Etsy.</p>
+      <div class="features">
+        <div class="feature-card">
+          <div class="feature-icon-wrap">
+            <svg viewBox="0 0 24 24"><path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61z"/></svg>
+          </div>
+          <div><strong>AI Listing Assistance</strong><span class="desc">Generate optimized titles, descriptions, and tags with one click.</span></div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon-wrap">
+            <svg viewBox="0 0 24 24"><path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z"/></svg>
+          </div>
+          <div><strong>Listing Automation</strong><span class="desc">Import a spreadsheet and upload hundreds of listings hands-free.</span></div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon-wrap">
+            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          </div>
+          <div><strong>Competitor Research</strong><span class="desc">Capture tags, titles, and prices from any Etsy listing instantly.</span></div>
+        </div>
+      </div>
+      <div class="modal-buttons">
+        <button class="btn btn-primary">Quick Tour</button>
+        <button class="btn btn-secondary">Skip</button>
+      </div>
+    </div>
+    <button class="replay-btn" onclick="replay('optC')">Replay</button>
+  </div>
+
+  <!-- OPTION E: Sequential Border Flash -->
+  <div class="option-wrapper">
+    <div class="option-label">Option E: Border Flash Cascade</div>
+    <div class="option-desc">Cards fade in, then each flashes with an orange border and glow top-to-bottom, returning to white.</div>
+    <div class="modal-frame optE playing" id="optE">
+      <h3>Welcome to BulkListingPro</h3>
+      <p class="subtitle">The fastest way to list digital products on Etsy.</p>
+      <div class="features">
+        <div class="feature-card">
+          <div class="feature-icon-wrap">
+            <svg viewBox="0 0 24 24"><path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61z"/></svg>
+          </div>
+          <div><strong>AI Listing Assistance</strong><span class="desc">Generate optimized titles, descriptions, and tags with one click.</span></div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon-wrap">
+            <svg viewBox="0 0 24 24"><path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z"/></svg>
+          </div>
+          <div><strong>Listing Automation</strong><span class="desc">Import a spreadsheet and upload hundreds of listings hands-free.</span></div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon-wrap">
+            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          </div>
+          <div><strong>Competitor Research</strong><span class="desc">Capture tags, titles, and prices from any Etsy listing instantly.</span></div>
+        </div>
+      </div>
+      <div class="modal-buttons">
+        <button class="btn btn-primary">Quick Tour</button>
+        <button class="btn btn-secondary">Skip</button>
+      </div>
+    </div>
+    <button class="replay-btn" onclick="replay('optE')">Replay</button>
+  </div>
+
+</div>
+
+<script>
+function replay(id) {
+  const el = document.getElementById(id);
+  el.classList.remove('playing');
+  el.querySelectorAll('.feature-card').forEach(c => {
+    c.classList.remove('highlight', 'flash');
+  });
+
+  void el.offsetWidth;
+  el.classList.add('playing');
+
+  if (id === 'optC') runSequentialHighlight(el);
+  if (id === 'optE') runSequentialFlash(el);
+}
+
+function runSequentialHighlight(container) {
+  const cards = container.querySelectorAll('.feature-card');
+  let i = 0;
+  function next() {
+    if (i > 0) cards[i - 1].classList.remove('highlight');
+    if (i < cards.length) {
+      cards[i].classList.add('highlight');
+      i++;
+      setTimeout(next, 900);
+    }
+  }
+  setTimeout(next, 300);
+}
+
+function runSequentialFlash(container) {
+  const cards = container.querySelectorAll('.feature-card');
+  let i = 0;
+  function next() {
+    if (i > 0) cards[i - 1].classList.remove('flash');
+    if (i < cards.length) {
+      cards[i].classList.add('flash');
+      i++;
+      setTimeout(next, 700);
+    }
+  }
+  setTimeout(next, 800);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  runSequentialHighlight(document.getElementById('optC'));
+  runSequentialFlash(document.getElementById('optE'));
+});
+</script>
+
+</body>
+</html>

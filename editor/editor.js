@@ -3,7 +3,7 @@ import { renderListingCard, renderAllCards, createBlankListing } from './compone
 import { validateListing, formatPrice, validateTag, autoformatTitle, autoformatDescription, autoformatListing, titleCaseTitle, validateAllListings } from './components/validator.js';
 import { initGrid, destroyGrid, refreshGridData, getGridListings, addGridRow, deleteGridRows, updateCell, IMAGES_COL } from './components/grid-view.js';
 import { openImageDB } from '../services/imageStore.js';
-import { loadTagLibrary, mapFormCategoryToInternal, getSuggestionsForCategory, fetchCompetitorTags, getTagFrequency } from './components/tag-manager.js';
+import { loadTagLibrary, mapFormCategoryToInternal, getSuggestionsForCategory, fetchCompetitorTags, getTagFrequency, importListingFromUrl } from './components/tag-manager.js';
 import { processImageFiles, processImageURL, removeImage, removeAllImages, getFullResolutionImages, reorderImages, showLightbox, closeLightbox, processDigitalFile, removeDigitalFile, hasImage } from './components/image-handler.js';
 import { generateForListing, bulkGenerate, evaluateListing, bulkEvaluate } from './components/ai-generator.js';
 import { startEditorTour, shouldAutoStart, showTourIntro } from '../services/tourService.js';
@@ -619,6 +619,7 @@ function handleMenuAction(action) {
   else if (action === 'evaluate-all') showEvalBulkModal();
   else if (action === 'add-tags-to-selected') addBatchTags();
   else if (action === 'remove-tag-from-all') removeBatchTag();
+  else if (action === 'import-from-url') showImportFromUrlModal();
 }
 
 function getSelectedIds() {
@@ -764,8 +765,9 @@ function handleFieldInput(e) {
     listing.description = e.target.value;
     const descCounter = e.target.parentElement.querySelector('.desc-counter');
     if (descCounter) {
-      const lines = e.target.value ? e.target.value.split('\n').length : 0;
-      descCounter.textContent = `${lines} line${lines !== 1 ? 's' : ''}`;
+      const len = (e.target.value || '').length;
+      descCounter.textContent = `${len}/4800`;
+      descCounter.className = `desc-counter char-counter ${len > 4800 ? 'over' : len > 4200 ? 'warn' : ''}`;
     }
   } else if (field === 'price') {
     listing.price = e.target.value;
@@ -1553,7 +1555,7 @@ async function sendToQueue() {
       }
       delete entry._digital_file_size;
       Object.keys(entry).forEach(k => {
-        if (k.startsWith('_eval_') || k.startsWith('_source_') || k.startsWith('_captured_')) delete entry[k];
+        if (k.startsWith('_eval_') || k.startsWith('_source_') || k.startsWith('_captured_') || k.startsWith('_import_') || k.startsWith('_product_') || k.startsWith('_feature_') || k.startsWith('_item_')) delete entry[k];
       });
       return entry;
     }));
@@ -2708,4 +2710,110 @@ function showToast(message, type = 'success') {
   setTimeout(() => {
     els.toast.classList.remove('show');
   }, 3000);
+}
+
+function showImportFromUrlModal() {
+  let modal = document.getElementById('import-url-modal');
+  if (modal) { modal.style.display = 'flex'; return; }
+
+  modal = document.createElement('div');
+  modal.id = 'import-url-modal';
+  Object.assign(modal.style, { position:'fixed', inset:'0', background:'rgba(0,0,0,0.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:'5000' });
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,0.2);width:440px;max-width:90vw;animation:fadeIn 0.2s ease-out">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:2px solid #F56400">
+        <h3 style="margin:0;font-size:18px;color:#333">Import from URL</h3>
+        <button class="modal-close" style="background:none;border:none;font-size:22px;cursor:pointer;color:#999">&times;</button>
+      </div>
+      <div style="padding:20px">
+        <p style="margin:0 0 8px;color:#888;font-size:13px">Paste one or more listing URLs (one per line). Supports Etsy, eBay, and Amazon.</p>
+        <textarea id="import-url-input" rows="4" placeholder="https://www.etsy.com/listing/123456789/...&#10;https://www.ebay.com/itm/315380320340...&#10;https://www.amazon.com/dp/B08ZK5C4LS..."
+          style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;background:#fafafa;color:#333;font-size:13px;resize:vertical;font-family:inherit;box-sizing:border-box"></textarea>
+        <p id="import-url-status" style="margin-top:8px;font-size:13px;color:#888;display:none"></p>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;padding:12px 20px;border-top:1px solid #eee">
+        <button class="btn btn-secondary import-url-cancel">Cancel</button>
+        <button class="btn btn-primary import-url-go">Import</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  modal.querySelector('.modal-close').addEventListener('click', () => modal.style.display = 'none');
+  modal.querySelector('.import-url-cancel').addEventListener('click', () => modal.style.display = 'none');
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
+
+  const input = modal.querySelector('#import-url-input');
+  const status = modal.querySelector('#import-url-status');
+  const goBtn = modal.querySelector('.import-url-go');
+
+  goBtn.addEventListener('click', async () => {
+    const urls = input.value.trim().split('\n').map(u => u.trim()).filter(u => u);
+    if (urls.length === 0) { showToast('Enter at least one URL', 'error'); return; }
+
+    const isSupportedUrl = u => u.includes('etsy.com/listing/') || u.includes('ebay.com/itm/') || u.includes('amazon.com/');
+    const invalidUrls = urls.filter(u => !isSupportedUrl(u));
+    if (invalidUrls.length > 0) {
+      showToast('Only Etsy, eBay, and Amazon listing URLs are supported', 'error');
+      return;
+    }
+
+    goBtn.disabled = true;
+    goBtn.textContent = 'Importing...';
+    status.style.display = 'block';
+    status.textContent = `Importing 0/${urls.length}...`;
+
+    let imported = 0;
+    pushUndo('import from URL');
+
+    for (let i = 0; i < urls.length; i++) {
+      status.textContent = `Importing ${i + 1}/${urls.length}...`;
+      const result = await importListingFromUrl(urls[i]);
+
+      if (result.error) {
+        showToast(`Failed: ${result.error}`, 'error');
+        continue;
+      }
+
+      const listing = createBlankListing();
+      listing.title = result.title || '';
+      listing.price = result.price || '';
+      listing.tags = result.tags || [];
+      for (let j = 0; j < Math.min((result.images || []).length, 10); j++) {
+        listing[`image_${j + 1}`] = result.images[j];
+      }
+
+      let desc = result.description || '';
+      if (result.itemSpecifics && Object.keys(result.itemSpecifics).length > 0) {
+        const specsText = Object.entries(result.itemSpecifics).map(([k, v]) => `${k}: ${v}`).join('\n');
+        desc = desc ? desc + '\n\n--- Item Specifics ---\n' + specsText : specsText;
+      }
+      if (result.condition) {
+        desc = desc ? `Condition: ${result.condition}\n\n${desc}` : `Condition: ${result.condition}`;
+      }
+      if (result.productDetails && Object.keys(result.productDetails).length > 0) {
+        const detailsText = Object.entries(result.productDetails).map(([k, v]) => `${k}: ${v}`).join('\n');
+        desc = desc ? desc + '\n\n--- Product Details ---\n' + detailsText : detailsText;
+      }
+      listing.description = desc;
+
+      if (result.source) listing._import_source = result.source;
+      listings.push(listing);
+      imported++;
+    }
+
+    goBtn.disabled = false;
+    goBtn.textContent = 'Import';
+    input.value = '';
+    status.style.display = 'none';
+
+    if (imported > 0) {
+      const last = listings[listings.length - 1];
+      expandedIds = new Set([last.id]);
+      render();
+      scheduleSave();
+      modal.style.display = 'none';
+      showToast(`Imported ${imported} listing${imported > 1 ? 's' : ''}`, 'success');
+    }
+  });
 }

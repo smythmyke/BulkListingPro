@@ -206,7 +206,7 @@ Always refer to `CHECKLIST.md` before starting work to see current progress.
 
 **Backend API:** `https://business-search-api-815700675676.us-central1.run.app`
 
-Free tier: 5 credits on signup (monthly allocation)
+Free tier: 10 credits on signup
 
 ## File Naming Conventions
 

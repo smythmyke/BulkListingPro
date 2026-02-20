@@ -202,6 +202,19 @@ function descLineCount(text) {
   return text.split('\n').length;
 }
 
+function renderSourceBadge(listing) {
+  const source = listing._import_source;
+  if (!source) return '';
+  const config = {
+    etsy: { label: 'Etsy', bg: '#F56400', color: '#fff' },
+    ebay: { label: 'eBay', bg: '#e53238', color: '#fff' },
+    amazon: { label: 'Amazon', bg: '#232f3e', color: '#ff9900' }
+  };
+  const c = config[source];
+  if (!c) return '';
+  return `<span class="source-badge" style="background:${c.bg};color:${c.color}">${c.label}</span>`;
+}
+
 export function renderListingCard(listing, index, collapsed = false) {
   const { valid, errors, warnings } = validateListing(listing);
   let badgeClass = 'empty';
@@ -238,6 +251,7 @@ export function renderListingCard(listing, index, collapsed = false) {
         <span class="card-chevron">${collapsed ? '&#9654;' : '&#9660;'}</span>
         <span class="card-number">#${index + 1}</span>
         <span class="card-title-preview ${titleClass}">${titlePreview}</span>
+        ${renderSourceBadge(listing)}
         <span class="validation-badge ${badgeClass}"></span>
         ${renderEvalBtn(listing)}
         <button class="card-remove" data-action="remove" data-listing-id="${listing.id}">&times;</button>
@@ -251,7 +265,7 @@ export function renderListingCard(listing, index, collapsed = false) {
         <div class="form-group">
           <label>Description <span class="required">*</span> ${renderAiBtn(listing, 'description')}${renderScoreChip(listing, 'description')}</label>
           <textarea data-field="description" data-listing-id="${listing.id}" rows="8" placeholder="Listing description (required)" class="${!listing.description && (listing.title || listing.price) ? 'field-error' : ''}">${escapeHtml(listing.description)}</textarea>
-          <div class="desc-counter">${descLineCount(listing.description)} line${descLineCount(listing.description) !== 1 ? 's' : ''}</div>
+          <div class="desc-counter char-counter ${(listing.description || '').length > 4800 ? 'over' : (listing.description || '').length > 4200 ? 'warn' : ''}">${(listing.description || '').length}/4800</div>
         </div>
         <div class="form-row">
           <div class="form-group-half">

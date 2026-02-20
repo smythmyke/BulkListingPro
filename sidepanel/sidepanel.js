@@ -100,6 +100,8 @@ const elements = {
   clipboardMeta: document.getElementById('clipboard-meta'),
   clipboardClearBtn: document.getElementById('clipboard-clear-btn'),
   captureListingBtn: document.getElementById('capture-listing-btn'),
+  captureEbayBtn: document.getElementById('capture-ebay-btn'),
+  captureAmazonBtn: document.getElementById('capture-amazon-btn'),
   captureStatus: document.getElementById('capture-status'),
   capturedDataSection: document.getElementById('captured-data-section'),
   capturedTitle: document.getElementById('captured-title'),
@@ -332,6 +334,8 @@ function setupEventListeners() {
   elements.tabBtns.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
   elements.clipboardClearBtn.addEventListener('click', clearResearchClipboard);
   elements.captureListingBtn.addEventListener('click', captureListingData);
+  elements.captureEbayBtn.addEventListener('click', captureEbayListingData);
+  elements.captureAmazonBtn.addEventListener('click', captureAmazonListingData);
   elements.selectAllTagsBtn.addEventListener('click', selectAllTags);
   elements.clearTagsBtn.addEventListener('click', clearTagSelection);
   elements.copySelectedTagsBtn.addEventListener('click', copySelectedTags);
@@ -2168,6 +2172,19 @@ function updateAccountTab() {
   loadTagLibrary();
 }
 
+async function sendMessageWithInject(tabId, message, scriptFile) {
+  try {
+    return await chrome.tabs.sendMessage(tabId, message);
+  } catch (e) {
+    if (e.message?.includes('Receiving end does not exist') || e.message?.includes('Could not establish connection')) {
+      await chrome.scripting.executeScript({ target: { tabId }, files: [scriptFile] });
+      await new Promise(r => setTimeout(r, 500));
+      return await chrome.tabs.sendMessage(tabId, message);
+    }
+    throw e;
+  }
+}
+
 async function captureListingData() {
   elements.captureListingBtn.classList.add('btn-loading');
   elements.captureListingBtn.disabled = true;
@@ -2181,15 +2198,16 @@ async function captureListingData() {
       return;
     }
 
-    const response = await chrome.tabs.sendMessage(tab.id, { type: 'EXTRACT_LISTING_DATA' });
+    const response = await sendMessageWithInject(tab.id, { type: 'EXTRACT_LISTING_DATA' }, 'content/etsy-scraper.js');
 
     if (response.success) {
+      response.data._source_platform = 'etsy';
       researchClipboard = response.data;
       await saveResearchClipboard();
-      addCapturedToEditor(response.data);
-      displayCapturedData(researchClipboard);
+      await addCapturedToEditor(response.data);
       updateClipboardBar();
-      showCaptureStatus('Listing data captured successfully!', 'success');
+      showCaptureStatus('Listing added to editor!', 'success');
+      openEditor();
     } else {
       showCaptureStatus(response.error || 'Failed to extract data', 'error');
     }
@@ -2199,6 +2217,106 @@ async function captureListingData() {
   } finally {
     elements.captureListingBtn.classList.remove('btn-loading');
     elements.captureListingBtn.disabled = false;
+  }
+}
+
+async function captureEbayListingData() {
+  elements.captureEbayBtn.classList.add('btn-loading');
+  elements.captureEbayBtn.disabled = true;
+  elements.captureStatus.classList.add('hidden');
+
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+    if (!tab?.url?.includes('ebay.com/itm/')) {
+      showCaptureStatus('Please navigate to an eBay listing page first.', 'error');
+      return;
+    }
+
+    const response = await sendMessageWithInject(tab.id, { type: 'EXTRACT_EBAY_LISTING' }, 'content/ebay-scraper.js');
+
+    if (response.success) {
+      const ebayData = response.data;
+      const mapped = {
+        url: ebayData.url,
+        title: ebayData.title,
+        price: ebayData.price,
+        currency: ebayData.currency || 'USD',
+        description: ebayData.description,
+        tags: ebayData.tags || [],
+        images: ebayData.images || [],
+        shopName: ebayData.seller?.name || '',
+        category: '',
+        _source_platform: 'ebay',
+        _item_specifics: ebayData.itemSpecifics || {},
+        _condition: ebayData.condition || ''
+      };
+
+      researchClipboard = mapped;
+      await saveResearchClipboard();
+      await addCapturedToEditor(mapped);
+      updateClipboardBar();
+      showCaptureStatus('eBay listing added to editor!', 'success');
+      openEditor();
+    } else {
+      showCaptureStatus(response.error || 'Failed to extract eBay data', 'error');
+    }
+  } catch (error) {
+    console.error('eBay capture error:', error);
+    showCaptureStatus('Failed to capture data. Make sure you\'re on an eBay listing page.', 'error');
+  } finally {
+    elements.captureEbayBtn.classList.remove('btn-loading');
+    elements.captureEbayBtn.disabled = false;
+  }
+}
+
+async function captureAmazonListingData() {
+  elements.captureAmazonBtn.classList.add('btn-loading');
+  elements.captureAmazonBtn.disabled = true;
+  elements.captureStatus.classList.add('hidden');
+
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+    if (!tab?.url?.includes('amazon.com/')) {
+      showCaptureStatus('Please navigate to an Amazon product page first.', 'error');
+      return;
+    }
+
+    const response = await sendMessageWithInject(tab.id, { type: 'EXTRACT_AMAZON_LISTING' }, 'content/amazon-scraper.js');
+
+    if (response.success) {
+      const amazonData = response.data;
+      const mapped = {
+        url: amazonData.url,
+        title: amazonData.title,
+        price: amazonData.price,
+        currency: amazonData.currency || 'USD',
+        description: amazonData.description,
+        tags: amazonData.tags || [],
+        images: amazonData.images || [],
+        shopName: amazonData.seller?.brand || '',
+        category: '',
+        _source_platform: 'amazon',
+        _product_details: amazonData.productDetails || {},
+        _feature_bullets: amazonData.featureBullets || []
+      };
+
+      researchClipboard = mapped;
+      await saveResearchClipboard();
+      await addCapturedToEditor(mapped);
+      updateClipboardBar();
+      showCaptureStatus('Amazon listing added to editor!', 'success');
+      openEditor();
+    } else {
+      showCaptureStatus(response.error || 'Failed to extract Amazon data', 'error');
+    }
+  } catch (error) {
+    console.error('Amazon capture error:', error);
+    showCaptureStatus('Failed to capture data. Make sure you\'re on an Amazon product page.', 'error');
+  } finally {
+    elements.captureAmazonBtn.classList.remove('btn-loading');
+    elements.captureAmazonBtn.disabled = false;
   }
 }
 
@@ -2838,6 +2956,26 @@ async function addCapturedToEditor(capturedData) {
       _source_shop: capturedData.shopName || '',
       _captured_at: new Date().toISOString()
     };
+
+    let desc = listing.description;
+    if (capturedData._item_specifics && Object.keys(capturedData._item_specifics).length > 0) {
+      const specsText = Object.entries(capturedData._item_specifics).map(([k, v]) => `${k}: ${v}`).join('\n');
+      desc = desc ? desc + '\n\n--- Item Specifics ---\n' + specsText : specsText;
+    }
+    if (capturedData._condition) {
+      desc = desc ? `Condition: ${capturedData._condition}\n\n${desc}` : `Condition: ${capturedData._condition}`;
+    }
+    if (capturedData._product_details && Object.keys(capturedData._product_details).length > 0) {
+      const detailsText = Object.entries(capturedData._product_details).map(([k, v]) => `${k}: ${v}`).join('\n');
+      desc = desc ? desc + '\n\n--- Product Details ---\n' + detailsText : detailsText;
+    }
+    listing.description = desc;
+    if (capturedData._source_platform) listing._import_source = capturedData._source_platform;
+
+    const images = capturedData.images || [];
+    for (let i = 0; i < Math.min(images.length, 10); i++) {
+      listing[`image_${i + 1}`] = images[i];
+    }
 
     const data = await chrome.storage.local.get(STORAGE_KEYS.EDITOR_LISTINGS);
     const existing = data[STORAGE_KEYS.EDITOR_LISTINGS] || [];

@@ -259,6 +259,46 @@ body {
   transform: translateY(-1px);
 }
 
+.btn-ebay {
+  background: linear-gradient(135deg, #e53238 0%, #f5af02 50%, #86b817 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(229, 50, 56, 0.25);
+}
+
+.btn-ebay:hover {
+  background: linear-gradient(135deg, #cc2d32 0%, #dda002 50%, #769f14 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(229, 50, 56, 0.35);
+}
+
+.btn-ebay:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-amazon {
+  background: linear-gradient(135deg, #232f3e 0%, #37475a 100%);
+  color: #ff9900;
+  box-shadow: 0 2px 8px rgba(35, 47, 62, 0.3);
+  font-weight: 600;
+}
+
+.btn-amazon:hover {
+  background: linear-gradient(135deg, #1a2530 0%, #2d3a4a 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(35, 47, 62, 0.4);
+}
+
+.btn-amazon:disabled {
+  background: #ccc;
+  color: #999;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
 .btn-danger {
   background: #dc3545;
   color: white;

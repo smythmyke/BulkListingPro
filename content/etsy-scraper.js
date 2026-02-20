@@ -32,6 +32,7 @@ function extractListingData() {
     description: '',
     shopName: '',
     shopUrl: '',
+    images: [],
     reviews: { rating: 0, count: 0 },
     favorites: 0,
     category: ''
@@ -108,8 +109,52 @@ function extractListingData() {
   }
 
   data.category = extractCategory();
+  data.images = extractImages();
 
   return data;
+}
+
+function extractImages() {
+  const urls = [];
+  const seen = new Set();
+
+  const carouselImgs = document.querySelectorAll('ul.carousel-pane-list img[src*="etsystatic.com"]');
+  for (const img of carouselImgs) {
+    const src = img.src || img.getAttribute('data-src') || '';
+    if (src && !seen.has(src)) {
+      seen.add(src);
+      urls.push(src.replace(/_\d+x\d+/, '_fullxfull'));
+    }
+  }
+
+  if (urls.length === 0) {
+    const allImgs = document.querySelectorAll('img[src*="etsystatic.com/i"]');
+    for (const img of allImgs) {
+      const src = img.src || '';
+      if (src && src.includes('/il/') && !seen.has(src)) {
+        seen.add(src);
+        urls.push(src.replace(/_\d+x\d+/, '_fullxfull'));
+      }
+    }
+  }
+
+  if (urls.length === 0) {
+    const jsonLdScripts = document.querySelectorAll('script[type="application/ld+json"]');
+    for (const script of jsonLdScripts) {
+      try {
+        const parsed = JSON.parse(script.textContent);
+        if (parsed['@type'] === 'Product' && parsed.image) {
+          const imgs = Array.isArray(parsed.image) ? parsed.image : [parsed.image];
+          for (const u of imgs) {
+            if (u && !seen.has(u)) { seen.add(u); urls.push(u); }
+          }
+        }
+      } catch (e) {}
+    }
+  }
+
+  console.log('Extracted images:', urls.length);
+  return urls.slice(0, 10);
 }
 
 function extractCategory() {
