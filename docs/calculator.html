@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Free Etsy Fee Calculator 2026 - Know Your Profit Before You List</title>
+  <meta name="description" content="Free Etsy fee calculator with full breakdown: listing fees, transaction fees, processing fees, offsite ads. Calculate your real profit per listing instantly.">
+  <meta name="keywords" content="etsy fee calculator, etsy charges calculator, etsy profit calculator, etsy fees, etsy seller calculator, etsy price calculator, etsy selling fees calculator">
+  <meta name="author" content="BulkListingPro">
+  <link rel="canonical" href="https://smythmyke.github.io/BulkListingPro/calculator.html">
+  <meta name="theme-color" content="#F56400">
+
+  <link rel="icon" type="image/png" sizes="48x48" href="images/favicon-48.png">
+  <link rel="icon" type="image/png" sizes="128x128" href="images/favicon-128.png">
+  <link rel="apple-touch-icon" href="images/favicon-128.png">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://smythmyke.github.io/BulkListingPro/calculator.html">
+  <meta property="og:title" content="Free Etsy Fee Calculator 2026 - Know Your Profit">
+  <meta property="og:description" content="Calculate your real Etsy profit with full fee breakdown. Listing fees, transaction fees, processing fees, offsite ads, and more.">
+  <meta property="og:image" content="https://smythmyke.github.io/BulkListingPro/images/og-image.png">
+  <meta property="og:site_name" content="BulkListingPro">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Free Etsy Fee Calculator 2026 - Know Your Profit">
+  <meta name="twitter:description" content="Calculate your real Etsy profit with full fee breakdown. Free, instant, no signup required.">
+  <meta name="twitter:image" content="https://smythmyke.github.io/BulkListingPro/images/og-image.png">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#fff7ed', 100: '#ffedd5', 200: '#fed7aa', 300: '#fdba74',
+              400: '#fb923c', 500: '#F56400', 600: '#ea580c', 700: '#c2410c',
+              800: '#9a3412', 900: '#7c2d12',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Etsy Fee Calculator",
+    "url": "https://smythmyke.github.io/BulkListingPro/calculator.html",
+    "description": "Free Etsy fee calculator with full breakdown of listing fees, transaction fees, processing fees, and offsite ads. Calculate your real profit per listing.",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Any",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "author": {
+      "@type": "Organization",
+      "name": "BulkListingPro",
+      "url": "https://smythmyke.github.io/BulkListingPro/"
+    }
+  }
+  </script>
+
+  <style>
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-fade-in-up { animation: fadeInUp 0.6s ease-out both; }
+    .delay-100 { animation-delay: 0.1s; }
+    .delay-200 { animation-delay: 0.2s; }
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type="number"] { -moz-appearance: textfield; }
+    .fee-negative { color: #dc2626; }
+    .profit-positive { color: #16a34a; }
+    .profit-negative { color: #dc2626; }
+  </style>
+</head>
+<body class="bg-white text-gray-900 antialiased">
+
+  <!-- Header -->
+  <header class="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-100">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <a href="./" class="flex items-center gap-2">
+        <img src="images/logo.png" alt="BulkListingPro" class="w-8 h-8 rounded">
+        <span class="font-bold text-lg text-gray-900">BulkListingPro</span>
+      </a>
+      <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
+        <a href="./#features" class="hover:text-brand-500 transition-colors">Features</a>
+        <a href="./#pricing" class="hover:text-brand-500 transition-colors">Pricing</a>
+        <a href="calculator.html" class="text-brand-500 font-semibold">Fee Calculator</a>
+      </nav>
+      <a href="https://chromewebstore.google.com/detail/gmmjdkdgejglelaemhpdekcmeaaccnab" target="_blank" rel="noopener"
+         class="bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold px-5 py-2 rounded-lg transition-colors shadow-sm">
+        Install Free
+      </a>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="pt-24 pb-6 sm:pt-28 sm:pb-8 bg-gradient-to-br from-orange-50 via-white to-amber-50">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 text-center animate-fade-in-up">
+      <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-tight tracking-tight text-gray-900">
+        Free Etsy Fee Calculator
+        <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-500 to-amber-500">2026</span>
+      </h1>
+      <p class="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+        Know your real profit before you list. Full fee breakdown including listing, transaction, processing, and offsite ad fees.
+      </p>
+    </div>
+  </section>
+
+  <!-- Calculator -->
+  <section class="pb-16 sm:pb-24 bg-gradient-to-br from-orange-50 via-white to-amber-50">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6">
+      <div class="animate-fade-in-up delay-100 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+        <div class="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-100">
+
+          <!-- Inputs -->
+          <div class="p-6 sm:p-8">
+            <h2 class="text-lg font-bold text-gray-900 mb-6">Your Listing Details</h2>
+
+            <div class="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1.5">Item Price</label>
+                <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-brand-500/30 focus-within:border-brand-500">
+                  <span class="px-3 py-2.5 bg-gray-50 text-gray-500 text-sm border-r border-gray-200">$</span>
+                  <input type="number" id="calc-price" step="0.01" min="0" value="25.00" class="w-full px-3 py-2.5 text-sm outline-none">
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1.5">Quantity</label>
+                <input type="number" id="calc-quantity" min="1" value="1" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-center outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1.5">Shipping Charged to Buyer</label>
+                <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-brand-500/30 focus-within:border-brand-500" id="shipping-wrap">
+                  <span class="px-3 py-2.5 bg-gray-50 text-gray-500 text-sm border-r border-gray-200">$</span>
+                  <input type="number" id="calc-shipping" step="0.01" min="0" value="0.00" class="w-full px-3 py-2.5 text-sm outline-none">
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1.5">Your Shipping Cost</label>
+                <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-brand-500/30 focus-within:border-brand-500" id="shipping-cost-wrap">
+                  <span class="px-3 py-2.5 bg-gray-50 text-gray-500 text-sm border-r border-gray-200">$</span>
+                  <input type="number" id="calc-shipping-cost" step="0.01" min="0" value="0.00" class="w-full px-3 py-2.5 text-sm outline-none">
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1.5">Materials / Cost of Goods</label>
+                <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-brand-500/30 focus-within:border-brand-500">
+                  <span class="px-3 py-2.5 bg-gray-50 text-gray-500 text-sm border-r border-gray-200">$</span>
+                  <input type="number" id="calc-cost" step="0.01" min="0" value="0.00" class="w-full px-3 py-2.5 text-sm outline-none">
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1.5">Packaging / Misc Costs</label>
+                <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-brand-500/30 focus-within:border-brand-500">
+                  <span class="px-3 py-2.5 bg-gray-50 text-gray-500 text-sm border-r border-gray-200">$</span>
+                  <input type="number" id="calc-misc" step="0.01" min="0" value="0.00" class="w-full px-3 py-2.5 text-sm outline-none">
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1.5">Discount</label>
+                <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-brand-500/30 focus-within:border-brand-500">
+                  <span class="px-3 py-2.5 bg-gray-50 text-gray-500 text-sm border-r border-gray-200" id="discount-symbol">$</span>
+                  <input type="number" id="calc-discount" step="0.01" min="0" value="0" class="w-full px-3 py-2.5 text-sm outline-none">
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1.5">Discount Type</label>
+                <select id="calc-discount-type" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none bg-white focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 cursor-pointer">
+                  <option value="flat">Flat ($)</option>
+                  <option value="percent">Percent (%)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-5">
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1.5">Labor Time (minutes)</label>
+                <input type="number" id="calc-labor-time" min="0" value="0" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-center outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1.5">Hourly Rate</label>
+                <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-brand-500/30 focus-within:border-brand-500">
+                  <span class="px-3 py-2.5 bg-gray-50 text-gray-500 text-sm border-r border-gray-200">$</span>
+                  <input type="number" id="calc-hourly-rate" step="0.01" min="0" value="15.00" class="w-full px-3 py-2.5 text-sm outline-none">
+                </div>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap gap-x-5 gap-y-2">
+              <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                <input type="checkbox" id="calc-free-shipping" checked class="accent-brand-500 w-4 h-4">
+                Free Shipping
+              </label>
+              <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                <input type="checkbox" id="calc-digital" class="accent-brand-500 w-4 h-4">
+                Digital Download
+              </label>
+              <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                <input type="checkbox" id="calc-offsite-ads" class="accent-brand-500 w-4 h-4">
+                Offsite Ads (15%)
+              </label>
+            </div>
+          </div>
+
+          <!-- Results -->
+          <div class="p-6 sm:p-8 bg-gray-50/50">
+            <h2 class="text-lg font-bold text-gray-900 mb-6">Your Profit Breakdown</h2>
+
+            <!-- Fee Breakdown -->
+            <div class="mb-6">
+              <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Etsy Fees</h3>
+              <div class="space-y-2 text-sm">
+                <div class="flex justify-between"><span class="text-gray-600">Listing Fee</span><span class="fee-negative font-medium" id="r-listing-fee">-$0.20</span></div>
+                <div class="flex justify-between"><span class="text-gray-600">Transaction Fee (6.5%)</span><span class="fee-negative font-medium" id="r-transaction-fee">-$0.00</span></div>
+                <div class="flex justify-between"><span class="text-gray-600">Processing Fee (3% + $0.25)</span><span class="fee-negative font-medium" id="r-processing-fee">-$0.00</span></div>
+                <div class="flex justify-between hidden" id="r-offsite-row"><span class="text-gray-600">Offsite Ads (15%)</span><span class="fee-negative font-medium" id="r-offsite-fee">-$0.00</span></div>
+                <div class="flex justify-between pt-2 border-t border-gray-200 font-semibold">
+                  <span class="text-gray-900">Total Etsy Fees</span>
+                  <span class="fee-negative" id="r-total-fees">-$0.00</span>
+                </div>
+                <div class="flex justify-between text-xs"><span class="text-gray-400">Effective Fee Rate</span><span class="text-gray-500" id="r-fee-rate">0%</span></div>
+              </div>
+            </div>
+
+            <!-- Profit Summary -->
+            <div class="mb-6">
+              <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Profit Summary</h3>
+              <div class="space-y-2 text-sm">
+                <div class="flex justify-between"><span class="text-gray-600">Revenue</span><span class="font-medium text-gray-900" id="r-revenue">$0.00</span></div>
+                <div class="flex justify-between hidden" id="r-discount-row"><span class="text-gray-600">Discount</span><span class="fee-negative font-medium" id="r-discount">-$0.00</span></div>
+                <div class="flex justify-between"><span class="text-gray-600">Etsy Fees</span><span class="fee-negative font-medium" id="r-fees-line">-$0.00</span></div>
+                <div class="flex justify-between"><span class="text-gray-600">Product Costs</span><span class="fee-negative font-medium" id="r-product-costs">-$0.00</span></div>
+                <div class="flex justify-between hidden" id="r-labor-row"><span class="text-gray-600">Labor Cost</span><span class="fee-negative font-medium" id="r-labor-cost">-$0.00</span></div>
+              </div>
+            </div>
+
+            <!-- Net Profit -->
+            <div class="bg-white rounded-xl p-4 border border-gray-200 mb-4">
+              <div class="flex justify-between items-center">
+                <span class="text-lg font-bold text-gray-900">Net Profit</span>
+                <span class="text-2xl font-extrabold" id="r-profit">$0.00</span>
+              </div>
+              <div class="flex justify-between mt-1">
+                <span class="text-sm text-gray-500">Profit Margin</span>
+                <span class="text-sm font-semibold" id="r-margin">0%</span>
+              </div>
+              <div class="flex justify-between mt-1 hidden" id="r-per-unit-row">
+                <span class="text-sm text-gray-500">Per Unit Profit</span>
+                <span class="text-sm font-semibold" id="r-per-unit">$0.00</span>
+              </div>
+            </div>
+
+            <!-- Reverse Calculator -->
+            <div class="bg-brand-50 rounded-xl p-4 border border-brand-100">
+              <h3 class="text-xs font-semibold text-brand-600 uppercase tracking-wider mb-3">Price Finder</h3>
+              <div class="flex items-center gap-3">
+                <label class="text-sm text-gray-600 whitespace-nowrap">Target Profit</label>
+                <div class="flex items-center border border-brand-200 rounded-lg overflow-hidden bg-white focus-within:ring-2 focus-within:ring-brand-500/30">
+                  <span class="px-2 py-2 bg-brand-50 text-brand-500 text-sm border-r border-brand-200">$</span>
+                  <input type="number" id="calc-target-profit" step="0.01" min="0" value="" placeholder="0.00" class="w-20 px-2 py-2 text-sm outline-none">
+                </div>
+                <span class="text-sm text-gray-600">Sell at <strong class="text-brand-600 text-base" id="r-suggested-price">&mdash;</strong></span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Fee Explainer -->
+  <section class="py-16 sm:py-20">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6">
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 text-center mb-12">How Etsy Fees Work in 2026</h2>
+      <div class="grid sm:grid-cols-2 gap-6">
+        <div class="p-6 rounded-2xl border border-gray-100 hover:shadow-lg transition-shadow">
+          <div class="text-2xl mb-3">$0.20</div>
+          <h3 class="font-bold text-gray-900 mb-2">Listing Fee</h3>
+          <p class="text-sm text-gray-600 leading-relaxed">Charged when you publish or renew a listing. Each listing lasts 4 months or until it sells. Applies to both physical and digital products.</p>
+        </div>
+        <div class="p-6 rounded-2xl border border-gray-100 hover:shadow-lg transition-shadow">
+          <div class="text-2xl mb-3">6.5%</div>
+          <h3 class="font-bold text-gray-900 mb-2">Transaction Fee</h3>
+          <p class="text-sm text-gray-600 leading-relaxed">Applied to the total sale amount (item price + shipping). This is Etsy's core marketplace fee for every sale made through the platform.</p>
+        </div>
+        <div class="p-6 rounded-2xl border border-gray-100 hover:shadow-lg transition-shadow">
+          <div class="text-2xl mb-3">3% + $0.25</div>
+          <h3 class="font-bold text-gray-900 mb-2">Payment Processing</h3>
+          <p class="text-sm text-gray-600 leading-relaxed">Etsy Payments processing fee. Covers credit card, debit card, Apple Pay, Google Pay, and other payment methods.</p>
+        </div>
+        <div class="p-6 rounded-2xl border border-gray-100 hover:shadow-lg transition-shadow">
+          <div class="text-2xl mb-3">15%</div>
+          <h3 class="font-bold text-gray-900 mb-2">Offsite Ads (Optional)</h3>
+          <p class="text-sm text-gray-600 leading-relaxed">If a buyer finds you through Etsy's offsite ads (Google, Facebook, etc). Mandatory for shops over $10K/year revenue, optional otherwise.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="py-16 sm:py-20 bg-gradient-to-br from-brand-500 to-amber-500">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 text-center">
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Now that you know your margins&hellip;</h2>
+      <p class="mt-4 text-lg text-white/80">List your products at scale with BulkListingPro. Import a spreadsheet, let AI write your titles and tags, then bulk upload to Etsy automatically.</p>
+      <div class="mt-8 flex flex-col sm:flex-row justify-center gap-4">
+        <a href="https://chromewebstore.google.com/detail/gmmjdkdgejglelaemhpdekcmeaaccnab" target="_blank" rel="noopener"
+           class="inline-flex items-center justify-center gap-2 bg-white text-brand-600 font-bold px-8 py-4 rounded-xl text-lg transition-all shadow-xl hover:shadow-2xl hover:scale-105">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+          Install BulkListingPro Free
+        </a>
+        <a href="./"
+           class="inline-flex items-center justify-center gap-2 bg-white/20 text-white font-semibold px-8 py-4 rounded-xl text-lg transition-all hover:bg-white/30 border border-white/30">
+          Learn More
+        </a>
+      </div>
+      <p class="mt-4 text-sm text-white/60">10 free credits included. No credit card needed.</p>
+    </div>
+  </section>
+
+  <!-- FAQ for SEO -->
+  <section class="py-16 sm:py-20">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6">
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 text-center mb-12">Frequently Asked Questions</h2>
+      <div class="space-y-6">
+        <div>
+          <h3 class="font-bold text-gray-900 mb-2">How much does Etsy charge per listing?</h3>
+          <p class="text-gray-600 text-sm leading-relaxed">Etsy charges a $0.20 listing fee when you publish or renew a listing. When you make a sale, there's an additional 6.5% transaction fee and a 3% + $0.25 payment processing fee. If the sale came through Etsy's offsite ads, there's an additional 15% fee.</p>
+        </div>
+        <div>
+          <h3 class="font-bold text-gray-900 mb-2">What is Etsy's effective fee rate?</h3>
+          <p class="text-gray-600 text-sm leading-relaxed">For a typical $25 item without offsite ads, Etsy's total fees come to about $2.88 (11.5% of the sale). With offsite ads, it jumps to about $6.63 (26.5%). Use the calculator above to see your exact effective rate.</p>
+        </div>
+        <div>
+          <h3 class="font-bold text-gray-900 mb-2">Are Etsy offsite ads mandatory?</h3>
+          <p class="text-gray-600 text-sm leading-relaxed">Offsite ads are optional for shops earning under $10,000/year. For shops above that threshold, Etsy automatically enrolls you in offsite ads at a 15% fee on sales generated through those ads. You only pay the fee when a sale is made.</p>
+        </div>
+        <div>
+          <h3 class="font-bold text-gray-900 mb-2">How do I calculate profit on digital downloads?</h3>
+          <p class="text-gray-600 text-sm leading-relaxed">Digital downloads have zero shipping and material costs, making profit calculation simpler. Toggle "Digital Download" in the calculator above. Your profit is: sale price minus Etsy fees. At $25, you'd keep about $22.12 per sale.</p>
+        </div>
+        <div>
+          <h3 class="font-bold text-gray-900 mb-2">What price should I set to make a specific profit?</h3>
+          <p class="text-gray-600 text-sm leading-relaxed">Use the "Price Finder" in the calculator above. Enter your target profit amount and it calculates the selling price needed after all Etsy fees and your costs are deducted.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="py-12 bg-gray-900 text-gray-400">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+        <div class="flex items-center gap-2">
+          <img src="images/logo.png" alt="BulkListingPro" class="w-6 h-6 rounded">
+          <span class="font-semibold text-white">BulkListingPro</span>
+        </div>
+        <nav class="flex flex-wrap justify-center gap-6 text-sm">
+          <a href="privacy-policy.html" class="hover:text-white transition-colors">Privacy Policy</a>
+          <a href="terms-of-service.html" class="hover:text-white transition-colors">Terms of Service</a>
+          <a href="https://github.com/smythmyke/BulkListingPro" target="_blank" rel="noopener" class="hover:text-white transition-colors">GitHub</a>
+          <a href="https://github.com/smythmyke/BulkListingPro/issues" target="_blank" rel="noopener" class="hover:text-white transition-colors">Support</a>
+        </nav>
+        <p class="text-sm">&copy; 2026 BulkListingPro. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+  (function() {
+    const $ = id => document.getElementById(id);
+    const inputs = ['calc-price','calc-shipping','calc-cost','calc-shipping-cost','calc-quantity','calc-misc','calc-discount','calc-labor-time','calc-hourly-rate','calc-target-profit'];
+    const toggles = ['calc-offsite-ads','calc-free-shipping','calc-digital'];
+
+    inputs.forEach(id => { const el = $(id); if (el) el.addEventListener('input', calculate); });
+    toggles.forEach(id => {
+      const el = $(id);
+      if (el) el.addEventListener('change', () => {
+        if (id === 'calc-free-shipping') {
+          $('shipping-wrap').style.opacity = el.checked ? '0.4' : '1';
+          $('shipping-wrap').style.pointerEvents = el.checked ? 'none' : 'auto';
+          if (el.checked) $('calc-shipping').value = '0.00';
+        }
+        if (id === 'calc-digital') {
+          $('shipping-cost-wrap').style.opacity = el.checked ? '0.4' : '1';
+          $('shipping-cost-wrap').style.pointerEvents = el.checked ? 'none' : 'auto';
+          if (el.checked) $('calc-shipping-cost').value = '0.00';
+        }
+        calculate();
+      });
+    });
+
+    $('calc-discount-type').addEventListener('change', function() {
+      $('discount-symbol').textContent = this.value === 'percent' ? '%' : '$';
+      calculate();
+    });
+
+    // Initial disabled state
+    $('shipping-wrap').style.opacity = '0.4';
+    $('shipping-wrap').style.pointerEvents = 'none';
+
+    function calculate() {
+      const price = parseFloat($('calc-price').value) || 0;
+      const shippingCharged = parseFloat($('calc-shipping').value) || 0;
+      const costOfGoods = parseFloat($('calc-cost').value) || 0;
+      const miscCosts = parseFloat($('calc-misc').value) || 0;
+      const shippingCost = parseFloat($('calc-shipping-cost').value) || 0;
+      const quantity = parseInt($('calc-quantity').value) || 1;
+      const offsiteAds = $('calc-offsite-ads').checked;
+      const freeShipping = $('calc-free-shipping').checked;
+      const isDigital = $('calc-digital').checked;
+      const discountVal = parseFloat($('calc-discount').value) || 0;
+      const discountType = $('calc-discount-type').value;
+      const laborMinutes = parseFloat($('calc-labor-time').value) || 0;
+      const hourlyRate = parseFloat($('calc-hourly-rate').value) || 0;
+
+      const effectiveShipping = freeShipping ? 0 : shippingCharged;
+      const discountAmount = discountType === 'percent' ? price * (discountVal / 100) : discountVal;
+      const salePrice = Math.max(0, price - discountAmount);
+      const totalSale = salePrice + effectiveShipping;
+
+      const listingFee = 0.20;
+      const transactionFee = totalSale * 0.065;
+      const processingFee = totalSale * 0.03 + 0.25;
+      const offsiteFee = offsiteAds ? totalSale * 0.15 : 0;
+      const actualShipping = isDigital ? 0 : shippingCost;
+      const laborCost = (laborMinutes / 60) * hourlyRate;
+
+      const totalFees = listingFee + transactionFee + processingFee + offsiteFee;
+      const productCosts = costOfGoods + miscCosts + actualShipping;
+      const revenue = totalSale * quantity;
+      const totalCostsAll = (totalFees + productCosts + laborCost) * quantity;
+      const profit = revenue - totalCostsAll;
+      const margin = revenue > 0 ? (profit / revenue * 100) : 0;
+      const effectiveFeeRate = totalSale > 0 ? (totalFees / totalSale * 100) : 0;
+
+      $('r-listing-fee').textContent = `-$${listingFee.toFixed(2)}`;
+      $('r-transaction-fee').textContent = `-$${transactionFee.toFixed(2)}`;
+      $('r-processing-fee').textContent = `-$${processingFee.toFixed(2)}`;
+
+      $('r-offsite-row').classList.toggle('hidden', !offsiteAds);
+      $('r-offsite-fee').textContent = `-$${offsiteFee.toFixed(2)}`;
+
+      $('r-total-fees').textContent = `-$${totalFees.toFixed(2)}`;
+      $('r-fee-rate').textContent = `${effectiveFeeRate.toFixed(1)}%`;
+
+      $('r-revenue').textContent = `$${revenue.toFixed(2)}`;
+
+      $('r-discount-row').classList.toggle('hidden', discountAmount <= 0);
+      $('r-discount').textContent = `-$${(discountAmount * quantity).toFixed(2)}`;
+
+      $('r-fees-line').textContent = `-$${(totalFees * quantity).toFixed(2)}`;
+      $('r-product-costs').textContent = `-$${(productCosts * quantity).toFixed(2)}`;
+
+      $('r-labor-row').classList.toggle('hidden', laborCost <= 0);
+      $('r-labor-cost').textContent = `-$${(laborCost * quantity).toFixed(2)}`;
+
+      const profitEl = $('r-profit');
+      profitEl.textContent = `$${profit.toFixed(2)}`;
+      profitEl.className = `text-2xl font-extrabold ${profit >= 0 ? 'profit-positive' : 'profit-negative'}`;
+
+      const marginEl = $('r-margin');
+      marginEl.textContent = `${margin.toFixed(1)}%`;
+      marginEl.className = `text-sm font-semibold ${margin >= 0 ? 'profit-positive' : 'profit-negative'}`;
+
+      const perUnitRow = $('r-per-unit-row');
+      if (quantity > 1) {
+        perUnitRow.classList.remove('hidden');
+        const profitPer = profit / quantity;
+        const perEl = $('r-per-unit');
+        perEl.textContent = `$${profitPer.toFixed(2)}`;
+        perEl.className = `text-sm font-semibold ${profitPer >= 0 ? 'profit-positive' : 'profit-negative'}`;
+      } else {
+        perUnitRow.classList.add('hidden');
+      }
+
+      const targetProfit = parseFloat($('calc-target-profit').value);
+      const suggestedEl = $('r-suggested-price');
+      if (targetProfit > 0) {
+        const feeRate = 0.065 + 0.03 + (offsiteAds ? 0.15 : 0);
+        const fixedFees = 0.20 + 0.25;
+        const needed = targetProfit + fixedFees + productCosts + laborCost;
+        const suggestedPrice = needed / (1 - feeRate);
+        suggestedEl.textContent = suggestedPrice > 0 ? `$${suggestedPrice.toFixed(2)}` : '\u2014';
+      } else {
+        suggestedEl.textContent = '\u2014';
+      }
+    }
+
+    calculate();
+  })();
+  </script>
+</body>
+</html>
