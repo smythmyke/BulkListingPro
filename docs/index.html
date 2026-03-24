@@ -60,9 +60,6 @@
     .delay-300 { animation-delay: 0.3s; }
     .delay-400 { animation-delay: 0.4s; }
     .delay-500 { animation-delay: 0.5s; }
-    .tab-btn.active { background: linear-gradient(135deg, #F56400, #ea580c); color: white; }
-    .tab-content { display: none; }
-    .tab-content.active { display: grid; }
     html { scroll-behavior: smooth; }
   </style>
 
@@ -154,7 +151,7 @@
         <div class="animate-fade-in-up delay-200 lg:pl-8">
           <div class="relative">
             <div class="absolute -inset-4 bg-gradient-to-r from-brand-500/20 to-amber-400/20 rounded-2xl blur-xl"></div>
-            <img src="images/screenshots/upload-progress.png" alt="BulkListingPro uploading listings to Etsy" class="relative rounded-xl shadow-2xl border border-gray-200">
+            <img src="images/screenshots/promo-simple.png" alt="BulkListingPro - Etsy Listings Made Simple" class="relative rounded-xl shadow-2xl border border-gray-200">
           </div>
         </div>
       </div>
@@ -280,71 +277,26 @@
   <!-- Screenshots -->
   <section id="screenshots" class="py-20 sm:py-28">
     <div class="max-w-6xl mx-auto px-4 sm:px-6">
-      <div class="text-center mb-12">
+      <div class="text-center mb-16">
         <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900">See it in action</h2>
-        <p class="mt-4 text-lg text-gray-600">Real screenshots from the extension.</p>
+        <p class="mt-4 text-lg text-gray-600">Professional-grade tools for Etsy sellers.</p>
       </div>
 
-      <div class="flex flex-wrap justify-center gap-2 mb-10">
-        <button class="tab-btn active px-5 py-2 rounded-full text-sm font-semibold border border-gray-200 transition-all" data-tab="tab-upload">Upload Progress</button>
-        <button class="tab-btn px-5 py-2 rounded-full text-sm font-semibold border border-gray-200 text-gray-600 hover:border-brand-300 transition-all" data-tab="tab-automation">Etsy Automation</button>
-        <button class="tab-btn px-5 py-2 rounded-full text-sm font-semibold border border-gray-200 text-gray-600 hover:border-brand-300 transition-all" data-tab="tab-queue">Upload Queue</button>
-        <button class="tab-btn px-5 py-2 rounded-full text-sm font-semibold border border-gray-200 text-gray-600 hover:border-brand-300 transition-all" data-tab="tab-form">Listing Form</button>
-      </div>
-
-      <div id="tab-upload" class="tab-content active grid lg:grid-cols-2 gap-10 items-center">
-        <img src="images/screenshots/upload-progress.png" alt="Upload progress showing real-time listing creation" class="rounded-xl shadow-xl border border-gray-200">
-        <div>
-          <span class="inline-block bg-brand-50 text-brand-600 text-xs font-bold px-3 py-1 rounded-full mb-4">REAL-TIME TRACKING</span>
-          <h3 class="text-2xl font-bold text-gray-900 mb-4">Watch your listings go live</h3>
-          <ul class="space-y-3 text-gray-600">
-            <li class="flex items-start gap-3"><svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Real-time progress bar with listing count</li>
-            <li class="flex items-start gap-3"><svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Pause, skip, or cancel anytime</li>
-            <li class="flex items-start gap-3"><svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Auto-retry on transient failures</li>
-            <li class="flex items-start gap-3"><svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Credit usage shown per upload</li>
-          </ul>
+      <div class="grid lg:grid-cols-2 gap-8 mb-8">
+        <div class="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all">
+          <img src="images/screenshots/promo-setup.png" alt="BulkListingPro - Etsy Listings Made Simple - Connect your shop in a snap" class="w-full">
+        </div>
+        <div class="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all">
+          <img src="images/screenshots/promo-batch.png" alt="BulkListingPro - Master Your Etsy Inventory with batch upload" class="w-full">
         </div>
       </div>
 
-      <div id="tab-automation" class="tab-content grid lg:grid-cols-2 gap-10 items-center">
-        <img src="images/screenshots/etsy-automation.png" alt="BulkListingPro automating Etsy listing creation" class="rounded-xl shadow-xl border border-gray-200">
-        <div>
-          <span class="inline-block bg-purple-50 text-purple-600 text-xs font-bold px-3 py-1 rounded-full mb-4">BROWSER AUTOMATION</span>
-          <h3 class="text-2xl font-bold text-gray-900 mb-4">Fills every field for you</h3>
-          <ul class="space-y-3 text-gray-600">
-            <li class="flex items-start gap-3"><svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Title, description, tags, price, category</li>
-            <li class="flex items-start gap-3"><svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Images, digital files, materials, SKU</li>
-            <li class="flex items-start gap-3"><svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Colors, personalization, shop sections</li>
-            <li class="flex items-start gap-3"><svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Save as draft or publish immediately</li>
-          </ul>
+      <div class="grid lg:grid-cols-3 gap-8">
+        <div class="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all lg:col-span-2">
+          <img src="images/screenshots/promo-inventory.png" alt="BulkListingPro - Easy batch upload and inventory management" class="w-full">
         </div>
-      </div>
-
-      <div id="tab-queue" class="tab-content grid lg:grid-cols-2 gap-10 items-center">
-        <img src="images/screenshots/upload-queue.png" alt="Upload queue with listings ready to publish" class="rounded-xl shadow-xl border border-gray-200">
-        <div>
-          <span class="inline-block bg-green-50 text-green-600 text-xs font-bold px-3 py-1 rounded-full mb-4">QUEUE MANAGEMENT</span>
-          <h3 class="text-2xl font-bold text-gray-900 mb-4">Queue, review, then upload</h3>
-          <ul class="space-y-3 text-gray-600">
-            <li class="flex items-start gap-3"><svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Preview listings before uploading</li>
-            <li class="flex items-start gap-3"><svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Credit cost displayed before starting</li>
-            <li class="flex items-start gap-3"><svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Select or deselect individual items</li>
-            <li class="flex items-start gap-3"><svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Clear queue with one click</li>
-          </ul>
-        </div>
-      </div>
-
-      <div id="tab-form" class="tab-content grid lg:grid-cols-2 gap-10 items-center">
-        <img src="images/screenshots/listing-form.png" alt="Listing creation form with all fields" class="rounded-xl shadow-xl border border-gray-200">
-        <div>
-          <span class="inline-block bg-amber-50 text-amber-600 text-xs font-bold px-3 py-1 rounded-full mb-4">SINGLE LISTINGS</span>
-          <h3 class="text-2xl font-bold text-gray-900 mb-4">Quick single listing mode</h3>
-          <ul class="space-y-3 text-gray-600">
-            <li class="flex items-start gap-3"><svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>All fields in one simple form</li>
-            <li class="flex items-start gap-3"><svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Drag-and-drop images</li>
-            <li class="flex items-start gap-3"><svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>24 digital product categories</li>
-            <li class="flex items-start gap-3"><svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Add to queue or upload directly</li>
-          </ul>
+        <div class="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all">
+          <img src="images/screenshots/promo-seo.png" alt="BulkListingPro - Streamline Etsy Listings and Dominate SEO" class="w-full">
         </div>
       </div>
     </div>
@@ -479,15 +431,5 @@
     </div>
   </footer>
 
-  <script>
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active'); b.style.background = ''; b.style.color = ''; });
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById(btn.dataset.tab).classList.add('active');
-      });
-    });
-  </script>
 </body>
 </html>
