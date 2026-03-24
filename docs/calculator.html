@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Free Etsy Fee Calculator 2026 - Know Your Profit Before You List</title>
-  <meta name="description" content="Free Etsy fee calculator with full breakdown: listing fees, transaction fees, processing fees, offsite ads. Calculate your real profit per listing instantly.">
-  <meta name="keywords" content="etsy fee calculator, etsy charges calculator, etsy profit calculator, etsy fees, etsy seller calculator, etsy price calculator, etsy selling fees calculator">
+  <title>Free Etsy Seller Tools 2026 - Fee Calculator, Shipping, Budget Planner</title>
+  <meta name="description" content="Free Etsy seller tools: profit calculator, shipping cost estimator, monthly budget planner, and conversion rate benchmarks. Know your numbers before you list.">
+  <meta name="keywords" content="etsy fee calculator, etsy profit calculator, etsy shipping calculator, etsy budget planner, etsy conversion rate, etsy seller tools, etsy charges calculator, etsy fees, etsy seller calculator, etsy price calculator, etsy selling fees calculator, etsy shipping cost estimator, etsy business planner">
   <meta name="author" content="BulkListingPro">
   <link rel="canonical" href="https://smythmyke.github.io/BulkListingPro/calculator.html">
   <meta name="theme-color" content="#F56400">
@@ -16,14 +16,14 @@
 
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://smythmyke.github.io/BulkListingPro/calculator.html">
-  <meta property="og:title" content="Free Etsy Fee Calculator 2026 - Know Your Profit">
-  <meta property="og:description" content="Calculate your real Etsy profit with full fee breakdown. Listing fees, transaction fees, processing fees, offsite ads, and more.">
+  <meta property="og:title" content="Free Etsy Seller Tools 2026 - Calculator, Shipping, Budget Planner">
+  <meta property="og:description" content="Free Etsy seller toolkit: profit calculator, shipping estimator, budget planner, and conversion benchmarks. Know your numbers before you list.">
   <meta property="og:image" content="https://smythmyke.github.io/BulkListingPro/images/og-image.png">
   <meta property="og:site_name" content="BulkListingPro">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Free Etsy Fee Calculator 2026 - Know Your Profit">
-  <meta name="twitter:description" content="Calculate your real Etsy profit with full fee breakdown. Free, instant, no signup required.">
+  <meta name="twitter:title" content="Free Etsy Seller Tools 2026 - Calculator, Shipping, Budget Planner">
+  <meta name="twitter:description" content="Free Etsy seller toolkit with profit calculator, shipping estimator, budget planner, and conversion benchmarks.">
   <meta name="twitter:image" content="https://smythmyke.github.io/BulkListingPro/images/og-image.png">
 
   <script src="https://cdn.tailwindcss.com"></script>
@@ -47,9 +47,9 @@
   {
     "@context": "https://schema.org",
     "@type": "WebApplication",
-    "name": "Etsy Fee Calculator",
+    "name": "Etsy Seller Tools",
     "url": "https://smythmyke.github.io/BulkListingPro/calculator.html",
-    "description": "Free Etsy fee calculator with full breakdown of listing fees, transaction fees, processing fees, and offsite ads. Calculate your real profit per listing.",
+    "description": "Free Etsy seller toolkit with profit calculator, shipping cost estimator, monthly budget planner, and conversion rate benchmarks.",
     "applicationCategory": "BusinessApplication",
     "operatingSystem": "Any",
     "offers": {
@@ -61,7 +61,8 @@
       "@type": "Organization",
       "name": "BulkListingPro",
       "url": "https://smythmyke.github.io/BulkListingPro/"
-    }
+    },
+    "featureList": ["Etsy Profit Calculator", "Shipping Cost Estimator", "Monthly Budget Planner", "Conversion Rate Benchmarks"]
   }
   </script>
 
@@ -76,6 +77,13 @@
     .fee-negative { color: #dc2626; }
     .profit-positive { color: #16a34a; }
     .profit-negative { color: #dc2626; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    .grade-excellent { color: #16a34a; }
+    .grade-great { color: #16a34a; }
+    .grade-average { color: #d97706; }
+    .grade-below { color: #ea580c; }
+    .grade-needs-work { color: #dc2626; }
   </style>
 </head>
 <body class="bg-white text-gray-900 antialiased">
@@ -90,7 +98,7 @@
       <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
         <a href="./#features" class="hover:text-brand-500 transition-colors">Features</a>
         <a href="./#pricing" class="hover:text-brand-500 transition-colors">Pricing</a>
-        <a href="calculator.html" class="text-brand-500 font-semibold">Fee Calculator</a>
+        <a href="calculator.html" class="text-brand-500 font-semibold">Seller Tools</a>
       </nav>
       <a href="https://chromewebstore.google.com/detail/gmmjdkdgejglelaemhpdekcmeaaccnab" target="_blank" rel="noopener"
          class="bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold px-5 py-2 rounded-lg transition-colors shadow-sm">
@@ -103,11 +111,11 @@
   <section class="pt-24 pb-6 sm:pt-28 sm:pb-8 bg-gradient-to-br from-orange-50 via-white to-amber-50">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 text-center animate-fade-in-up">
       <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-tight tracking-tight text-gray-900">
-        Free Etsy Fee Calculator
+        Free Etsy Seller Tools
         <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-500 to-amber-500">2026</span>
       </h1>
       <p class="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-        Know your real profit before you list. Full fee breakdown including listing, transaction, processing, and offsite ad fees.
+        Know your real numbers before you list. Profit calculator, shipping estimator, budget planner, and conversion benchmarks &mdash; all free.
       </p>
     </div>
   </section>
@@ -116,170 +124,525 @@
   <section class="pb-16 sm:pb-24 bg-gradient-to-br from-orange-50 via-white to-amber-50">
     <div class="max-w-4xl mx-auto px-4 sm:px-6">
       <div class="animate-fade-in-up delay-100 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-        <div class="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-100">
 
-          <!-- Inputs -->
-          <div class="p-6 sm:p-8">
-            <h2 class="text-lg font-bold text-gray-900 mb-6">Your Listing Details</h2>
-
-            <div class="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <label class="block text-xs font-medium text-gray-500 mb-1.5">Item Price</label>
-                <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-brand-500/30 focus-within:border-brand-500">
-                  <span class="px-3 py-2.5 bg-gray-50 text-gray-500 text-sm border-r border-gray-200">$</span>
-                  <input type="number" id="calc-price" step="0.01" min="0" value="25.00" class="w-full px-3 py-2.5 text-sm outline-none">
-                </div>
-              </div>
-              <div>
-                <label class="block text-xs font-medium text-gray-500 mb-1.5">Quantity</label>
-                <input type="number" id="calc-quantity" min="1" value="1" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-center outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500">
-              </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <label class="block text-xs font-medium text-gray-500 mb-1.5">Shipping Charged to Buyer</label>
-                <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-brand-500/30 focus-within:border-brand-500" id="shipping-wrap">
-                  <span class="px-3 py-2.5 bg-gray-50 text-gray-500 text-sm border-r border-gray-200">$</span>
-                  <input type="number" id="calc-shipping" step="0.01" min="0" value="0.00" class="w-full px-3 py-2.5 text-sm outline-none">
-                </div>
-              </div>
-              <div>
-                <label class="block text-xs font-medium text-gray-500 mb-1.5">Your Shipping Cost</label>
-                <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-brand-500/30 focus-within:border-brand-500" id="shipping-cost-wrap">
-                  <span class="px-3 py-2.5 bg-gray-50 text-gray-500 text-sm border-r border-gray-200">$</span>
-                  <input type="number" id="calc-shipping-cost" step="0.01" min="0" value="0.00" class="w-full px-3 py-2.5 text-sm outline-none">
-                </div>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <label class="block text-xs font-medium text-gray-500 mb-1.5">Materials / Cost of Goods</label>
-                <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-brand-500/30 focus-within:border-brand-500">
-                  <span class="px-3 py-2.5 bg-gray-50 text-gray-500 text-sm border-r border-gray-200">$</span>
-                  <input type="number" id="calc-cost" step="0.01" min="0" value="0.00" class="w-full px-3 py-2.5 text-sm outline-none">
-                </div>
-              </div>
-              <div>
-                <label class="block text-xs font-medium text-gray-500 mb-1.5">Packaging / Misc Costs</label>
-                <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-brand-500/30 focus-within:border-brand-500">
-                  <span class="px-3 py-2.5 bg-gray-50 text-gray-500 text-sm border-r border-gray-200">$</span>
-                  <input type="number" id="calc-misc" step="0.01" min="0" value="0.00" class="w-full px-3 py-2.5 text-sm outline-none">
-                </div>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <label class="block text-xs font-medium text-gray-500 mb-1.5">Discount</label>
-                <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-brand-500/30 focus-within:border-brand-500">
-                  <span class="px-3 py-2.5 bg-gray-50 text-gray-500 text-sm border-r border-gray-200" id="discount-symbol">$</span>
-                  <input type="number" id="calc-discount" step="0.01" min="0" value="0" class="w-full px-3 py-2.5 text-sm outline-none">
-                </div>
-              </div>
-              <div>
-                <label class="block text-xs font-medium text-gray-500 mb-1.5">Discount Type</label>
-                <select id="calc-discount-type" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none bg-white focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 cursor-pointer">
-                  <option value="flat">Flat ($)</option>
-                  <option value="percent">Percent (%)</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4 mb-5">
-              <div>
-                <label class="block text-xs font-medium text-gray-500 mb-1.5">Labor Time (minutes)</label>
-                <input type="number" id="calc-labor-time" min="0" value="0" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-center outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500">
-              </div>
-              <div>
-                <label class="block text-xs font-medium text-gray-500 mb-1.5">Hourly Rate</label>
-                <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-brand-500/30 focus-within:border-brand-500">
-                  <span class="px-3 py-2.5 bg-gray-50 text-gray-500 text-sm border-r border-gray-200">$</span>
-                  <input type="number" id="calc-hourly-rate" step="0.01" min="0" value="15.00" class="w-full px-3 py-2.5 text-sm outline-none">
-                </div>
-              </div>
-            </div>
-
-            <div class="flex flex-wrap gap-x-5 gap-y-2">
-              <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-                <input type="checkbox" id="calc-free-shipping" checked class="accent-brand-500 w-4 h-4">
-                Free Shipping
-              </label>
-              <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-                <input type="checkbox" id="calc-digital" class="accent-brand-500 w-4 h-4">
-                Digital Download
-              </label>
-              <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-                <input type="checkbox" id="calc-offsite-ads" class="accent-brand-500 w-4 h-4">
-                Offsite Ads (15%)
-              </label>
-            </div>
+        <!-- Tab Navigation -->
+        <div class="px-4 sm:px-6 pt-5 pb-0">
+          <div class="flex flex-wrap gap-2" role="tablist">
+            <button role="tab" aria-selected="true" data-tab="profit" class="tab-btn px-4 py-2 rounded-full text-sm font-semibold transition-colors bg-brand-500 text-white">Profit Calculator</button>
+            <button role="tab" aria-selected="false" data-tab="shipping" class="tab-btn px-4 py-2 rounded-full text-sm font-semibold transition-colors border border-gray-200 text-gray-600 hover:border-brand-300 hover:text-brand-500">Shipping Calculator</button>
+            <button role="tab" aria-selected="false" data-tab="budget" class="tab-btn px-4 py-2 rounded-full text-sm font-semibold transition-colors border border-gray-200 text-gray-600 hover:border-brand-300 hover:text-brand-500">Budget Planner</button>
+            <button role="tab" aria-selected="false" data-tab="benchmarks" class="tab-btn px-4 py-2 rounded-full text-sm font-semibold transition-colors border border-gray-200 text-gray-600 hover:border-brand-300 hover:text-brand-500">Conversion Benchmarks</button>
           </div>
-
-          <!-- Results -->
-          <div class="p-6 sm:p-8 bg-gray-50/50">
-            <h2 class="text-lg font-bold text-gray-900 mb-6">Your Profit Breakdown</h2>
-
-            <!-- Fee Breakdown -->
-            <div class="mb-6">
-              <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Etsy Fees</h3>
-              <div class="space-y-2 text-sm">
-                <div class="flex justify-between"><span class="text-gray-600">Listing Fee</span><span class="fee-negative font-medium" id="r-listing-fee">-$0.20</span></div>
-                <div class="flex justify-between"><span class="text-gray-600">Transaction Fee (6.5%)</span><span class="fee-negative font-medium" id="r-transaction-fee">-$0.00</span></div>
-                <div class="flex justify-between"><span class="text-gray-600">Processing Fee (3% + $0.25)</span><span class="fee-negative font-medium" id="r-processing-fee">-$0.00</span></div>
-                <div class="flex justify-between hidden" id="r-offsite-row"><span class="text-gray-600">Offsite Ads (15%)</span><span class="fee-negative font-medium" id="r-offsite-fee">-$0.00</span></div>
-                <div class="flex justify-between pt-2 border-t border-gray-200 font-semibold">
-                  <span class="text-gray-900">Total Etsy Fees</span>
-                  <span class="fee-negative" id="r-total-fees">-$0.00</span>
-                </div>
-                <div class="flex justify-between text-xs"><span class="text-gray-400">Effective Fee Rate</span><span class="text-gray-500" id="r-fee-rate">0%</span></div>
-              </div>
-            </div>
-
-            <!-- Profit Summary -->
-            <div class="mb-6">
-              <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Profit Summary</h3>
-              <div class="space-y-2 text-sm">
-                <div class="flex justify-between"><span class="text-gray-600">Revenue</span><span class="font-medium text-gray-900" id="r-revenue">$0.00</span></div>
-                <div class="flex justify-between hidden" id="r-discount-row"><span class="text-gray-600">Discount</span><span class="fee-negative font-medium" id="r-discount">-$0.00</span></div>
-                <div class="flex justify-between"><span class="text-gray-600">Etsy Fees</span><span class="fee-negative font-medium" id="r-fees-line">-$0.00</span></div>
-                <div class="flex justify-between"><span class="text-gray-600">Product Costs</span><span class="fee-negative font-medium" id="r-product-costs">-$0.00</span></div>
-                <div class="flex justify-between hidden" id="r-labor-row"><span class="text-gray-600">Labor Cost</span><span class="fee-negative font-medium" id="r-labor-cost">-$0.00</span></div>
-              </div>
-            </div>
-
-            <!-- Net Profit -->
-            <div class="bg-white rounded-xl p-4 border border-gray-200 mb-4">
-              <div class="flex justify-between items-center">
-                <span class="text-lg font-bold text-gray-900">Net Profit</span>
-                <span class="text-2xl font-extrabold" id="r-profit">$0.00</span>
-              </div>
-              <div class="flex justify-between mt-1">
-                <span class="text-sm text-gray-500">Profit Margin</span>
-                <span class="text-sm font-semibold" id="r-margin">0%</span>
-              </div>
-              <div class="flex justify-between mt-1 hidden" id="r-per-unit-row">
-                <span class="text-sm text-gray-500">Per Unit Profit</span>
-                <span class="text-sm font-semibold" id="r-per-unit">$0.00</span>
-              </div>
-            </div>
-
-            <!-- Reverse Calculator -->
-            <div class="bg-brand-50 rounded-xl p-4 border border-brand-100">
-              <h3 class="text-xs font-semibold text-brand-600 uppercase tracking-wider mb-3">Price Finder</h3>
-              <div class="flex items-center gap-3">
-                <label class="text-sm text-gray-600 whitespace-nowrap">Target Profit</label>
-                <div class="flex items-center border border-brand-200 rounded-lg overflow-hidden bg-white focus-within:ring-2 focus-within:ring-brand-500/30">
-                  <span class="px-2 py-2 bg-brand-50 text-brand-500 text-sm border-r border-brand-200">$</span>
-                  <input type="number" id="calc-target-profit" step="0.01" min="0" value="" placeholder="0.00" class="w-20 px-2 py-2 text-sm outline-none">
-                </div>
-                <span class="text-sm text-gray-600">Sell at <strong class="text-brand-600 text-base" id="r-suggested-price">&mdash;</strong></span>
-              </div>
-            </div>
-          </div>
-
         </div>
+
+        <!-- Tab 1: Profit Calculator -->
+        <div id="panel-profit" class="tab-panel active">
+          <div class="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-100">
+
+            <!-- Inputs -->
+            <div class="p-6 sm:p-8">
+              <h2 class="text-lg font-bold text-gray-900 mb-6">Your Listing Details</h2>
+
+              <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5">Item Price</label>
+                  <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-brand-500/30 focus-within:border-brand-500">
+                    <span class="px-3 py-2.5 bg-gray-50 text-gray-500 text-sm border-r border-gray-200">$</span>
+                    <input type="number" id="calc-price" step="0.01" min="0" value="25.00" class="w-full px-3 py-2.5 text-sm outline-none">
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5">Quantity</label>
+                  <input type="number" id="calc-quantity" min="1" value="1" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-center outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5">Shipping Charged to Buyer</label>
+                  <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-brand-500/30 focus-within:border-brand-500" id="shipping-wrap">
+                    <span class="px-3 py-2.5 bg-gray-50 text-gray-500 text-sm border-r border-gray-200">$</span>
+                    <input type="number" id="calc-shipping" step="0.01" min="0" value="0.00" class="w-full px-3 py-2.5 text-sm outline-none">
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5">Your Shipping Cost</label>
+                  <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-brand-500/30 focus-within:border-brand-500" id="shipping-cost-wrap">
+                    <span class="px-3 py-2.5 bg-gray-50 text-gray-500 text-sm border-r border-gray-200">$</span>
+                    <input type="number" id="calc-shipping-cost" step="0.01" min="0" value="0.00" class="w-full px-3 py-2.5 text-sm outline-none">
+                  </div>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5">Materials / Cost of Goods</label>
+                  <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-brand-500/30 focus-within:border-brand-500">
+                    <span class="px-3 py-2.5 bg-gray-50 text-gray-500 text-sm border-r border-gray-200">$</span>
+                    <input type="number" id="calc-cost" step="0.01" min="0" value="0.00" class="w-full px-3 py-2.5 text-sm outline-none">
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5">Packaging / Misc Costs</label>
+                  <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-brand-500/30 focus-within:border-brand-500">
+                    <span class="px-3 py-2.5 bg-gray-50 text-gray-500 text-sm border-r border-gray-200">$</span>
+                    <input type="number" id="calc-misc" step="0.01" min="0" value="0.00" class="w-full px-3 py-2.5 text-sm outline-none">
+                  </div>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5">Discount</label>
+                  <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-brand-500/30 focus-within:border-brand-500">
+                    <span class="px-3 py-2.5 bg-gray-50 text-gray-500 text-sm border-r border-gray-200" id="discount-symbol">$</span>
+                    <input type="number" id="calc-discount" step="0.01" min="0" value="0" class="w-full px-3 py-2.5 text-sm outline-none">
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5">Discount Type</label>
+                  <select id="calc-discount-type" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none bg-white focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 cursor-pointer">
+                    <option value="flat">Flat ($)</option>
+                    <option value="percent">Percent (%)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4 mb-5">
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5">Labor Time (minutes)</label>
+                  <input type="number" id="calc-labor-time" min="0" value="0" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-center outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500">
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5">Hourly Rate</label>
+                  <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-brand-500/30 focus-within:border-brand-500">
+                    <span class="px-3 py-2.5 bg-gray-50 text-gray-500 text-sm border-r border-gray-200">$</span>
+                    <input type="number" id="calc-hourly-rate" step="0.01" min="0" value="15.00" class="w-full px-3 py-2.5 text-sm outline-none">
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex flex-wrap gap-x-5 gap-y-2">
+                <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                  <input type="checkbox" id="calc-free-shipping" checked class="accent-brand-500 w-4 h-4">
+                  Free Shipping
+                </label>
+                <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                  <input type="checkbox" id="calc-digital" class="accent-brand-500 w-4 h-4">
+                  Digital Download
+                </label>
+                <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                  <input type="checkbox" id="calc-offsite-ads" class="accent-brand-500 w-4 h-4">
+                  Offsite Ads (15%)
+                </label>
+              </div>
+            </div>
+
+            <!-- Results -->
+            <div class="p-6 sm:p-8 bg-gray-50/50">
+              <h2 class="text-lg font-bold text-gray-900 mb-6">Your Profit Breakdown</h2>
+
+              <!-- Fee Breakdown -->
+              <div class="mb-6">
+                <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Etsy Fees</h3>
+                <div class="space-y-2 text-sm">
+                  <div class="flex justify-between"><span class="text-gray-600">Listing Fee</span><span class="fee-negative font-medium" id="r-listing-fee">-$0.20</span></div>
+                  <div class="flex justify-between"><span class="text-gray-600">Transaction Fee (6.5%)</span><span class="fee-negative font-medium" id="r-transaction-fee">-$0.00</span></div>
+                  <div class="flex justify-between"><span class="text-gray-600">Processing Fee (3% + $0.25)</span><span class="fee-negative font-medium" id="r-processing-fee">-$0.00</span></div>
+                  <div class="flex justify-between hidden" id="r-offsite-row"><span class="text-gray-600">Offsite Ads (15%)</span><span class="fee-negative font-medium" id="r-offsite-fee">-$0.00</span></div>
+                  <div class="flex justify-between pt-2 border-t border-gray-200 font-semibold">
+                    <span class="text-gray-900">Total Etsy Fees</span>
+                    <span class="fee-negative" id="r-total-fees">-$0.00</span>
+                  </div>
+                  <div class="flex justify-between text-xs"><span class="text-gray-400">Effective Fee Rate</span><span class="text-gray-500" id="r-fee-rate">0%</span></div>
+                </div>
+              </div>
+
+              <!-- Profit Summary -->
+              <div class="mb-6">
+                <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Profit Summary</h3>
+                <div class="space-y-2 text-sm">
+                  <div class="flex justify-between"><span class="text-gray-600">Revenue</span><span class="font-medium text-gray-900" id="r-revenue">$0.00</span></div>
+                  <div class="flex justify-between hidden" id="r-discount-row"><span class="text-gray-600">Discount</span><span class="fee-negative font-medium" id="r-discount">-$0.00</span></div>
+                  <div class="flex justify-between"><span class="text-gray-600">Etsy Fees</span><span class="fee-negative font-medium" id="r-fees-line">-$0.00</span></div>
+                  <div class="flex justify-between"><span class="text-gray-600">Product Costs</span><span class="fee-negative font-medium" id="r-product-costs">-$0.00</span></div>
+                  <div class="flex justify-between hidden" id="r-labor-row"><span class="text-gray-600">Labor Cost</span><span class="fee-negative font-medium" id="r-labor-cost">-$0.00</span></div>
+                </div>
+              </div>
+
+              <!-- Net Profit -->
+              <div class="bg-white rounded-xl p-4 border border-gray-200 mb-4">
+                <div class="flex justify-between items-center">
+                  <span class="text-lg font-bold text-gray-900">Net Profit</span>
+                  <span class="text-2xl font-extrabold" id="r-profit">$0.00</span>
+                </div>
+                <div class="flex justify-between mt-1">
+                  <span class="text-sm text-gray-500">Profit Margin</span>
+                  <span class="text-sm font-semibold" id="r-margin">0%</span>
+                </div>
+                <div class="flex justify-between mt-1 hidden" id="r-per-unit-row">
+                  <span class="text-sm text-gray-500">Per Unit Profit</span>
+                  <span class="text-sm font-semibold" id="r-per-unit">$0.00</span>
+                </div>
+              </div>
+
+              <!-- Reverse Calculator -->
+              <div class="bg-brand-50 rounded-xl p-4 border border-brand-100">
+                <h3 class="text-xs font-semibold text-brand-600 uppercase tracking-wider mb-3">Price Finder</h3>
+                <div class="flex items-center gap-3">
+                  <label class="text-sm text-gray-600 whitespace-nowrap">Target Profit</label>
+                  <div class="flex items-center border border-brand-200 rounded-lg overflow-hidden bg-white focus-within:ring-2 focus-within:ring-brand-500/30">
+                    <span class="px-2 py-2 bg-brand-50 text-brand-500 text-sm border-r border-brand-200">$</span>
+                    <input type="number" id="calc-target-profit" step="0.01" min="0" value="" placeholder="0.00" class="w-20 px-2 py-2 text-sm outline-none">
+                  </div>
+                  <span class="text-sm text-gray-600">Sell at <strong class="text-brand-600 text-base" id="r-suggested-price">&mdash;</strong></span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Tab 2: Shipping Calculator -->
+        <div id="panel-shipping" class="tab-panel">
+          <div class="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-100">
+
+            <div class="p-6 sm:p-8">
+              <h2 class="text-lg font-bold text-gray-900 mb-6">Package Details</h2>
+
+              <div class="mb-4">
+                <label class="block text-xs font-medium text-gray-500 mb-1.5">Package Weight</label>
+                <div class="grid grid-cols-2 gap-3">
+                  <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-brand-500/30 focus-within:border-brand-500">
+                    <input type="number" id="ship-weight-lbs" min="0" value="0" class="w-full px-3 py-2.5 text-sm outline-none">
+                    <span class="px-3 py-2.5 bg-gray-50 text-gray-500 text-sm border-l border-gray-200">lbs</span>
+                  </div>
+                  <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-brand-500/30 focus-within:border-brand-500">
+                    <input type="number" id="ship-weight-oz" min="0" max="15" value="0" class="w-full px-3 py-2.5 text-sm outline-none">
+                    <span class="px-3 py-2.5 bg-gray-50 text-gray-500 text-sm border-l border-gray-200">oz</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mb-4">
+                <label class="block text-xs font-medium text-gray-500 mb-1.5">Package Dimensions (inches)</label>
+                <div class="grid grid-cols-3 gap-3">
+                  <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-brand-500/30 focus-within:border-brand-500">
+                    <input type="number" id="ship-length" min="0" step="0.1" value="0" placeholder="L" class="w-full px-3 py-2.5 text-sm outline-none text-center">
+                  </div>
+                  <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-brand-500/30 focus-within:border-brand-500">
+                    <input type="number" id="ship-width" min="0" step="0.1" value="0" placeholder="W" class="w-full px-3 py-2.5 text-sm outline-none text-center">
+                  </div>
+                  <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-brand-500/30 focus-within:border-brand-500">
+                    <input type="number" id="ship-height" min="0" step="0.1" value="0" placeholder="H" class="w-full px-3 py-2.5 text-sm outline-none text-center">
+                  </div>
+                </div>
+                <div class="flex justify-between mt-1 text-xs text-gray-400"><span>Length</span><span>Width</span><span>Height</span></div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5">Ship From (ZIP)</label>
+                  <input type="text" id="ship-from-zip" maxlength="5" value="" placeholder="e.g. 90210" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500">
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5">Ship To (ZIP)</label>
+                  <input type="text" id="ship-to-zip" maxlength="5" value="" placeholder="e.g. 10001" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500">
+                </div>
+              </div>
+
+              <div class="mb-4">
+                <label class="block text-xs font-medium text-gray-500 mb-1.5">Destination</label>
+                <div class="flex gap-3">
+                  <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                    <input type="radio" name="ship-dest" value="domestic" checked class="accent-brand-500 w-4 h-4">
+                    Domestic
+                  </label>
+                  <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                    <input type="radio" name="ship-dest" value="international" class="accent-brand-500 w-4 h-4">
+                    International
+                  </label>
+                </div>
+              </div>
+
+              <div class="mb-4">
+                <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                  <input type="checkbox" id="ship-free-shipping" class="accent-brand-500 w-4 h-4">
+                  Free Shipping (absorb into price)
+                </label>
+              </div>
+
+              <div id="ship-free-shipping-price" class="hidden mb-4">
+                <label class="block text-xs font-medium text-gray-500 mb-1.5">Current Item Price</label>
+                <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-brand-500/30 focus-within:border-brand-500">
+                  <span class="px-3 py-2.5 bg-gray-50 text-gray-500 text-sm border-r border-gray-200">$</span>
+                  <input type="number" id="ship-item-price" step="0.01" min="0" value="25.00" class="w-full px-3 py-2.5 text-sm outline-none">
+                </div>
+              </div>
+            </div>
+
+            <div class="p-6 sm:p-8 bg-gray-50/50">
+              <h2 class="text-lg font-bold text-gray-900 mb-6">Estimated Shipping Costs</h2>
+
+              <div id="ship-digital-msg" class="hidden mb-6">
+                <div class="bg-green-50 rounded-xl p-4 border border-green-200 text-center">
+                  <p class="text-lg font-bold text-green-700 mt-2">Digital Product: $0.00 shipping</p>
+                  <p class="text-sm text-green-600 mt-1">No shipping needed for digital downloads!</p>
+                </div>
+              </div>
+
+              <div id="ship-results-container">
+                <div class="mb-6" id="ship-first-class-section">
+                  <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">USPS First Class (under 1 lb)</h3>
+                  <div class="space-y-2 text-sm">
+                    <div class="flex justify-between"><span class="text-gray-600">0-4 oz</span><span class="font-medium text-gray-900">$3.50 - $4.50</span></div>
+                    <div class="flex justify-between"><span class="text-gray-600">4-8 oz</span><span class="font-medium text-gray-900">$4.00 - $5.50</span></div>
+                    <div class="flex justify-between"><span class="text-gray-600">8-16 oz</span><span class="font-medium text-gray-900">$5.00 - $7.00</span></div>
+                  </div>
+                </div>
+
+                <div class="mb-6" id="ship-priority-section">
+                  <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">USPS Priority Mail</h3>
+                  <div class="space-y-2 text-sm">
+                    <div class="flex justify-between"><span class="text-gray-600">1-5 lbs</span><span class="font-medium text-gray-900">$8.00 - $12.00</span></div>
+                    <div class="flex justify-between"><span class="text-gray-600">5-10 lbs</span><span class="font-medium text-gray-900">$12.00 - $18.00</span></div>
+                    <div class="flex justify-between"><span class="text-gray-600">10-20 lbs</span><span class="font-medium text-gray-900">$18.00 - $30.00</span></div>
+                  </div>
+                </div>
+
+                <div class="bg-white rounded-xl p-4 border border-gray-200 mb-4">
+                  <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Your Estimated Cost</h3>
+                  <div class="flex justify-between items-center">
+                    <span class="text-lg font-bold text-gray-900">Estimated Shipping</span>
+                    <span class="text-2xl font-extrabold text-gray-900" id="r-ship-estimate">$0.00</span>
+                  </div>
+                  <div class="flex justify-between mt-1">
+                    <span class="text-sm text-gray-500">Service</span>
+                    <span class="text-sm font-semibold text-gray-600" id="r-ship-service">Enter weight above</span>
+                  </div>
+                </div>
+
+                <div id="ship-free-impact" class="hidden mb-4">
+                  <div class="bg-brand-50 rounded-xl p-4 border border-brand-100">
+                    <h3 class="text-xs font-semibold text-brand-600 uppercase tracking-wider mb-3">Free Shipping Impact</h3>
+                    <div class="space-y-2 text-sm">
+                      <div class="flex justify-between"><span class="text-gray-600">Shipping to absorb</span><span class="font-medium text-gray-900" id="r-ship-absorb">$0.00</span></div>
+                      <div class="flex justify-between"><span class="text-gray-600">Current item price</span><span class="font-medium text-gray-900" id="r-ship-current-price">$0.00</span></div>
+                      <div class="flex justify-between pt-2 border-t border-brand-200 font-semibold">
+                        <span class="text-brand-700">New price needed</span>
+                        <span class="text-brand-700 text-lg" id="r-ship-new-price">$0.00</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                  <p class="text-sm text-blue-700"><strong>Etsy Shipping Labels:</strong> Etsy offers discounted shipping labels &mdash; typically 30% off retail rates. Purchase labels directly through your Etsy shop to save.</p>
+                </div>
+              </div>
+
+              <div id="ship-intl-note" class="hidden mt-4">
+                <div class="bg-amber-50 rounded-xl p-4 border border-amber-200">
+                  <p class="text-sm text-amber-700"><strong>International Shipping:</strong> Rates vary significantly by destination. USPS First Class International starts around $14-$15 for small packages. Consider Etsy's Global Shipping program for simplified customs.</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Tab 3: Budget Planner -->
+        <div id="panel-budget" class="tab-panel">
+          <div class="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-100">
+
+            <div class="p-6 sm:p-8">
+              <h2 class="text-lg font-bold text-gray-900 mb-6">Monthly Business Inputs</h2>
+
+              <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5">Monthly Listings Target</label>
+                  <input type="number" id="budget-listings" min="1" value="30" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-center outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500">
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5">Avg. Item Price</label>
+                  <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-brand-500/30 focus-within:border-brand-500">
+                    <span class="px-3 py-2.5 bg-gray-50 text-gray-500 text-sm border-r border-gray-200">$</span>
+                    <input type="number" id="budget-price" step="0.01" min="0" value="25.00" class="w-full px-3 py-2.5 text-sm outline-none">
+                  </div>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5">Conversion Rate (%)</label>
+                  <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-brand-500/30 focus-within:border-brand-500">
+                    <input type="number" id="budget-conversion" step="0.1" min="0" value="2.5" class="w-full px-3 py-2.5 text-sm outline-none">
+                    <span class="px-3 py-2.5 bg-gray-50 text-gray-500 text-sm border-l border-gray-200">%</span>
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5">Avg. Cost of Goods</label>
+                  <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-brand-500/30 focus-within:border-brand-500">
+                    <span class="px-3 py-2.5 bg-gray-50 text-gray-500 text-sm border-r border-gray-200">$</span>
+                    <input type="number" id="budget-cogs" step="0.01" min="0" value="5.00" class="w-full px-3 py-2.5 text-sm outline-none">
+                  </div>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5">Monthly Fixed Costs</label>
+                  <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-brand-500/30 focus-within:border-brand-500">
+                    <span class="px-3 py-2.5 bg-gray-50 text-gray-500 text-sm border-r border-gray-200">$</span>
+                    <input type="number" id="budget-fixed" step="0.01" min="0" value="10.00" class="w-full px-3 py-2.5 text-sm outline-none">
+                  </div>
+                  <p class="text-xs text-gray-400 mt-1">Etsy Plus, tools, subscriptions</p>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5">Marketing Budget</label>
+                  <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-brand-500/30 focus-within:border-brand-500">
+                    <span class="px-3 py-2.5 bg-gray-50 text-gray-500 text-sm border-r border-gray-200">$</span>
+                    <input type="number" id="budget-marketing" step="0.01" min="0" value="0.00" class="w-full px-3 py-2.5 text-sm outline-none">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-6 sm:p-8 bg-gray-50/50">
+              <h2 class="text-lg font-bold text-gray-900 mb-6">Monthly Projections</h2>
+
+              <div class="mb-6">
+                <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Traffic &amp; Sales</h3>
+                <div class="space-y-2 text-sm">
+                  <div class="flex justify-between"><span class="text-gray-600">Est. Monthly Views</span><span class="font-medium text-gray-900" id="r-budget-views">0</span></div>
+                  <div class="flex justify-between"><span class="text-gray-600">Est. Monthly Sales</span><span class="font-medium text-gray-900" id="r-budget-sales">0</span></div>
+                  <div class="flex justify-between"><span class="text-gray-600">Est. Gross Revenue</span><span class="font-medium text-gray-900" id="r-budget-revenue">$0.00</span></div>
+                </div>
+              </div>
+
+              <div class="mb-6">
+                <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Costs &amp; Fees</h3>
+                <div class="space-y-2 text-sm">
+                  <div class="flex justify-between"><span class="text-gray-600">Listing Fees ($0.20 each)</span><span class="fee-negative font-medium" id="r-budget-listing-fees">-$0.00</span></div>
+                  <div class="flex justify-between"><span class="text-gray-600">Transaction Fees (6.5%)</span><span class="fee-negative font-medium" id="r-budget-transaction-fees">-$0.00</span></div>
+                  <div class="flex justify-between"><span class="text-gray-600">Processing Fees (3% + $0.25)</span><span class="fee-negative font-medium" id="r-budget-processing-fees">-$0.00</span></div>
+                  <div class="flex justify-between pt-2 border-t border-gray-200"><span class="text-gray-600">Total Etsy Fees</span><span class="fee-negative font-semibold" id="r-budget-total-fees">-$0.00</span></div>
+                  <div class="flex justify-between"><span class="text-gray-600">Product Costs</span><span class="fee-negative font-medium" id="r-budget-product-costs">-$0.00</span></div>
+                  <div class="flex justify-between"><span class="text-gray-600">Fixed Costs</span><span class="fee-negative font-medium" id="r-budget-fixed-costs">-$0.00</span></div>
+                  <div class="flex justify-between"><span class="text-gray-600">Marketing</span><span class="fee-negative font-medium" id="r-budget-marketing">-$0.00</span></div>
+                </div>
+              </div>
+
+              <div class="bg-white rounded-xl p-4 border border-gray-200 mb-4">
+                <div class="flex justify-between items-center">
+                  <span class="text-lg font-bold text-gray-900">Monthly Profit</span>
+                  <span class="text-2xl font-extrabold" id="r-budget-profit">$0.00</span>
+                </div>
+                <div class="flex justify-between mt-1">
+                  <span class="text-sm text-gray-500">Break-even Sales</span>
+                  <span class="text-sm font-semibold text-gray-600" id="r-budget-breakeven">0 sales</span>
+                </div>
+              </div>
+
+              <div class="bg-brand-50 rounded-xl p-4 border border-brand-100">
+                <h3 class="text-xs font-semibold text-brand-600 uppercase tracking-wider mb-3">Annual Projection</h3>
+                <div class="space-y-2 text-sm">
+                  <div class="flex justify-between"><span class="text-gray-600">Annual Revenue</span><span class="font-medium text-gray-900" id="r-budget-annual-rev">$0.00</span></div>
+                  <div class="flex justify-between"><span class="text-gray-600">Annual Profit</span><span class="font-semibold text-brand-700" id="r-budget-annual-profit">$0.00</span></div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Tab 4: Conversion Benchmarks -->
+        <div id="panel-benchmarks" class="tab-panel">
+          <div class="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-100">
+
+            <div class="p-6 sm:p-8">
+              <h2 class="text-lg font-bold text-gray-900 mb-6">Your Shop Metrics</h2>
+
+              <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5">Monthly Views</label>
+                  <input type="number" id="bench-views" min="0" value="1000" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-center outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500">
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5">Monthly Orders</label>
+                  <input type="number" id="bench-orders" min="0" value="20" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-center outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5">Monthly Revenue</label>
+                  <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-brand-500/30 focus-within:border-brand-500">
+                    <span class="px-3 py-2.5 bg-gray-50 text-gray-500 text-sm border-r border-gray-200">$</span>
+                    <input type="number" id="bench-revenue" step="0.01" min="0" value="500.00" class="w-full px-3 py-2.5 text-sm outline-none">
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1.5">Active Listings</label>
+                  <input type="number" id="bench-listings" min="1" value="50" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-center outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500">
+                </div>
+              </div>
+
+              <div class="mt-8">
+                <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Industry Benchmarks</h3>
+                <div class="space-y-3">
+                  <div class="flex justify-between items-center text-sm">
+                    <span class="text-gray-600">Average Etsy Shop</span>
+                    <span class="font-medium text-gray-900">1 - 3%</span>
+                  </div>
+                  <div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-amber-400 h-2 rounded-full" style="width: 30%"></div></div>
+                  <div class="flex justify-between items-center text-sm">
+                    <span class="text-gray-600">Top Sellers</span>
+                    <span class="font-medium text-gray-900">3 - 5%</span>
+                  </div>
+                  <div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-green-500 h-2 rounded-full" style="width: 50%"></div></div>
+                  <div class="flex justify-between items-center text-sm">
+                    <span class="text-gray-600">Digital Products</span>
+                    <span class="font-medium text-gray-900">2 - 4%</span>
+                  </div>
+                  <div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-blue-500 h-2 rounded-full" style="width: 40%"></div></div>
+                  <div class="flex justify-between items-center text-sm">
+                    <span class="text-gray-600">Handmade / Custom</span>
+                    <span class="font-medium text-gray-900">1 - 2%</span>
+                  </div>
+                  <div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-purple-400 h-2 rounded-full" style="width: 20%"></div></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-6 sm:p-8 bg-gray-50/50">
+              <h2 class="text-lg font-bold text-gray-900 mb-6">Your Performance</h2>
+
+              <div class="bg-white rounded-xl p-4 border border-gray-200 mb-6 text-center">
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Your Conversion Rate</p>
+                <p class="text-4xl font-extrabold" id="r-bench-rate">2.0%</p>
+                <p class="text-lg font-bold mt-1" id="r-bench-grade">Average</p>
+              </div>
+
+              <div class="mb-6">
+                <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Key Metrics</h3>
+                <div class="space-y-2 text-sm">
+                  <div class="flex justify-between"><span class="text-gray-600">Revenue Per View</span><span class="font-medium text-gray-900" id="r-bench-rpv">$0.00</span></div>
+                  <div class="flex justify-between"><span class="text-gray-600">Revenue Per Listing</span><span class="font-medium text-gray-900" id="r-bench-rpl">$0.00</span></div>
+                  <div class="flex justify-between"><span class="text-gray-600">Views Per Listing</span><span class="font-medium text-gray-900" id="r-bench-vpl">0</span></div>
+                  <div class="flex justify-between"><span class="text-gray-600">Avg. Order Value</span><span class="font-medium text-gray-900" id="r-bench-aov">$0.00</span></div>
+                </div>
+              </div>
+
+              <div class="rounded-xl p-4 border" id="bench-tips-container">
+                <h3 class="text-xs font-semibold uppercase tracking-wider mb-3" id="bench-tips-title">Tips to Improve</h3>
+                <div class="text-sm space-y-2" id="bench-tips"></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
       </div>
     </div>
   </section>
@@ -316,7 +679,7 @@
   <!-- CTA -->
   <section class="py-16 sm:py-20 bg-gradient-to-br from-brand-500 to-amber-500">
     <div class="max-w-3xl mx-auto px-4 sm:px-6 text-center">
-      <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Now that you know your margins&hellip;</h2>
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Now that you know your numbers&hellip;</h2>
       <p class="mt-4 text-lg text-white/80">List your products at scale with BulkListingPro. Import a spreadsheet, let AI write your titles and tags, then bulk upload to Etsy automatically.</p>
       <div class="mt-8 flex flex-col sm:flex-row justify-center gap-4">
         <a href="https://chromewebstore.google.com/detail/gmmjdkdgejglelaemhpdekcmeaaccnab" target="_blank" rel="noopener"
@@ -358,6 +721,14 @@
           <h3 class="font-bold text-gray-900 mb-2">What price should I set to make a specific profit?</h3>
           <p class="text-gray-600 text-sm leading-relaxed">Use the "Price Finder" in the calculator above. Enter your target profit amount and it calculates the selling price needed after all Etsy fees and your costs are deducted.</p>
         </div>
+        <div>
+          <h3 class="font-bold text-gray-900 mb-2">How much does Etsy shipping cost?</h3>
+          <p class="text-gray-600 text-sm leading-relaxed">Shipping costs depend on package weight and destination. USPS First Class (under 1 lb) ranges from $3.50-$7.00, while Priority Mail starts at $8-$12 for 1-5 lbs. Etsy offers discounted shipping labels, typically 30% off retail rates. Use our Shipping Calculator tab above.</p>
+        </div>
+        <div>
+          <h3 class="font-bold text-gray-900 mb-2">What is a good Etsy conversion rate?</h3>
+          <p class="text-gray-600 text-sm leading-relaxed">The average Etsy conversion rate is 1-3%. Top sellers achieve 3-5%, while digital products typically convert at 2-4%. Use our Conversion Benchmarks tab to see how your shop compares.</p>
+        </div>
       </div>
     </div>
   </section>
@@ -384,6 +755,28 @@
   <script>
   (function() {
     const $ = id => document.getElementById(id);
+
+    // ===== Tab Switching =====
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabPanels = document.querySelectorAll('.tab-panel');
+
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = btn.dataset.tab;
+        tabBtns.forEach(b => {
+          b.classList.remove('bg-brand-500', 'text-white');
+          b.classList.add('border', 'border-gray-200', 'text-gray-600');
+          b.setAttribute('aria-selected', 'false');
+        });
+        btn.classList.add('bg-brand-500', 'text-white');
+        btn.classList.remove('border', 'border-gray-200', 'text-gray-600');
+        btn.setAttribute('aria-selected', 'true');
+        tabPanels.forEach(p => p.classList.remove('active'));
+        $('panel-' + target).classList.add('active');
+      });
+    });
+
+    // ===== Tab 1: Profit Calculator =====
     const inputs = ['calc-price','calc-shipping','calc-cost','calc-shipping-cost','calc-quantity','calc-misc','calc-discount','calc-labor-time','calc-hourly-rate','calc-target-profit'];
     const toggles = ['calc-offsite-ads','calc-free-shipping','calc-digital'];
 
@@ -410,7 +803,6 @@
       calculate();
     });
 
-    // Initial disabled state
     $('shipping-wrap').style.opacity = '0.4';
     $('shipping-wrap').style.pointerEvents = 'none';
 
@@ -503,6 +895,229 @@
     }
 
     calculate();
+
+    // ===== Tab 2: Shipping Calculator =====
+    const shipInputs = ['ship-weight-lbs','ship-weight-oz','ship-length','ship-width','ship-height','ship-from-zip','ship-to-zip','ship-item-price'];
+    shipInputs.forEach(id => { const el = $(id); if (el) el.addEventListener('input', calculateShipping); });
+
+    document.querySelectorAll('input[name="ship-dest"]').forEach(r => r.addEventListener('change', calculateShipping));
+
+    $('ship-free-shipping').addEventListener('change', function() {
+      $('ship-free-shipping-price').classList.toggle('hidden', !this.checked);
+      $('ship-free-impact').classList.toggle('hidden', !this.checked);
+      calculateShipping();
+    });
+
+    function getShippingEstimate(totalOz) {
+      if (totalOz <= 0) return { low: 0, high: 0, service: 'Enter weight above' };
+      if (totalOz <= 4) return { low: 3.50, high: 4.50, service: 'USPS First Class' };
+      if (totalOz <= 8) return { low: 4.00, high: 5.50, service: 'USPS First Class' };
+      if (totalOz <= 16) return { low: 5.00, high: 7.00, service: 'USPS First Class' };
+      var lbs = totalOz / 16;
+      if (lbs <= 5) return { low: 8.00, high: 12.00, service: 'USPS Priority Mail' };
+      if (lbs <= 10) return { low: 12.00, high: 18.00, service: 'USPS Priority Mail' };
+      if (lbs <= 20) return { low: 18.00, high: 30.00, service: 'USPS Priority Mail' };
+      return { low: 30.00, high: 50.00, service: 'USPS Priority Mail / UPS' };
+    }
+
+    function calculateShipping() {
+      var lbs = parseInt($('ship-weight-lbs').value) || 0;
+      var oz = parseInt($('ship-weight-oz').value) || 0;
+      var totalOz = lbs * 16 + oz;
+      var isIntl = document.querySelector('input[name="ship-dest"]:checked').value === 'international';
+      var freeShip = $('ship-free-shipping').checked;
+
+      $('ship-digital-msg').classList.toggle('hidden', totalOz > 0);
+      $('ship-results-container').classList.toggle('hidden', totalOz <= 0);
+      $('ship-intl-note').classList.toggle('hidden', !isIntl);
+
+      $('ship-first-class-section').style.opacity = totalOz <= 16 ? '1' : '0.4';
+      $('ship-priority-section').style.opacity = totalOz > 16 || totalOz === 0 ? '1' : '0.4';
+
+      var estimate = getShippingEstimate(totalOz);
+      if (isIntl && totalOz > 0) {
+        estimate = { low: estimate.low * 2.5, high: estimate.high * 3, service: estimate.service + ' International' };
+      }
+
+      var midEstimate = (estimate.low + estimate.high) / 2;
+
+      if (totalOz > 0) {
+        $('r-ship-estimate').textContent = '$' + estimate.low.toFixed(2) + ' - $' + estimate.high.toFixed(2);
+        $('r-ship-service').textContent = estimate.service;
+      } else {
+        $('r-ship-estimate').textContent = '$0.00';
+        $('r-ship-service').textContent = 'Digital product';
+      }
+
+      if (freeShip && totalOz > 0) {
+        $('ship-free-impact').classList.remove('hidden');
+        var itemPrice = parseFloat($('ship-item-price').value) || 0;
+        $('r-ship-absorb').textContent = '$' + midEstimate.toFixed(2);
+        $('r-ship-current-price').textContent = '$' + itemPrice.toFixed(2);
+        $('r-ship-new-price').textContent = '$' + (itemPrice + midEstimate).toFixed(2);
+      } else {
+        $('ship-free-impact').classList.add('hidden');
+      }
+    }
+
+    calculateShipping();
+
+    // ===== Tab 3: Budget Planner =====
+    var budgetInputs = ['budget-listings','budget-price','budget-conversion','budget-cogs','budget-fixed','budget-marketing'];
+    budgetInputs.forEach(function(id) { var el = $(id); if (el) el.addEventListener('input', calculateBudget); });
+
+    function calculateBudget() {
+      var listings = parseInt($('budget-listings').value) || 0;
+      var avgPrice = parseFloat($('budget-price').value) || 0;
+      var convRate = (parseFloat($('budget-conversion').value) || 0) / 100;
+      var cogs = parseFloat($('budget-cogs').value) || 0;
+      var fixedCosts = parseFloat($('budget-fixed').value) || 0;
+      var marketing = parseFloat($('budget-marketing').value) || 0;
+
+      var views = listings * 50;
+      var sales = Math.round(views * convRate);
+      var grossRevenue = sales * avgPrice;
+
+      var listingFees = listings * 0.20;
+      var transactionFees = grossRevenue * 0.065;
+      var processingFees = sales > 0 ? (grossRevenue * 0.03 + sales * 0.25) : 0;
+      var totalEtsyFees = listingFees + transactionFees + processingFees;
+      var productCosts = sales * cogs;
+      var totalCosts = totalEtsyFees + productCosts + fixedCosts + marketing;
+      var monthlyProfit = grossRevenue - totalCosts;
+
+      var profitPerSale = avgPrice > 0 ? (avgPrice - (avgPrice * 0.065) - (avgPrice * 0.03 + 0.25) - cogs) : 0;
+      var breakeven = profitPerSale > 0 ? Math.ceil((fixedCosts + marketing) / profitPerSale) : 0;
+
+      $('r-budget-views').textContent = views.toLocaleString();
+      $('r-budget-sales').textContent = sales.toLocaleString();
+      $('r-budget-revenue').textContent = '$' + grossRevenue.toFixed(2);
+
+      $('r-budget-listing-fees').textContent = '-$' + listingFees.toFixed(2);
+      $('r-budget-transaction-fees').textContent = '-$' + transactionFees.toFixed(2);
+      $('r-budget-processing-fees').textContent = '-$' + processingFees.toFixed(2);
+      $('r-budget-total-fees').textContent = '-$' + totalEtsyFees.toFixed(2);
+      $('r-budget-product-costs').textContent = '-$' + productCosts.toFixed(2);
+      $('r-budget-fixed-costs').textContent = '-$' + fixedCosts.toFixed(2);
+      $('r-budget-marketing').textContent = '-$' + marketing.toFixed(2);
+
+      var profitEl = $('r-budget-profit');
+      profitEl.textContent = '$' + monthlyProfit.toFixed(2);
+      profitEl.className = 'text-2xl font-extrabold ' + (monthlyProfit >= 0 ? 'profit-positive' : 'profit-negative');
+
+      $('r-budget-breakeven').textContent = profitPerSale > 0 ? breakeven + ' sales' : 'N/A';
+
+      $('r-budget-annual-rev').textContent = '$' + (grossRevenue * 12).toFixed(2);
+      var annualEl = $('r-budget-annual-profit');
+      annualEl.textContent = '$' + (monthlyProfit * 12).toFixed(2);
+      annualEl.className = 'font-semibold ' + (monthlyProfit >= 0 ? 'profit-positive' : 'profit-negative');
+    }
+
+    calculateBudget();
+
+    // ===== Tab 4: Conversion Benchmarks =====
+    var benchInputs = ['bench-views','bench-orders','bench-revenue','bench-listings'];
+    benchInputs.forEach(function(id) { var el = $(id); if (el) el.addEventListener('input', calculateBenchmarks); });
+
+    function calculateBenchmarks() {
+      var views = parseInt($('bench-views').value) || 0;
+      var orders = parseInt($('bench-orders').value) || 0;
+      var revenue = parseFloat($('bench-revenue').value) || 0;
+      var listings = parseInt($('bench-listings').value) || 1;
+
+      var convRate = views > 0 ? (orders / views * 100) : 0;
+      var rpv = views > 0 ? (revenue / views) : 0;
+      var rpl = listings > 0 ? (revenue / listings) : 0;
+      var vpl = listings > 0 ? (views / listings) : 0;
+      var aov = orders > 0 ? (revenue / orders) : 0;
+
+      var grade, gradeClass, tips;
+      if (convRate >= 5) {
+        grade = 'Excellent';
+        gradeClass = 'grade-excellent';
+        tips = [
+          'Your conversion rate is outstanding! You are in the top tier of Etsy sellers.',
+          'Focus on scaling: add more listings to multiply your revenue.',
+          'Consider raising prices slightly to test if your rate holds.'
+        ];
+      } else if (convRate >= 3) {
+        grade = 'Great';
+        gradeClass = 'grade-great';
+        tips = [
+          'Your conversion rate is above average. Great work!',
+          'Optimize your best sellers with better photos and descriptions.',
+          'Expand into related product categories to grow further.'
+        ];
+      } else if (convRate >= 1) {
+        grade = 'Average';
+        gradeClass = 'grade-average';
+        tips = [
+          'Your conversion rate is in the typical Etsy range.',
+          'Improve listing photos: use all 10 slots, add lifestyle shots.',
+          'Strengthen titles and tags with long-tail keywords.',
+          'Add more detailed descriptions with sizing, materials, and care info.'
+        ];
+      } else if (convRate >= 0.5) {
+        grade = 'Below Average';
+        gradeClass = 'grade-below';
+        tips = [
+          'Your conversion rate is below the Etsy average.',
+          'Review your pricing against competitors in your niche.',
+          'Improve your first listing photo: it is your most important asset.',
+          'Consider offering free shipping: it boosts conversion significantly.',
+          'Add reviews/social proof to your shop.'
+        ];
+      } else {
+        grade = 'Needs Work';
+        gradeClass = 'grade-needs-work';
+        tips = [
+          'Your conversion rate suggests visitors are not finding what they expect.',
+          'Audit your listing titles: do they match what buyers search for?',
+          'Replace all listing photos with high-quality, well-lit images.',
+          'Review your pricing: are you competitive in your niche?',
+          'Offer free shipping and clear return policies.',
+          'Consider running an Etsy Ads campaign to boost visibility.'
+        ];
+      }
+
+      if (views === 0 && orders === 0) {
+        grade = '--';
+        gradeClass = 'text-gray-400';
+        tips = ['Enter your shop metrics to see your conversion grade and personalized tips.'];
+      }
+
+      $('r-bench-rate').textContent = convRate.toFixed(1) + '%';
+      $('r-bench-rate').className = 'text-4xl font-extrabold ' + gradeClass;
+
+      var gradeEl = $('r-bench-grade');
+      gradeEl.textContent = grade;
+      gradeEl.className = 'text-lg font-bold mt-1 ' + gradeClass;
+
+      $('r-bench-rpv').textContent = '$' + rpv.toFixed(2);
+      $('r-bench-rpl').textContent = '$' + rpl.toFixed(2);
+      $('r-bench-vpl').textContent = vpl.toFixed(1);
+      $('r-bench-aov').textContent = '$' + aov.toFixed(2);
+
+      var tipsContainer = $('bench-tips');
+      tipsContainer.innerHTML = tips.map(function(t) { return '<p class="text-gray-600">' + t + '</p>'; }).join('');
+
+      var tipsBox = $('bench-tips-container');
+      if (gradeClass.indexOf('excellent') >= 0 || gradeClass.indexOf('great') >= 0) {
+        tipsBox.className = 'bg-green-50 rounded-xl p-4 border border-green-200';
+        $('bench-tips-title').className = 'text-xs font-semibold text-green-700 uppercase tracking-wider mb-3';
+      } else if (gradeClass.indexOf('average') >= 0) {
+        tipsBox.className = 'bg-amber-50 rounded-xl p-4 border border-amber-200';
+        $('bench-tips-title').className = 'text-xs font-semibold text-amber-700 uppercase tracking-wider mb-3';
+      } else if (gradeClass.indexOf('below') >= 0 || gradeClass.indexOf('needs') >= 0) {
+        tipsBox.className = 'bg-red-50 rounded-xl p-4 border border-red-200';
+        $('bench-tips-title').className = 'text-xs font-semibold text-red-700 uppercase tracking-wider mb-3';
+      } else {
+        tipsBox.className = 'bg-gray-50 rounded-xl p-4 border border-gray-200';
+        $('bench-tips-title').className = 'text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3';
+      }
+    }
+
+    calculateBenchmarks();
   })();
   </script>
 </body>
