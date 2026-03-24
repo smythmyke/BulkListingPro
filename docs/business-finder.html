@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Find Businesses For Sale Near You 2026 - Laundromats, Vending Machines & More</title>
+  <meta name="description" content="Search laundromats, vending machines, car washes, and more businesses for sale near you. Free search tool with listings from BizBuySell, BizQuest, and LoopNet.">
+  <meta name="keywords" content="laundromat for sale, laundromat for sale near me, vending machine business for sale, car wash for sale, businesses for sale near me, coin laundry for sale, buying a laundromat, vending routes for sale">
+  <meta name="author" content="BulkListingPro">
+  <link rel="canonical" href="https://smythmyke.github.io/BulkListingPro/business-finder.html">
+  <meta name="theme-color" content="#F56400">
+
+  <link rel="icon" type="image/png" sizes="48x48" href="images/favicon-48.png">
+  <link rel="icon" type="image/png" sizes="128x128" href="images/favicon-128.png">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://smythmyke.github.io/BulkListingPro/business-finder.html">
+  <meta property="og:title" content="Find Businesses For Sale Near You - Free Search Tool">
+  <meta property="og:description" content="Search laundromats, vending machines, car washes & more for sale near you. Free tool with listings from top business marketplaces.">
+  <meta property="og:image" content="https://smythmyke.github.io/BulkListingPro/images/og-image.png">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#fff7ed', 100: '#ffedd5', 200: '#fed7aa', 300: '#fdba74',
+              400: '#fb923c', 500: '#F56400', 600: '#ea580c', 700: '#c2410c',
+              800: '#9a3412', 900: '#7c2d12',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Business For Sale Finder",
+    "url": "https://smythmyke.github.io/BulkListingPro/business-finder.html",
+    "description": "Free tool to search businesses for sale near you — laundromats, vending machines, car washes, and more.",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Any",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  }
+  </script>
+
+  <style>
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-fade-in-up { animation: fadeInUp 0.5s ease-out both; }
+    .category-card.selected { border-color: #F56400; background: #fff7ed; }
+    .category-card.selected .cat-check { display: flex; }
+    .cat-check { display: none; }
+    .result-group { animation: fadeInUp 0.4s ease-out both; }
+    .source-btn:hover { transform: translateY(-2px); }
+  </style>
+</head>
+<body class="bg-white text-gray-900 antialiased">
+
+  <!-- Header -->
+  <header class="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-100">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <a href="./" class="flex items-center gap-2">
+        <img src="images/logo.png" alt="BulkListingPro" class="w-8 h-8 rounded">
+        <span class="font-bold text-lg text-gray-900">BulkListingPro</span>
+      </a>
+      <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
+        <a href="./#features" class="hover:text-brand-500 transition-colors">Features</a>
+        <a href="calculator.html" class="hover:text-brand-500 transition-colors">Seller Tools</a>
+        <a href="best-sellers.html" class="hover:text-brand-500 transition-colors">Best Sellers</a>
+        <a href="business-finder.html" class="text-brand-500 font-semibold">Business Finder</a>
+      </nav>
+      <a href="https://chromewebstore.google.com/detail/gmmjdkdgejglelaemhpdekcmeaaccnab" target="_blank" rel="noopener"
+         class="bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold px-5 py-2 rounded-lg transition-colors shadow-sm">
+        Install Free
+      </a>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="pt-24 pb-8 sm:pt-28 sm:pb-12 bg-gradient-to-br from-orange-50 via-white to-amber-50">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 text-center">
+      <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-tight text-gray-900">
+        Find Businesses For Sale
+        <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-500 to-amber-500">Near You</span>
+      </h1>
+      <p class="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+        Search laundromats, vending machines, car washes, and more. Free search across top business marketplaces.
+      </p>
+    </div>
+  </section>
+
+  <!-- Search Tool -->
+  <section class="pb-8 bg-gradient-to-br from-orange-50 via-white to-amber-50">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6">
+      <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-8">
+
+        <!-- Category Selection -->
+        <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Select Business Types</h2>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-6" id="categories">
+          <button class="category-card selected relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-gray-200 cursor-pointer transition-all hover:border-brand-300 text-center" data-cat="laundromat" data-bbs="laundromat-and-coin-laundry" data-label="Laundromats">
+            <div class="cat-check absolute top-2 right-2 w-5 h-5 rounded-full bg-brand-500 text-white items-center justify-center text-xs">&#10003;</div>
+            <span class="text-2xl">&#129529;</span>
+            <span class="text-xs font-semibold text-gray-700">Laundromats</span>
+          </button>
+          <button class="category-card selected relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-gray-200 cursor-pointer transition-all hover:border-brand-300 text-center" data-cat="vending" data-bbs="vending-machine" data-label="Vending Machines">
+            <div class="cat-check absolute top-2 right-2 w-5 h-5 rounded-full bg-brand-500 text-white items-center justify-center text-xs">&#10003;</div>
+            <span class="text-2xl">&#127863;</span>
+            <span class="text-xs font-semibold text-gray-700">Vending Machines</span>
+          </button>
+          <button class="category-card relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-gray-200 cursor-pointer transition-all hover:border-brand-300 text-center" data-cat="carwash" data-bbs="car-wash" data-label="Car Washes">
+            <div class="cat-check absolute top-2 right-2 w-5 h-5 rounded-full bg-brand-500 text-white items-center justify-center text-xs">&#10003;</div>
+            <span class="text-2xl">&#128663;</span>
+            <span class="text-xs font-semibold text-gray-700">Car Washes</span>
+          </button>
+          <button class="category-card relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-gray-200 cursor-pointer transition-all hover:border-brand-300 text-center" data-cat="storage" data-bbs="self-storage" data-label="Storage Units">
+            <div class="cat-check absolute top-2 right-2 w-5 h-5 rounded-full bg-brand-500 text-white items-center justify-center text-xs">&#10003;</div>
+            <span class="text-2xl">&#128230;</span>
+            <span class="text-xs font-semibold text-gray-700">Storage Units</span>
+          </button>
+          <button class="category-card relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-gray-200 cursor-pointer transition-all hover:border-brand-300 text-center" data-cat="ev" data-bbs="gas-station-and-car-wash" data-label="EV Charging">
+            <div class="cat-check absolute top-2 right-2 w-5 h-5 rounded-full bg-brand-500 text-white items-center justify-center text-xs">&#10003;</div>
+            <span class="text-2xl">&#9889;</span>
+            <span class="text-xs font-semibold text-gray-700">EV Charging</span>
+          </button>
+          <button class="category-card relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-gray-200 cursor-pointer transition-all hover:border-brand-300 text-center" data-cat="atm" data-bbs="atm-machine" data-label="ATM Machines">
+            <div class="cat-check absolute top-2 right-2 w-5 h-5 rounded-full bg-brand-500 text-white items-center justify-center text-xs">&#10003;</div>
+            <span class="text-2xl">&#127974;</span>
+            <span class="text-xs font-semibold text-gray-700">ATM Machines</span>
+          </button>
+          <button class="category-card relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-gray-200 cursor-pointer transition-all hover:border-brand-300 text-center" data-cat="cleaning" data-bbs="cleaning-and-janitorial" data-label="Cleaning / Pressure Wash">
+            <div class="cat-check absolute top-2 right-2 w-5 h-5 rounded-full bg-brand-500 text-white items-center justify-center text-xs">&#10003;</div>
+            <span class="text-2xl">&#128167;</span>
+            <span class="text-xs font-semibold text-gray-700">Pressure Washing</span>
+          </button>
+          <button class="category-card relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-gray-200 cursor-pointer transition-all hover:border-brand-300 text-center" data-cat="all" data-bbs="" data-label="All Businesses">
+            <div class="cat-check absolute top-2 right-2 w-5 h-5 rounded-full bg-brand-500 text-white items-center justify-center text-xs">&#10003;</div>
+            <span class="text-2xl">&#128269;</span>
+            <span class="text-xs font-semibold text-gray-700">All Businesses</span>
+          </button>
+        </div>
+
+        <!-- ZIP Input -->
+        <div class="flex flex-col sm:flex-row gap-3">
+          <div class="flex-1">
+            <div class="flex items-center border-2 border-gray-200 rounded-xl overflow-hidden focus-within:border-brand-500 transition-colors">
+              <span class="px-4 text-gray-400">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              </span>
+              <input type="text" id="zip-input" placeholder="Enter ZIP code (e.g. 90210)" maxlength="5" pattern="[0-9]{5}"
+                     class="flex-1 py-4 text-lg outline-none placeholder-gray-400">
+            </div>
+          </div>
+          <button id="search-btn" class="bg-brand-500 hover:bg-brand-600 text-white font-bold px-8 py-4 rounded-xl text-lg transition-all shadow-lg shadow-brand-500/25 hover:shadow-xl whitespace-nowrap">
+            Search Listings
+          </button>
+        </div>
+
+        <p class="text-xs text-gray-400 mt-3 text-center">Searches BizBuySell, BizQuest, and LoopNet for active listings</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Results -->
+  <section class="py-8 sm:py-12 hidden" id="results-section">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6">
+      <h2 class="text-xl font-bold text-gray-900 mb-6" id="results-heading">Results near <span class="text-brand-500" id="results-zip"></span></h2>
+      <div id="results-container" class="space-y-6"></div>
+    </div>
+  </section>
+
+  <!-- Starter Guides -->
+  <section class="py-12 sm:py-16">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6">
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 text-center mb-4">Business Starter Guides</h2>
+      <p class="text-center text-gray-600 mb-10 max-w-2xl mx-auto">Found a business you're interested in? Our step-by-step guides cover everything from due diligence to day-one operations.</p>
+
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5" id="guides-grid">
+
+        <a href="https://www.etsy.com/listing/4454862507/how-to-start-a-laundromat-business-guide" target="_blank" rel="noopener" class="group block rounded-xl border border-gray-100 overflow-hidden hover:shadow-lg transition-all">
+          <div class="h-32 bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center">
+            <span class="text-4xl">&#129529;</span>
+          </div>
+          <div class="p-4">
+            <h3 class="font-bold text-sm text-gray-900 group-hover:text-brand-500 transition-colors">Laundromat Business Guide</h3>
+            <p class="text-xs text-gray-500 mt-1">How to buy, start & run a profitable laundromat</p>
+            <div class="flex justify-between items-center mt-3">
+              <span class="font-bold text-gray-900">$5.99</span>
+              <span class="text-xs font-semibold text-brand-500">View on Etsy &rarr;</span>
+            </div>
+          </div>
+        </a>
+
+        <a href="#" target="_blank" rel="noopener" class="group block rounded-xl border border-gray-100 overflow-hidden hover:shadow-lg transition-all" id="guide-vending">
+          <div class="h-32 bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center">
+            <span class="text-4xl">&#127863;</span>
+          </div>
+          <div class="p-4">
+            <h3 class="font-bold text-sm text-gray-900 group-hover:text-brand-500 transition-colors">Vending Machine Business Guide</h3>
+            <p class="text-xs text-gray-500 mt-1">How to start a vending machine side hustle</p>
+            <div class="flex justify-between items-center mt-3">
+              <span class="font-bold text-gray-900">$5.99</span>
+              <span class="text-xs font-semibold text-brand-500">View on Etsy &rarr;</span>
+            </div>
+          </div>
+        </a>
+
+        <a href="#" target="_blank" rel="noopener" class="group block rounded-xl border border-gray-100 overflow-hidden hover:shadow-lg transition-all" id="guide-carwash">
+          <div class="h-32 bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center">
+            <span class="text-4xl">&#128663;</span>
+          </div>
+          <div class="p-4">
+            <h3 class="font-bold text-sm text-gray-900 group-hover:text-brand-500 transition-colors">Car Wash Business Guide</h3>
+            <p class="text-xs text-gray-500 mt-1">How to start a self-service car wash</p>
+            <div class="flex justify-between items-center mt-3">
+              <span class="font-bold text-gray-900">$5.99</span>
+              <span class="text-xs font-semibold text-brand-500">View on Etsy &rarr;</span>
+            </div>
+          </div>
+        </a>
+
+        <a href="#" target="_blank" rel="noopener" class="group block rounded-xl border border-gray-100 overflow-hidden hover:shadow-lg transition-all" id="guide-storage">
+          <div class="h-32 bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+            <span class="text-4xl">&#128230;</span>
+          </div>
+          <div class="p-4">
+            <h3 class="font-bold text-sm text-gray-900 group-hover:text-brand-500 transition-colors">Self Storage Investment Guide</h3>
+            <p class="text-xs text-gray-500 mt-1">How to make money with storage units</p>
+            <div class="flex justify-between items-center mt-3">
+              <span class="font-bold text-gray-900">$5.99</span>
+              <span class="text-xs font-semibold text-brand-500">View on Etsy &rarr;</span>
+            </div>
+          </div>
+        </a>
+
+        <a href="#" target="_blank" rel="noopener" class="group block rounded-xl border border-gray-100 overflow-hidden hover:shadow-lg transition-all" id="guide-ev">
+          <div class="h-32 bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center">
+            <span class="text-4xl">&#9889;</span>
+          </div>
+          <div class="p-4">
+            <h3 class="font-bold text-sm text-gray-900 group-hover:text-brand-500 transition-colors">EV Charging Station Guide</h3>
+            <p class="text-xs text-gray-500 mt-1">How to start an EV charger business</p>
+            <div class="flex justify-between items-center mt-3">
+              <span class="font-bold text-gray-900">$5.99</span>
+              <span class="text-xs font-semibold text-brand-500">View on Etsy &rarr;</span>
+            </div>
+          </div>
+        </a>
+
+        <a href="#" target="_blank" rel="noopener" class="group block rounded-xl border border-gray-100 overflow-hidden hover:shadow-lg transition-all" id="guide-pressure">
+          <div class="h-32 bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center">
+            <span class="text-4xl">&#128167;</span>
+          </div>
+          <div class="p-4">
+            <h3 class="font-bold text-sm text-gray-900 group-hover:text-brand-500 transition-colors">Pressure Washing Business Guide</h3>
+            <p class="text-xs text-gray-500 mt-1">How to start a pressure washing side hustle</p>
+            <div class="flex justify-between items-center mt-3">
+              <span class="font-bold text-gray-900">$5.99</span>
+              <span class="text-xs font-semibold text-brand-500">View on Etsy &rarr;</span>
+            </div>
+          </div>
+        </a>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- How to Buy Content (SEO) -->
+  <section class="py-12 sm:py-16 bg-gray-50">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6">
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-8">How to Buy a Laundromat: What You Need to Know</h2>
+
+      <div class="space-y-6 text-gray-600 leading-relaxed">
+        <p>Buying a laundromat is one of the most popular passive income business models. The average laundromat generates <strong>$30,000 to $200,000+ per year</strong> in revenue, with profit margins of 20-35%.</p>
+
+        <h3 class="text-lg font-bold text-gray-900 pt-2">What does a laundromat cost?</h3>
+        <p>Laundromats typically sell for <strong>$50,000 to $500,000</strong> depending on location, equipment age, and revenue. Expect to pay 2-4x annual net income. Smaller coin laundries can be found for under $100,000 in smaller markets.</p>
+
+        <h3 class="text-lg font-bold text-gray-900 pt-2">Where to find laundromats for sale</h3>
+        <p>Use the search tool above to find listings near you. The top marketplaces are <strong>BizBuySell</strong> (largest business-for-sale site), <strong>BizQuest</strong>, and <strong>LoopNet</strong>. You can also contact local business brokers or look for "For Sale" signs in your area.</p>
+
+        <h3 class="text-lg font-bold text-gray-900 pt-2">Key due diligence steps</h3>
+        <ul class="list-disc pl-6 space-y-2">
+          <li>Review 3 years of financial records (tax returns, P&L statements)</li>
+          <li>Inspect all equipment — age, condition, maintenance history</li>
+          <li>Check the lease terms — length, rent increases, renewal options</li>
+          <li>Evaluate the location — foot traffic, parking, competition</li>
+          <li>Understand utility costs — water, gas, electricity are major expenses</li>
+        </ul>
+      </div>
+
+      <div class="mt-8 space-y-6 text-gray-600 leading-relaxed">
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900">Vending Machine Business: Getting Started</h2>
+        <p>Vending machines are a low-cost entry into business ownership. A single machine costs <strong>$3,000 to $10,000</strong> and can generate <strong>$300 to $1,500+ per month</strong> depending on location and product selection.</p>
+
+        <h3 class="text-lg font-bold text-gray-900 pt-2">Buying vending routes vs. starting fresh</h3>
+        <p>Established vending routes (multiple machines with existing locations) sell for <strong>$10,000 to $100,000+</strong>. The advantage: immediate cash flow and proven locations. Starting fresh is cheaper but requires finding and negotiating locations yourself.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="py-12 sm:py-16">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6">
+      <h2 class="text-2xl font-extrabold text-gray-900 text-center mb-10">Frequently Asked Questions</h2>
+      <div class="space-y-6">
+        <div>
+          <h3 class="font-bold text-gray-900 mb-2">How much does it cost to buy a laundromat?</h3>
+          <p class="text-sm text-gray-600">Most laundromats sell for $50,000 to $500,000. Smaller coin laundries in rural areas can be found for under $100,000. Price depends on revenue, equipment condition, lease terms, and location.</p>
+        </div>
+        <div>
+          <h3 class="font-bold text-gray-900 mb-2">Is buying a laundromat a good investment?</h3>
+          <p class="text-sm text-gray-600">Laundromats have 20-35% profit margins and relatively low labor costs since most are self-service. They're considered recession-resistant since people always need clean clothes. ROI typically ranges from 20-35% annually.</p>
+        </div>
+        <div>
+          <h3 class="font-bold text-gray-900 mb-2">How much do vending machine routes make?</h3>
+          <p class="text-sm text-gray-600">A single vending machine generates $300-$1,500/month depending on location and products. A route of 10-20 machines can produce $5,000-$15,000/month in revenue with 30-50% profit margins.</p>
+        </div>
+        <div>
+          <h3 class="font-bold text-gray-900 mb-2">Where can I find businesses for sale near me?</h3>
+          <p class="text-sm text-gray-600">Use our search tool above to find listings from BizBuySell, BizQuest, and LoopNet — the three largest business-for-sale marketplaces. You can also contact local business brokers in your area.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="py-16 bg-gradient-to-br from-brand-500 to-amber-500">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 text-center">
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Ready to start your business?</h2>
+      <p class="mt-4 text-lg text-white/80">Get our step-by-step guides with everything you need: due diligence checklists, financial projections, legal requirements, and 30-day launch plans.</p>
+      <p class="mt-2 text-sm text-white/60">Instant download. All guides $5.99.</p>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="py-12 bg-gray-900 text-gray-400">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+        <div class="flex items-center gap-2">
+          <img src="images/logo.png" alt="BulkListingPro" class="w-6 h-6 rounded">
+          <span class="font-semibold text-white">BulkListingPro</span>
+        </div>
+        <nav class="flex flex-wrap justify-center gap-6 text-sm">
+          <a href="privacy-policy.html" class="hover:text-white transition-colors">Privacy Policy</a>
+          <a href="terms-of-service.html" class="hover:text-white transition-colors">Terms of Service</a>
+          <a href="https://github.com/smythmyke/BulkListingPro/issues" target="_blank" rel="noopener" class="hover:text-white transition-colors">Support</a>
+        </nav>
+        <p class="text-sm">&copy; 2026 BulkListingPro. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+  (function() {
+    const $ = id => document.getElementById(id);
+
+    // BizBuySell URL patterns by category
+    const SOURCES = {
+      bizbuysell: {
+        name: 'BizBuySell',
+        color: 'from-blue-500 to-blue-600',
+        urlFn: (cat, zip) => {
+          const base = 'https://www.bizbuysell.com';
+          const catMap = {
+            laundromat: '/laundromat-and-coin-laundry-businesses-for-sale/',
+            vending: '/vending-machine-businesses-for-sale/',
+            carwash: '/car-wash-businesses-for-sale/',
+            storage: '/self-storage-businesses-for-sale/',
+            ev: '/gas-station-and-car-wash-businesses-for-sale/',
+            atm: '/atm-machine-businesses-for-sale/',
+            cleaning: '/cleaning-and-janitorial-businesses-for-sale/',
+            all: '/businesses-for-sale/',
+          };
+          return base + (catMap[cat] || catMap.all) + '?q=' + zip;
+        }
+      },
+      bizquest: {
+        name: 'BizQuest',
+        color: 'from-emerald-500 to-emerald-600',
+        urlFn: (cat, zip) => {
+          const catTerms = {
+            laundromat: 'laundromat', vending: 'vending', carwash: 'car wash',
+            storage: 'storage', ev: 'ev charging', atm: 'atm',
+            cleaning: 'cleaning', all: '',
+          };
+          const term = catTerms[cat] || '';
+          return 'https://www.bizquest.com/businesses-for-sale/?q=' + encodeURIComponent(term) + '&l=' + zip;
+        }
+      },
+      loopnet: {
+        name: 'LoopNet',
+        color: 'from-violet-500 to-violet-600',
+        urlFn: (cat, zip) => {
+          return 'https://www.loopnet.com/biz/businesses-for-sale/?sk=' + zip;
+        }
+      }
+    };
+
+    // Guide links by category
+    const GUIDES = {
+      laundromat: { name: 'Laundromat Guide', url: 'https://www.etsy.com/listing/4454862507/how-to-start-a-laundromat-business-guide' },
+      vending: { name: 'Vending Machine Guide', url: null },
+      carwash: { name: 'Car Wash Guide', url: null },
+      storage: { name: 'Storage Unit Guide', url: null },
+      ev: { name: 'EV Charging Guide', url: null },
+      cleaning: { name: 'Pressure Washing Guide', url: null },
+    };
+
+    // Category toggle
+    document.querySelectorAll('.category-card').forEach(card => {
+      card.addEventListener('click', () => {
+        if (card.dataset.cat === 'all') {
+          const isSelected = card.classList.contains('selected');
+          document.querySelectorAll('.category-card').forEach(c => c.classList.remove('selected'));
+          if (!isSelected) card.classList.add('selected');
+        } else {
+          document.querySelector('[data-cat="all"]').classList.remove('selected');
+          card.classList.toggle('selected');
+        }
+      });
+    });
+
+    // Search
+    function doSearch() {
+      const zip = $('zip-input').value.trim();
+      if (!/^\d{5}$/.test(zip)) {
+        $('zip-input').classList.add('border-red-400');
+        $('zip-input').focus();
+        setTimeout(() => $('zip-input').classList.remove('border-red-400'), 2000);
+        return;
+      }
+
+      const selected = [...document.querySelectorAll('.category-card.selected')].map(c => c.dataset.cat);
+      if (!selected.length) { selected.push('laundromat', 'vending'); }
+
+      const container = $('results-container');
+      container.innerHTML = '';
+      $('results-zip').textContent = zip;
+      $('results-section').classList.remove('hidden');
+
+      selected.forEach((cat, i) => {
+        const label = document.querySelector(`[data-cat="${cat}"]`)?.dataset.label || cat;
+        const group = document.createElement('div');
+        group.className = 'result-group';
+        group.style.animationDelay = (i * 0.1) + 's';
+
+        let sourceButtons = '';
+        Object.entries(SOURCES).forEach(([key, src]) => {
+          const url = src.urlFn(cat, zip);
+          sourceButtons += `
+            <a href="${url}" target="_blank" rel="noopener"
+               class="source-btn flex-1 flex flex-col items-center gap-2 p-4 rounded-xl bg-gradient-to-br ${src.color} text-white font-semibold text-sm transition-all shadow-md hover:shadow-lg">
+              ${src.name}
+              <span class="text-xs opacity-80">Search &rarr;</span>
+            </a>`;
+        });
+
+        const guide = GUIDES[cat];
+        const guideHtml = guide && guide.url
+          ? `<a href="${guide.url}" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-500 hover:text-brand-600 mt-2 inline-block">Get our ${guide.name} &rarr;</a>`
+          : '';
+
+        group.innerHTML = `
+          <div class="bg-white rounded-xl border border-gray-200 p-5">
+            <h3 class="font-bold text-gray-900 mb-3">${label} for Sale near ${zip}</h3>
+            <div class="flex gap-3">${sourceButtons}</div>
+            ${guideHtml}
+          </div>`;
+        container.appendChild(group);
+      });
+
+      $('results-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    $('search-btn').addEventListener('click', doSearch);
+    $('zip-input').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+
+    // Only allow digits in ZIP
+    $('zip-input').addEventListener('input', function() {
+      this.value = this.value.replace(/\D/g, '').slice(0, 5);
+    });
+  })();
+  </script>
+</body>
+</html>
