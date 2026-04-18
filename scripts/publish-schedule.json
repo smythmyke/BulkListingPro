@@ -198,5 +198,69 @@
     "description": "A composite walkthrough of scaling to 500 active listings solo. Where the hours go and what automation unlocks.",
     "archetype": "Case study",
     "read_time": "8 min read"
+  },
+  {
+    "slug": "etsy-listing-photo-sizes-2026",
+    "publish_date": "2026-06-17",
+    "title": "Etsy listing photo sizes 2026: the complete guide",
+    "description": "Exact size requirements, optimal dimensions, aspect ratios, and the rules that actually affect search rankings.",
+    "archetype": "Data",
+    "read_time": "7 min read"
+  },
+  {
+    "slug": "bulklistingpro-vs-alura",
+    "publish_date": "2026-06-19",
+    "title": "BulkListingPro vs Alura: research tool vs bulk creator",
+    "description": "Two Etsy tools that get compared but don't actually compete. When to use each — and when to use both.",
+    "archetype": "Comparison",
+    "read_time": "8 min read"
+  },
+  {
+    "slug": "how-much-does-etsy-take-2026",
+    "publish_date": "2026-06-22",
+    "title": "How much does Etsy take in 2026? The complete answer",
+    "description": "Every fee Etsy charges, the exact math, and what you actually take home on typical sale prices.",
+    "archetype": "Data",
+    "read_time": "8 min read"
+  },
+  {
+    "slug": "bulklistingpro-vs-vela",
+    "publish_date": "2026-06-24",
+    "title": "BulkListingPro vs Vela: which Etsy AI tool fits you?",
+    "description": "Vela is a multi-channel AI listing editor. BulkListingPro is an Etsy-only bulk creator. Different shapes of a similar problem.",
+    "archetype": "Comparison",
+    "read_time": "8 min read"
+  },
+  {
+    "slug": "how-to-sell-digital-products-on-etsy-2026",
+    "publish_date": "2026-06-26",
+    "title": "How to sell digital products on Etsy in 2026: complete beginner guide",
+    "description": "Everything you actually need to know, from shop setup to your first drop. Without the fluff.",
+    "archetype": "How-to",
+    "read_time": "10 min read"
+  },
+  {
+    "slug": "can-you-have-multiple-etsy-shops-2026",
+    "publish_date": "2026-06-29",
+    "title": "Can you have multiple Etsy shops in 2026?",
+    "description": "Yes, but the rules matter. What Etsy allows, what it prohibits, and how to run multiple shops without getting banned.",
+    "archetype": "Rules",
+    "read_time": "6 min read"
+  },
+  {
+    "slug": "etsy-rules-for-selling-2026",
+    "publish_date": "2026-07-01",
+    "title": "Etsy rules for selling in 2026: the complete requirements guide",
+    "description": "Every rule that affects what you can sell, how you sell it, and what gets your shop banned. 2026 edition.",
+    "archetype": "Rules",
+    "read_time": "9 min read"
+  },
+  {
+    "slug": "how-to-write-etsy-descriptions-that-sell",
+    "publish_date": "2026-07-03",
+    "title": "How to write Etsy descriptions that sell (2026 guide + templates)",
+    "description": "A practical framework for writing descriptions that rank in search and convert browsers to buyers.",
+    "archetype": "How-to",
+    "read_time": "8 min read"
   }
 ]
