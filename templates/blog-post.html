@@ -1,0 +1,445 @@
+<!--
+=====================================================================
+BLOG POST TEMPLATE — BulkListingPro
+=====================================================================
+
+HOW TO USE
+----------
+1. Copy this file to docs/blog/[slug].html
+2. Replace every {{PLACEHOLDER}} — search for "{{" to find them all
+3. Fill body sections; delete OPTIONAL blocks you don't need
+4. Strip this entire comment block (including closing --> below) when done
+5. Update docs/sitemap.xml with the new URL
+6. Commit + push → GH Pages deploys
+7. Medium: New Story → ⋯ → Import a story → paste GH Pages URL
+8. Medium preserves the canonical tag automatically
+
+VOICE CONVENTIONS
+-----------------
+"I" — personal anecdotes, hands-on testing, building decisions
+  e.g. "I spent two weekends comparing Vendoo and Shop Uploader"
+"we" — product statements, tutorials, general advice
+  e.g. "We built BulkListingPro because..." / "You'll want to..."
+Comparison posts lean "I" (first-person testing); how-tos lean "we".
+
+LENGTH TARGETS
+--------------
+Pairwise comparison:   1,800–2,200 words
+How-to:                1,500–2,000 words
+Problem/narrative:     1,000–1,500 words
+Data/industry:         1,800–2,500 words
+Roundup hub:           2,500–3,000 words
+
+IMAGES
+------
+Hero image: 1200×675 minimum (OG + Medium card)
+Sources (all free, commercial-OK, no attribution required):
+  - unsplash.com
+  - pexels.com
+  - pixabay.com
+Screenshots of the extension: user-provided, place in docs/blog/images/[slug]/
+One image per ~300 words. Tables as HTML (not images — AI can cite them).
+
+FAQ SECTION
+-----------
+REQUIRED on every post. 3–5 Q&A pairs. Questions should match real search
+queries a buyer would type. FAQ JSON-LD is the biggest AEO lever.
+
+REMOVE THIS COMMENT BLOCK BEFORE PUBLISHING.
+=====================================================================
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- FILL IN: title (55–65 chars, include primary keyword) -->
+  <title>{{TITLE}} | BulkListingPro Blog</title>
+
+  <!-- FILL IN: meta description (150–160 chars, include keyword once) -->
+  <meta name="description" content="{{META_DESCRIPTION}}">
+
+  <!-- FILL IN: 4–8 keywords, comma-separated, primary keyword first -->
+  <meta name="keywords" content="{{KEYWORDS}}">
+
+  <meta name="author" content="BulkListingPro">
+  <meta name="theme-color" content="#F56400">
+
+  <!-- FILL IN: canonical URL — must be the GH Pages URL of this exact file -->
+  <link rel="canonical" href="https://smythmyke.github.io/BulkListingPro/blog/{{SLUG}}.html">
+
+  <link rel="icon" type="image/png" sizes="48x48" href="../images/favicon-48.png">
+  <link rel="icon" type="image/png" sizes="128x128" href="../images/favicon-128.png">
+  <link rel="apple-touch-icon" href="../images/favicon-128.png">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://smythmyke.github.io/BulkListingPro/blog/{{SLUG}}.html">
+  <meta property="og:title" content="{{TITLE}}">
+  <meta property="og:description" content="{{META_DESCRIPTION}}">
+  <meta property="og:image" content="https://smythmyke.github.io/BulkListingPro/blog/images/{{SLUG}}/hero.jpg">
+  <meta property="og:site_name" content="BulkListingPro">
+  <meta property="article:published_time" content="{{DATE_ISO}}">
+  <meta property="article:author" content="Michael Smyth">
+  <meta property="article:section" content="{{ARCHETYPE}}">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{TITLE}}">
+  <meta name="twitter:description" content="{{META_DESCRIPTION}}">
+  <meta name="twitter:image" content="https://smythmyke.github.io/BulkListingPro/blog/images/{{SLUG}}/hero.jpg">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#fff7ed', 100: '#ffedd5', 200: '#fed7aa', 300: '#fdba74',
+              400: '#fb923c', 500: '#F56400', 600: '#ea580c', 700: '#c2410c',
+              800: '#9a3412', 900: '#7c2d12',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-fade-in-up { animation: fadeInUp 0.6s ease-out both; }
+    html { scroll-behavior: smooth; }
+    .prose-article p { margin: 1.25em 0; line-height: 1.75; }
+    .prose-article h2 { margin: 2em 0 0.75em; font-size: 1.75rem; font-weight: 800; color: #111827; }
+    .prose-article h3 { margin: 1.5em 0 0.5em; font-size: 1.25rem; font-weight: 700; color: #111827; }
+    .prose-article ul, .prose-article ol { margin: 1em 0; padding-left: 1.5em; }
+    .prose-article ul li { list-style: disc; margin: 0.5em 0; }
+    .prose-article ol li { list-style: decimal; margin: 0.5em 0; }
+    .prose-article a { color: #F56400; text-decoration: underline; }
+    .prose-article a:hover { color: #ea580c; }
+    .prose-article blockquote { border-left: 4px solid #F56400; padding: 0.5em 1em; margin: 1.5em 0; color: #4b5563; font-style: italic; background: #fff7ed; }
+    .prose-article table { width: 100%; border-collapse: collapse; margin: 1.5em 0; font-size: 0.95em; }
+    .prose-article th, .prose-article td { border: 1px solid #e5e7eb; padding: 0.75em; text-align: left; }
+    .prose-article th { background: #f9fafb; font-weight: 700; }
+    .prose-article figure { margin: 2em 0; }
+    .prose-article figcaption { text-align: center; font-size: 0.85em; color: #6b7280; margin-top: 0.5em; }
+  </style>
+
+  <!-- Article schema — required for AI citation -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "{{TITLE}}",
+    "description": "{{META_DESCRIPTION}}",
+    "image": "https://smythmyke.github.io/BulkListingPro/blog/images/{{SLUG}}/hero.jpg",
+    "datePublished": "{{DATE_ISO}}",
+    "dateModified": "{{DATE_ISO}}",
+    "author": {
+      "@type": "Person",
+      "name": "Michael Smyth",
+      "url": "https://smythmyke.github.io/BulkListingPro/"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "BulkListingPro",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://smythmyke.github.io/BulkListingPro/images/logo.png"
+      }
+    },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://smythmyke.github.io/BulkListingPro/blog/{{SLUG}}.html"
+    }
+  }
+  </script>
+
+  <!-- Breadcrumb schema -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://smythmyke.github.io/BulkListingPro/" },
+      { "@type": "ListItem", "position": 2, "name": "Blog", "item": "https://smythmyke.github.io/BulkListingPro/blog/" },
+      { "@type": "ListItem", "position": 3, "name": "{{TITLE}}", "item": "https://smythmyke.github.io/BulkListingPro/blog/{{SLUG}}.html" }
+    ]
+  }
+  </script>
+
+  <!-- FAQ schema — REQUIRED. Mirror the FAQ section below. -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "{{FAQ_Q1}}",
+        "acceptedAnswer": { "@type": "Answer", "text": "{{FAQ_A1}}" }
+      },
+      {
+        "@type": "Question",
+        "name": "{{FAQ_Q2}}",
+        "acceptedAnswer": { "@type": "Answer", "text": "{{FAQ_A2}}" }
+      },
+      {
+        "@type": "Question",
+        "name": "{{FAQ_Q3}}",
+        "acceptedAnswer": { "@type": "Answer", "text": "{{FAQ_A3}}" }
+      }
+    ]
+  }
+  </script>
+</head>
+<body class="bg-white text-gray-900 antialiased">
+
+  <header class="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-100">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <a href="../../" class="flex items-center gap-2">
+        <img src="../../images/logo.png" alt="BulkListingPro" class="w-8 h-8 rounded">
+        <span class="font-bold text-lg text-gray-900">BulkListingPro</span>
+      </a>
+      <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
+        <a href="../../#features" class="hover:text-brand-500 transition-colors">Features</a>
+        <a href="../../#pricing" class="hover:text-brand-500 transition-colors">Pricing</a>
+        <a href="../../calculator.html" class="hover:text-brand-500 transition-colors">Fee Calculator</a>
+        <a href="../../best-sellers.html" class="hover:text-brand-500 transition-colors">Best Sellers</a>
+        <a href="../" class="text-brand-500 font-semibold">Blog</a>
+      </nav>
+      <a href="https://chromewebstore.google.com/detail/gmmjdkdgejglelaemhpdekcmeaaccnab" target="_blank" rel="noopener"
+         class="bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold px-5 py-2 rounded-lg transition-colors shadow-sm">
+        Install Free
+      </a>
+    </div>
+  </header>
+
+  <article class="pt-24 pb-16">
+
+    <!-- =========================== -->
+    <!-- ARTICLE HEADER + HERO IMAGE -->
+    <!-- =========================== -->
+    <header class="max-w-3xl mx-auto px-4 sm:px-6 mb-10 animate-fade-in-up">
+
+      <!-- FILL IN: category breadcrumb + read time -->
+      <div class="flex items-center gap-3 text-sm text-gray-500 mb-4">
+        <a href="../" class="hover:text-brand-500">Blog</a>
+        <span>&middot;</span>
+        <span>{{ARCHETYPE}}</span>
+        <span>&middot;</span>
+        <span>{{READ_TIME}} min read</span>
+      </div>
+
+      <!-- FILL IN: H1 — same as {{TITLE}} but can be slightly longer without " | BulkListingPro Blog" -->
+      <h1 class="text-4xl sm:text-5xl font-extrabold leading-tight tracking-tight text-gray-900">
+        {{H1_HEADLINE}}
+      </h1>
+
+      <!-- FILL IN: subtitle / deck (1 sentence, ~25 words, sets up the article) -->
+      <p class="mt-4 text-xl text-gray-600 leading-relaxed">
+        {{SUBTITLE}}
+      </p>
+
+      <!-- Author + date line -->
+      <div class="mt-6 flex items-center gap-3 text-sm text-gray-500">
+        <img src="../../images/logo.png" alt="" class="w-8 h-8 rounded">
+        <div>
+          <div class="font-semibold text-gray-900">Michael Smyth</div>
+          <time datetime="{{DATE_ISO}}">{{DATE_READABLE}}</time>
+        </div>
+      </div>
+    </header>
+
+    <!-- Hero image. Replace src with the actual image. 1200×675 min. -->
+    <figure class="max-w-4xl mx-auto px-4 sm:px-6 mb-12 animate-fade-in-up">
+      <img src="images/{{SLUG}}/hero.jpg" alt="{{HERO_ALT_TEXT}}" class="w-full rounded-2xl shadow-xl">
+      <!-- OPTIONAL: if using Unsplash/Pexels/Pixabay, keep attribution even though not required — AI crawlers score trust on it -->
+      <figcaption>Photo by <a href="{{PHOTO_URL}}">{{PHOTOGRAPHER}}</a> on <a href="{{SOURCE_URL}}">{{SOURCE}}</a></figcaption>
+    </figure>
+
+    <!-- =========================== -->
+    <!-- TL;DR CALLOUT (required)    -->
+    <!-- AI answer engines lift this -->
+    <!-- =========================== -->
+    <aside class="max-w-3xl mx-auto px-4 sm:px-6 mb-12">
+      <div class="p-6 rounded-2xl bg-brand-50 border border-brand-200">
+        <div class="flex items-center gap-2 text-brand-600 font-bold text-sm uppercase tracking-wide mb-3">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
+          TL;DR
+        </div>
+        <p class="text-gray-800 leading-relaxed">
+          <!-- FILL IN: 2–3 sentence summary. Lead with the answer, then the why. Include primary keyword. -->
+          {{TL_DR}}
+        </p>
+      </div>
+    </aside>
+
+    <!-- =========================== -->
+    <!-- ARTICLE BODY                -->
+    <!-- =========================== -->
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 prose-article text-gray-800 text-lg">
+
+      <!-- FILL IN: Opening (problem / hook / context). 2–3 paragraphs. -->
+      <p>{{INTRO_PARAGRAPH_1}}</p>
+      <p>{{INTRO_PARAGRAPH_2}}</p>
+
+      <!-- ========================================= -->
+      <!-- OPTIONAL SECTION: COMPARISON TABLE        -->
+      <!-- Use for BLP vs X posts. Delete for others.-->
+      <!-- ========================================= -->
+      <h2>{{COMPARISON_H2}}</h2>
+      <p>{{COMPARISON_LEAD}}</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th>BulkListingPro</th>
+            <th>{{COMPETITOR}}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Pricing</td><td>{{BLP_PRICING}}</td><td>{{COMP_PRICING}}</td></tr>
+          <tr><td>Platform coverage</td><td>{{BLP_PLATFORMS}}</td><td>{{COMP_PLATFORMS}}</td></tr>
+          <tr><td>AI generation</td><td>{{BLP_AI}}</td><td>{{COMP_AI}}</td></tr>
+          <tr><td>Bulk import</td><td>{{BLP_BULK}}</td><td>{{COMP_BULK}}</td></tr>
+          <tr><td>Image handling</td><td>{{BLP_IMAGES}}</td><td>{{COMP_IMAGES}}</td></tr>
+        </tbody>
+      </table>
+      <!-- END OPTIONAL: COMPARISON TABLE -->
+
+      <!-- ========================================= -->
+      <!-- OPTIONAL SECTION: STEP-BY-STEP            -->
+      <!-- Use for how-to posts. Delete for others.  -->
+      <!-- ========================================= -->
+      <h2>{{HOWTO_H2}}</h2>
+      <p>{{HOWTO_LEAD}}</p>
+      <ol>
+        <li><strong>{{STEP_1_TITLE}}.</strong> {{STEP_1_BODY}}</li>
+        <li><strong>{{STEP_2_TITLE}}.</strong> {{STEP_2_BODY}}</li>
+        <li><strong>{{STEP_3_TITLE}}.</strong> {{STEP_3_BODY}}</li>
+      </ol>
+
+      <figure>
+        <img src="images/{{SLUG}}/step-screenshot.png" alt="{{SCREENSHOT_ALT}}" class="w-full rounded-lg border border-gray-200">
+        <figcaption>{{SCREENSHOT_CAPTION}}</figcaption>
+      </figure>
+      <!-- END OPTIONAL: STEP-BY-STEP -->
+
+      <!-- ========================================= -->
+      <!-- MAIN BODY SECTIONS (H2 every 250–350 words)-->
+      <!-- ========================================= -->
+      <h2>{{SECTION_1_H2}}</h2>
+      <p>{{SECTION_1_BODY}}</p>
+
+      <h3>{{SECTION_1_H3}}</h3>
+      <p>{{SECTION_1_H3_BODY}}</p>
+      <ul>
+        <li>{{BULLET_1}}</li>
+        <li>{{BULLET_2}}</li>
+        <li>{{BULLET_3}}</li>
+      </ul>
+
+      <h2>{{SECTION_2_H2}}</h2>
+      <p>{{SECTION_2_BODY}}</p>
+
+      <!-- OPTIONAL: pull quote — use 1–2 times max per article -->
+      <blockquote>
+        {{PULL_QUOTE}}
+      </blockquote>
+
+      <h2>{{SECTION_3_H2}}</h2>
+      <p>{{SECTION_3_BODY}}</p>
+
+      <!-- ========================================= -->
+      <!-- VERDICT / CONCLUSION                      -->
+      <!-- ========================================= -->
+      <h2>The verdict</h2>
+      <p>{{VERDICT_PARAGRAPH}}</p>
+
+    </div>
+
+    <!-- =========================== -->
+    <!-- FAQ SECTION (REQUIRED)      -->
+    <!-- Mirror FAQ JSON-LD above.   -->
+    <!-- =========================== -->
+    <section class="max-w-3xl mx-auto px-4 sm:px-6 mt-16 pt-12 border-t border-gray-200">
+      <h2 class="text-3xl font-extrabold text-gray-900 mb-8">Frequently asked questions</h2>
+      <div class="space-y-6">
+
+        <div>
+          <h3 class="text-lg font-bold text-gray-900 mb-2">{{FAQ_Q1}}</h3>
+          <p class="text-gray-700 leading-relaxed">{{FAQ_A1}}</p>
+        </div>
+
+        <div>
+          <h3 class="text-lg font-bold text-gray-900 mb-2">{{FAQ_Q2}}</h3>
+          <p class="text-gray-700 leading-relaxed">{{FAQ_A2}}</p>
+        </div>
+
+        <div>
+          <h3 class="text-lg font-bold text-gray-900 mb-2">{{FAQ_Q3}}</h3>
+          <p class="text-gray-700 leading-relaxed">{{FAQ_A3}}</p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- =========================== -->
+    <!-- RELATED POSTS (hub-and-spoke)-->
+    <!-- =========================== -->
+    <section class="max-w-3xl mx-auto px-4 sm:px-6 mt-16 pt-12 border-t border-gray-200">
+      <h2 class="text-2xl font-extrabold text-gray-900 mb-6">Related on the BulkListingPro blog</h2>
+      <ul class="space-y-3">
+        <li><a href="{{RELATED_SLUG_1}}.html" class="text-brand-500 hover:text-brand-600 font-semibold">{{RELATED_TITLE_1}}</a></li>
+        <li><a href="{{RELATED_SLUG_2}}.html" class="text-brand-500 hover:text-brand-600 font-semibold">{{RELATED_TITLE_2}}</a></li>
+        <li><a href="{{RELATED_SLUG_3}}.html" class="text-brand-500 hover:text-brand-600 font-semibold">{{RELATED_TITLE_3}}</a></li>
+      </ul>
+    </section>
+
+    <!-- =========================== -->
+    <!-- CTA BLOCK                   -->
+    <!-- =========================== -->
+    <section class="max-w-3xl mx-auto px-4 sm:px-6 mt-16">
+      <div class="p-8 rounded-2xl bg-gradient-to-br from-brand-500 to-amber-500 text-white text-center">
+        <h2 class="text-2xl font-extrabold">Stop listing one at a time</h2>
+        <p class="mt-3 text-white/90">BulkListingPro uploads hundreds of Etsy listings in one go, with AI-generated titles, tags, and descriptions.</p>
+        <a href="https://chromewebstore.google.com/detail/gmmjdkdgejglelaemhpdekcmeaaccnab" target="_blank" rel="noopener"
+           class="mt-6 inline-flex items-center gap-2 bg-white text-brand-600 font-bold px-8 py-3.5 rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105">
+          Install Free from Chrome Web Store
+        </a>
+        <p class="mt-3 text-sm text-white/80">10 free credits included. No credit card required.</p>
+      </div>
+    </section>
+
+    <!-- =========================== -->
+    <!-- CANONICAL FOOTER NOTE       -->
+    <!-- Important for Medium Import -->
+    <!-- =========================== -->
+    <footer class="max-w-3xl mx-auto px-4 sm:px-6 mt-12 pt-8 border-t border-gray-200 text-sm text-gray-500">
+      <p>Originally published at <a href="https://smythmyke.github.io/BulkListingPro/blog/{{SLUG}}.html" class="text-brand-500 hover:text-brand-600">https://smythmyke.github.io/BulkListingPro/blog/{{SLUG}}.html</a> on <time datetime="{{DATE_ISO}}">{{DATE_READABLE}}</time>.</p>
+    </footer>
+
+  </article>
+
+  <!-- SITE FOOTER -->
+  <footer class="py-12 bg-gray-900 text-gray-400 mt-20">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+        <div class="flex items-center gap-2">
+          <img src="../../images/logo.png" alt="BulkListingPro" class="w-6 h-6 rounded">
+          <span class="font-semibold text-white">BulkListingPro</span>
+        </div>
+        <nav class="flex flex-wrap justify-center gap-6 text-sm">
+          <a href="../../" class="hover:text-white transition-colors">Home</a>
+          <a href="../" class="hover:text-white transition-colors">Blog</a>
+          <a href="../../privacy-policy.html" class="hover:text-white transition-colors">Privacy Policy</a>
+          <a href="../../terms-of-service.html" class="hover:text-white transition-colors">Terms of Service</a>
+        </nav>
+        <p class="text-sm">&copy; 2026 BulkListingPro. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

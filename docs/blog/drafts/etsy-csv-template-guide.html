@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+
+  <title>How to Prep a CSV for Etsy Bulk Listing (With Template) | BulkListingPro Blog</title>
+  <meta name="description" content="Step-by-step guide to formatting a spreadsheet for Etsy bulk upload: required fields, format quirks that break imports, and a free template you can download.">
+  <meta name="keywords" content="etsy csv template, etsy bulk listing csv, etsy spreadsheet import, etsy bulk upload format, etsy listing template">
+  <meta name="author" content="BulkListingPro">
+  <meta name="theme-color" content="#F56400">
+
+  <link rel="canonical" href="https://smythmyke.github.io/BulkListingPro/blog/etsy-csv-template-guide.html">
+
+  <link rel="icon" type="image/png" sizes="48x48" href="../../images/favicon-48.png">
+  <link rel="icon" type="image/png" sizes="128x128" href="../../images/favicon-128.png">
+  <link rel="apple-touch-icon" href="../../images/favicon-128.png">
+
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://smythmyke.github.io/BulkListingPro/blog/etsy-csv-template-guide.html">
+  <meta property="og:title" content="How to Prep a CSV for Etsy Bulk Listing (With Template)">
+  <meta property="og:description" content="Required fields, format quirks, and a free template.">
+  <meta property="og:image" content="https://smythmyke.github.io/BulkListingPro/blog/images/etsy-csv-template-guide/hero.jpg">
+  <meta property="og:site_name" content="BulkListingPro">
+  <meta property="article:published_time" content="2026-04-18">
+  <meta property="article:author" content="Michael Smyth">
+  <meta property="article:section" content="How-to">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="How to Prep a CSV for Etsy Bulk Listing">
+  <meta name="twitter:description" content="Required fields, format quirks, and a free template.">
+  <meta name="twitter:image" content="https://smythmyke.github.io/BulkListingPro/blog/images/etsy-csv-template-guide/hero.jpg">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: { brand: { 50: '#fff7ed', 100: '#ffedd5', 200: '#fed7aa', 300: '#fdba74', 400: '#fb923c', 500: '#F56400', 600: '#ea580c', 700: '#c2410c', 800: '#9a3412', 900: '#7c2d12' } } } } }
+  </script>
+  <style>
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-fade-in-up { animation: fadeInUp 0.6s ease-out both; }
+    html { scroll-behavior: smooth; }
+    .prose-article p { margin: 1.25em 0; line-height: 1.75; }
+    .prose-article h2 { margin: 2em 0 0.75em; font-size: 1.75rem; font-weight: 800; color: #111827; }
+    .prose-article h3 { margin: 1.5em 0 0.5em; font-size: 1.25rem; font-weight: 700; color: #111827; }
+    .prose-article ul, .prose-article ol { margin: 1em 0; padding-left: 1.5em; }
+    .prose-article ul li { list-style: disc; margin: 0.5em 0; }
+    .prose-article ol li { list-style: decimal; margin: 0.5em 0; }
+    .prose-article a { color: #F56400; text-decoration: underline; }
+    .prose-article a:hover { color: #ea580c; }
+    .prose-article blockquote { border-left: 4px solid #F56400; padding: 0.5em 1em; margin: 1.5em 0; color: #4b5563; font-style: italic; background: #fff7ed; }
+    .prose-article table { width: 100%; border-collapse: collapse; margin: 1.5em 0; font-size: 0.95em; }
+    .prose-article th, .prose-article td { border: 1px solid #e5e7eb; padding: 0.75em; text-align: left; vertical-align: top; }
+    .prose-article th { background: #f9fafb; font-weight: 700; }
+    .prose-article code { background: #f3f4f6; padding: 0.15em 0.4em; border-radius: 4px; font-size: 0.9em; color: #c2410c; }
+    .prose-article pre { background: #111827; color: #f9fafb; padding: 1em; border-radius: 8px; overflow-x: auto; margin: 1.5em 0; font-size: 0.9em; }
+    .hero-fallback { aspect-ratio: 16 / 9; background: linear-gradient(135deg, #F56400 0%, #fbbf24 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 1.5rem; text-align: center; padding: 2rem; border-radius: 1rem; }
+  </style>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "How to Prep a CSV for Etsy Bulk Listing (With Template)",
+    "description": "Step-by-step guide to formatting a spreadsheet for Etsy bulk upload: required fields, format quirks, and a free template.",
+    "image": "https://smythmyke.github.io/BulkListingPro/blog/images/etsy-csv-template-guide/hero.jpg",
+    "datePublished": "2026-04-18",
+    "dateModified": "2026-04-18",
+    "author": { "@type": "Person", "name": "Michael Smyth", "url": "https://smythmyke.github.io/BulkListingPro/" },
+    "publisher": { "@type": "Organization", "name": "BulkListingPro", "logo": { "@type": "ImageObject", "url": "https://smythmyke.github.io/BulkListingPro/images/logo.png" } },
+    "mainEntityOfPage": { "@type": "WebPage", "@id": "https://smythmyke.github.io/BulkListingPro/blog/etsy-csv-template-guide.html" }
+  }
+  </script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://smythmyke.github.io/BulkListingPro/" },
+      { "@type": "ListItem", "position": 2, "name": "Blog", "item": "https://smythmyke.github.io/BulkListingPro/blog/" },
+      { "@type": "ListItem", "position": 3, "name": "Etsy CSV Template Guide", "item": "https://smythmyke.github.io/BulkListingPro/blog/etsy-csv-template-guide.html" }
+    ]
+  }
+  </script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      { "@type": "Question", "name": "What CSV format does BulkListingPro accept for Etsy uploads?", "acceptedAnswer": { "@type": "Answer", "text": "BulkListingPro accepts standard CSV (comma-separated values) and XLSX files. The file should be UTF-8 encoded, use commas as separators, and preserve empty cells (leave a placeholder comma, don't omit the column). A reference template is available for download inside the extension." } },
+      { "@type": "Question", "name": "Can I use XLSX instead of CSV for Etsy bulk uploads?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. BulkListingPro reads both .csv and .xlsx files. XLSX is often easier to work with because Excel and Google Sheets handle the formatting quirks automatically (preserved empty cells, UTF-8 encoding). CSV is useful if you're generating the file from another system or script." } },
+      { "@type": "Question", "name": "Do I need every Etsy listing column filled in?", "acceptedAnswer": { "@type": "Answer", "text": "No. Only a handful are strictly required: title, category, price, quantity, and at least one image. Tags, description, materials, who-made, when-made, and most other fields can be blank and either filled in via AI generation or left as Etsy's defaults. The CSV column still has to exist — just leave the cell empty." } },
+      { "@type": "Question", "name": "How do I add image paths to my Etsy CSV?", "acceptedAnswer": { "@type": "Answer", "text": "BulkListingPro accepts either absolute file paths or filenames that resolve against a folder you pick during import. The simplest approach is to keep all product images in one folder, use just the filename in your CSV (e.g., 'sunset-svg-01.jpg'), and point BulkListingPro at that folder when it asks. Digital product files work the same way." } }
+    ]
+  }
+  </script>
+</head>
+<body class="bg-white text-gray-900 antialiased">
+
+  <header class="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-100">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <a href="../../" class="flex items-center gap-2"><img src="../../images/logo.png" alt="BulkListingPro" class="w-8 h-8 rounded"><span class="font-bold text-lg text-gray-900">BulkListingPro</span></a>
+      <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
+        <a href="../../#features" class="hover:text-brand-500 transition-colors">Features</a>
+        <a href="../../#pricing" class="hover:text-brand-500 transition-colors">Pricing</a>
+        <a href="../../calculator.html" class="hover:text-brand-500 transition-colors">Fee Calculator</a>
+        <a href="../" class="text-brand-500 font-semibold">Blog</a>
+      </nav>
+      <a href="https://chromewebstore.google.com/detail/gmmjdkdgejglelaemhpdekcmeaaccnab" target="_blank" rel="noopener" class="bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold px-5 py-2 rounded-lg transition-colors shadow-sm">Install Free</a>
+    </div>
+  </header>
+
+  <article class="pt-24 pb-16">
+
+    <header class="max-w-3xl mx-auto px-4 sm:px-6 mb-10 animate-fade-in-up">
+      <div class="flex items-center gap-3 text-sm text-gray-500 mb-4">
+        <a href="../" class="hover:text-brand-500">Blog</a>
+        <span>&middot;</span>
+        <span>How-to</span>
+        <span>&middot;</span>
+        <span>7 min read</span>
+      </div>
+      <h1 class="text-4xl sm:text-5xl font-extrabold leading-tight tracking-tight text-gray-900">How to prep a CSV for Etsy bulk listing (with template)</h1>
+      <p class="mt-4 text-xl text-gray-600 leading-relaxed">A small set of rules that make the difference between a clean import and an afternoon of debugging. Including a free template you can copy and go.</p>
+      <div class="mt-6 flex items-center gap-3 text-sm text-gray-500">
+        <img src="../../images/logo.png" alt="" class="w-8 h-8 rounded">
+        <div><div class="font-semibold text-gray-900">Michael Smyth</div><time datetime="2026-04-18">April 18, 2026</time></div>
+      </div>
+    </header>
+
+    <figure class="max-w-4xl mx-auto px-4 sm:px-6 mb-12 animate-fade-in-up">
+      <div class="hero-fallback">Etsy CSV Template Guide</div>
+    </figure>
+
+    <aside class="max-w-3xl mx-auto px-4 sm:px-6 mb-12">
+      <div class="p-6 rounded-2xl bg-brand-50 border border-brand-200">
+        <div class="flex items-center gap-2 text-brand-600 font-bold text-sm uppercase tracking-wide mb-3">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
+          TL;DR
+        </div>
+        <p class="text-gray-800 leading-relaxed">Etsy doesn't have a native CSV format, so you're using a tool like BulkListingPro that defines its own. The rules: UTF-8, comma-separated, preserve empty cells (double-comma), one product per row, and include at minimum title, category, price, quantity, and an image path. Download the template, fill in what you know, let AI fill the rest.</p>
+      </div>
+    </aside>
+
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 prose-article text-gray-800 text-lg">
+
+      <p>Almost every bulk upload failure I've seen comes down to one thing: a malformed CSV. Not a bug in the tool, not a problem with Etsy — a missing comma, a weird encoding, an empty cell that got silently dropped. The CSV is the single source of truth for your batch, and if it's wrong, every row downstream is wrong.</p>
+
+      <p>Good news: the rules are short. If you follow them, your first bulk upload works. If you don't, you'll spend an hour figuring out why your fifty "Mountain SVG" products all got imported with the price in the tags field.</p>
+
+      <h2>The required fields</h2>
+
+      <p>Etsy has a handful of fields that must be populated on every new listing. Skip any of these and the listing won't save. In your CSV, these columns must exist and each row must have a value:</p>
+
+      <ul>
+        <li><strong>title</strong> — the listing name a buyer sees. 140-character max. If you leave this blank, BulkListingPro can generate one with AI, but the column still has to be there.</li>
+        <li><strong>category</strong> — Etsy's taxonomy category (e.g., "Craft Supplies &amp; Tools &gt; Paper Craft Supplies &gt; Patterns &amp; How To"). The category can't be guessed reliably, so always fill this one manually.</li>
+        <li><strong>price</strong> — a number, no currency symbol. <code>4.99</code>, not <code>$4.99</code>.</li>
+        <li><strong>quantity</strong> — integer. Digital products usually list as <code>999</code> or the highest quantity your product type supports.</li>
+        <li><strong>image_1</strong> — path or filename of the primary product image. Etsy requires at least one image per listing; additional slots (<code>image_2</code> through <code>image_10</code>) are optional.</li>
+      </ul>
+
+      <p>For digital products, you also need a <strong>digital_file_1</strong> column with the path to the PDF, ZIP, SVG, or whatever file the buyer is going to download. Etsy won't save a digital listing without the file attached.</p>
+
+      <h2>The format rules that actually matter</h2>
+
+      <p>These are the four format rules that cause 90% of failed imports.</p>
+
+      <h3>1. UTF-8 encoding</h3>
+
+      <p>Save as UTF-8. Not Windows-1252, not Latin-1. If you're using Excel on Windows, this is easy to get wrong — Excel defaults to Windows-1252, which silently breaks any special character you have in a title (em dashes, curly quotes, accented letters). Always save with "UTF-8" selected in the Save As dialog, or export from Google Sheets which defaults to UTF-8.</p>
+
+      <h3>2. Preserve empty cells</h3>
+
+      <p>If a cell is empty, it must still exist in the row as a placeholder. In CSV, this means double commas. A valid row with an empty <code>description</code> between <code>title</code> and <code>price</code> looks like:</p>
+
+      <pre>Sunset Mountain SVG,,4.99,999,sunset.jpg,sunset-bundle.zip</pre>
+
+      <p>Note the two commas after the title. If you leave the column out entirely, every column after it shifts left by one and your price ends up in the description slot. Bulk import disaster.</p>
+
+      <h3>3. No quotes around numbers or simple strings</h3>
+
+      <p>Quotes only for values that contain commas or line breaks. Most CSV tools handle this automatically, but if you're hand-editing, a row like <code>"4.99"</code> for the price will sometimes parse as a string and fail validation. Leave it as <code>4.99</code>.</p>
+
+      <h3>4. One product per row</h3>
+
+      <p>It sounds obvious, but people with variations often try to cram them into one row with pipe-separated fields (<code>size1|size2|size3</code>). Don't. Each variation gets its own row. BulkListingPro can generate the SKU column automatically so duplicates are clear.</p>
+
+      <h2>The columns you can leave blank (and let AI fill)</h2>
+
+      <p>Here's where the workflow gets fast. These columns can be blank in your CSV, and BulkListingPro will generate or infer them:</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Column</th>
+            <th>AI can generate?</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>title</td><td>Yes</td><td>Better to let AI draft than hand-write 100 titles</td></tr>
+          <tr><td>description</td><td>Yes</td><td>AI writes SEO-aware descriptions from the image</td></tr>
+          <tr><td>tags</td><td>Yes</td><td>Generates 13 category-tuned tags per listing</td></tr>
+          <tr><td>materials</td><td>Yes</td><td>Guessed from category (skippable for digital)</td></tr>
+          <tr><td>who_made</td><td>Defaulted</td><td>Defaults to "i_did" unless you override</td></tr>
+          <tr><td>when_made</td><td>Defaulted</td><td>Defaults to "made_to_order" for digital</td></tr>
+          <tr><td>section</td><td>Defaulted</td><td>Falls back to shop default</td></tr>
+          <tr><td>sku</td><td>Yes</td><td>Auto-generated from title if blank</td></tr>
+        </tbody>
+      </table>
+
+      <p>The practical workflow: fill in title manually (optional), category, price, quantity, image path, digital file path — leave the rest blank — run AI generation after import.</p>
+
+      <h2>Step-by-step: build your first CSV</h2>
+
+      <p>Here's the fastest path from "I have fifty new products" to "CSV ready to import":</p>
+
+      <ol>
+        <li><strong>Download the BulkListingPro template.</strong> It's an XLSX with every supported column, pre-labeled, with example rows. You can find it inside the extension or on the main site.</li>
+        <li><strong>Delete the example rows</strong> once you understand the format.</li>
+        <li><strong>For each product, fill in:</strong> category, price, quantity, and image filename. If you have a pre-written title, add it; otherwise skip.</li>
+        <li><strong>Skip tags, description, materials, who_made, when_made</strong> — AI will handle them.</li>
+        <li><strong>Put all your product images in one folder</strong> and use bare filenames (e.g., <code>mountain-sunset.jpg</code>, not <code>C:\Users\me\images\mountain-sunset.jpg</code>). BulkListingPro will ask for the folder on import.</li>
+        <li><strong>Same for digital files</strong> — one folder, bare filenames in the <code>digital_file_1</code> column.</li>
+        <li><strong>Save as XLSX</strong> (easiest) or CSV with UTF-8 encoding.</li>
+        <li><strong>Import into BulkListingPro.</strong> It'll validate every row, flag anything malformed, and drop you into the editor with everything ready for AI generation.</li>
+      </ol>
+
+      <h2>Mistakes I see on every first-timer's CSV</h2>
+
+      <p>Even with the rules written down, these are the four that trip everyone up on their first batch:</p>
+
+      <p><strong>Currency symbols in the price column.</strong> <code>$4.99</code> fails to parse. Use <code>4.99</code>.</p>
+
+      <p><strong>Tags as a single string instead of 13 separated values.</strong> Tags should be a comma-separated string <em>within</em> a CSV cell that's itself quoted, like <code>"boho,minimalist,digital download,svg"</code>. BulkListingPro accepts this format and splits into individual tags on import.</p>
+
+      <p><strong>Missing image file.</strong> The CSV has <code>mountain.jpg</code> in the image column, but there's no <code>mountain.jpg</code> in your images folder. BulkListingPro catches this on import and flags the row, but it still slows you down.</p>
+
+      <p><strong>Category typos.</strong> Etsy's categories are strict. "Craft Supply" isn't a category — "Craft Supplies &amp; Tools" is. If you're hand-typing categories, copy them from Etsy's category picker or use the BulkListingPro category helper.</p>
+
+      <h2>The shortest possible valid CSV</h2>
+
+      <p>Just to prove it: here's the minimum viable CSV for a bulk Etsy upload. Three rows of listings, only the required fields:</p>
+
+      <pre>title,category,price,quantity,image_1,digital_file_1
+Mountain Sunset SVG,Craft Supplies &amp; Tools &gt; Paper Craft Supplies &gt; Patterns &amp; How To,4.99,999,mountain.jpg,mountain.zip
+Beach Scene SVG,Craft Supplies &amp; Tools &gt; Paper Craft Supplies &gt; Patterns &amp; How To,4.99,999,beach.jpg,beach.zip
+Forest Path SVG,Craft Supplies &amp; Tools &gt; Paper Craft Supplies &gt; Patterns &amp; How To,4.99,999,forest.jpg,forest.zip</pre>
+
+      <p>Drop this into BulkListingPro, run AI generation for titles and tags and descriptions, review, upload. Forty minutes later you have three clean listings live on Etsy. Not the most exciting batch, but it proves the format works.</p>
+
+      <h2>When to go beyond the minimum</h2>
+
+      <p>Once the minimum CSV is working, start adding columns as you need them:</p>
+
+      <ul>
+        <li>Multiple images: <code>image_2</code>, <code>image_3</code>, etc. up to <code>image_10</code></li>
+        <li>Shipping info (physical products only): processing time, weight, dimensions</li>
+        <li>Variations: use BulkListingPro's variation columns or one row per variation</li>
+        <li>Personalization: <code>is_personalizable</code> and <code>personalization_instructions</code></li>
+      </ul>
+
+      <p>For most digital product sellers, the minimum plus images is all you'll ever need. Extra columns are for specific edge cases.</p>
+
+    </div>
+
+    <section class="max-w-3xl mx-auto px-4 sm:px-6 mt-16 pt-12 border-t border-gray-200">
+      <h2 class="text-3xl font-extrabold text-gray-900 mb-8">Frequently asked questions</h2>
+      <div class="space-y-6">
+        <div>
+          <h3 class="text-lg font-bold text-gray-900 mb-2">What CSV format does BulkListingPro accept for Etsy uploads?</h3>
+          <p class="text-gray-700 leading-relaxed">BulkListingPro accepts standard CSV (comma-separated values) and XLSX files. The file should be UTF-8 encoded, use commas as separators, and preserve empty cells (leave a placeholder comma, don't omit the column). A reference template is available for download inside the extension.</p>
+        </div>
+        <div>
+          <h3 class="text-lg font-bold text-gray-900 mb-2">Can I use XLSX instead of CSV for Etsy bulk uploads?</h3>
+          <p class="text-gray-700 leading-relaxed">Yes. BulkListingPro reads both .csv and .xlsx files. XLSX is often easier to work with because Excel and Google Sheets handle the formatting quirks automatically (preserved empty cells, UTF-8 encoding). CSV is useful if you're generating the file from another system or script.</p>
+        </div>
+        <div>
+          <h3 class="text-lg font-bold text-gray-900 mb-2">Do I need every Etsy listing column filled in?</h3>
+          <p class="text-gray-700 leading-relaxed">No. Only a handful are strictly required: title, category, price, quantity, and at least one image. Tags, description, materials, who-made, when-made, and most other fields can be blank and either filled in via AI generation or left as Etsy's defaults. The CSV column still has to exist — just leave the cell empty.</p>
+        </div>
+        <div>
+          <h3 class="text-lg font-bold text-gray-900 mb-2">How do I add image paths to my Etsy CSV?</h3>
+          <p class="text-gray-700 leading-relaxed">BulkListingPro accepts either absolute file paths or filenames that resolve against a folder you pick during import. The simplest approach is to keep all product images in one folder, use just the filename in your CSV (e.g., 'sunset-svg-01.jpg'), and point BulkListingPro at that folder when it asks. Digital product files work the same way.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="max-w-3xl mx-auto px-4 sm:px-6 mt-16 pt-12 border-t border-gray-200">
+      <h2 class="text-2xl font-extrabold text-gray-900 mb-6">Related on the BulkListingPro blog</h2>
+      <ul class="space-y-3">
+        <li><a href="../how-to-bulk-upload-etsy-listings.html" class="text-brand-500 hover:text-brand-600 font-semibold">How to bulk upload Etsy listings in under an hour</a></li>
+        <li><a href="etsy-native-bulk-editor-isnt-bulk.html" class="text-brand-500 hover:text-brand-600 font-semibold">Why Etsy's native bulk editor isn't actually bulk</a></li>
+        <li><a href="etsy-fee-breakdown-2026.html" class="text-brand-500 hover:text-brand-600 font-semibold">Etsy fee breakdown 2026: what sellers actually take home</a></li>
+      </ul>
+    </section>
+
+    <section class="max-w-3xl mx-auto px-4 sm:px-6 mt-16">
+      <div class="p-8 rounded-2xl bg-gradient-to-br from-brand-500 to-amber-500 text-white text-center">
+        <h2 class="text-2xl font-extrabold">Skip the formatting pain</h2>
+        <p class="mt-3 text-white/90">BulkListingPro ships with a tested Etsy CSV template. Download, fill in, import.</p>
+        <a href="https://chromewebstore.google.com/detail/gmmjdkdgejglelaemhpdekcmeaaccnab" target="_blank" rel="noopener" class="mt-6 inline-flex items-center gap-2 bg-white text-brand-600 font-bold px-8 py-3.5 rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105">Install Free from Chrome Web Store</a>
+        <p class="mt-3 text-sm text-white/80">10 free credits included. No credit card required.</p>
+      </div>
+    </section>
+
+    <footer class="max-w-3xl mx-auto px-4 sm:px-6 mt-12 pt-8 border-t border-gray-200 text-sm text-gray-500">
+      <p>Originally published at <a href="https://smythmyke.github.io/BulkListingPro/blog/etsy-csv-template-guide.html" class="text-brand-500 hover:text-brand-600">https://smythmyke.github.io/BulkListingPro/blog/etsy-csv-template-guide.html</a> on <time datetime="2026-04-18">April 18, 2026</time>.</p>
+    </footer>
+
+  </article>
+
+  <footer class="py-12 bg-gray-900 text-gray-400 mt-20">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+        <div class="flex items-center gap-2"><img src="../../images/logo.png" alt="BulkListingPro" class="w-6 h-6 rounded"><span class="font-semibold text-white">BulkListingPro</span></div>
+        <nav class="flex flex-wrap justify-center gap-6 text-sm">
+          <a href="../../" class="hover:text-white transition-colors">Home</a>
+          <a href="../" class="hover:text-white transition-colors">Blog</a>
+          <a href="../../privacy-policy.html" class="hover:text-white transition-colors">Privacy Policy</a>
+          <a href="../../terms-of-service.html" class="hover:text-white transition-colors">Terms of Service</a>
+        </nav>
+        <p class="text-sm">&copy; 2026 BulkListingPro. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
