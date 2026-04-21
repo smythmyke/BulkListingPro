@@ -26,6 +26,15 @@
   <meta name="twitter:description" content="Free Etsy seller toolkit with profit calculator, shipping estimator, budget planner, and conversion benchmarks.">
   <meta name="twitter:image" content="https://smythmyke.github.io/BulkListingPro/images/og-image.png">
 
+  <!-- Google Ads conversion tracking -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17678736775"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'AW-17678736775');
+  </script>
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -1234,6 +1243,18 @@
 
     calculateBenchmarks();
   })();
+  </script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('a[href*="chromewebstore.google.com/detail/gmmjdkdgejglelaemhpdekcmeaaccnab"]').forEach(function(a) {
+        a.addEventListener('click', function() {
+          if (typeof gtag === 'function') {
+            gtag('event', 'conversion', {'send_to': 'AW-17678736775/ryWaCM_HmaAcEIe78O1B'});
+          }
+        });
+      });
+    });
   </script>
 </body>
 </html>
