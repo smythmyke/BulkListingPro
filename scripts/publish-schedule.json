@@ -15,7 +15,9 @@
     "title": "How to prep a CSV for Etsy bulk listing (with template)",
     "description": "A small set of rules that makes the difference between a clean import and an afternoon of debugging.",
     "archetype": "How-to",
-    "read_time": "7 min read"
+    "read_time": "7 min read",
+    "published": true,
+    "published_at": "2026-04-22"
   },
   {
     "slug": "bulklistingpro-vs-shop-uploader",
