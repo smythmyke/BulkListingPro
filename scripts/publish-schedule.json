@@ -25,7 +25,9 @@
     "title": "BulkListingPro vs Shop Uploader: a pragmatic comparison",
     "description": "Both are Etsy bulk tools. Shop Uploader uses templates and subscriptions; BulkListingPro is AI-first and credit-based.",
     "archetype": "Comparison",
-    "read_time": "8 min read"
+    "read_time": "8 min read",
+    "published": true,
+    "published_at": "2026-04-24"
   },
   {
     "slug": "etsy-fee-breakdown-2026",
