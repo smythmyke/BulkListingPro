@@ -35,7 +35,9 @@
     "title": "Etsy fee breakdown 2026: what sellers actually take home",
     "description": "Every Etsy fee with real dollar examples at $10, $25, and $50 sale prices.",
     "archetype": "Data",
-    "read_time": "10 min read"
+    "read_time": "10 min read",
+    "published": true,
+    "published_at": "2026-04-27"
   },
   {
     "slug": "bulklistingpro-vs-skupid",
