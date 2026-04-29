@@ -45,7 +45,9 @@
     "title": "BulkListingPro vs SKUpid: which Etsy bulk uploader fits you?",
     "description": "Two Etsy bulk uploaders with very different pricing and content philosophies. Honest side-by-side.",
     "archetype": "Comparison",
-    "read_time": "8 min read"
+    "read_time": "8 min read",
+    "published": true,
+    "published_at": "2026-04-29"
   },
   {
     "slug": "etsy-native-bulk-editor-isnt-bulk",
