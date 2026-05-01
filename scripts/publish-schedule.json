@@ -55,7 +55,9 @@
     "title": "Why Etsy's native bulk editor isn't actually bulk",
     "description": "The Listings Manager edits existing listings. It can't create new ones. Here's the gap and why it exists.",
     "archetype": "Narrative",
-    "read_time": "6 min read"
+    "read_time": "6 min read",
+    "published": true,
+    "published_at": "2026-05-01"
   },
   {
     "slug": "bulklistingpro-vs-easy-listing-uploader",
