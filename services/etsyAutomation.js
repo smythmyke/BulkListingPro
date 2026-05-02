@@ -425,14 +425,17 @@ class EtsyAutomationService {
 
   async fillAboutTab(listing) {
     if (listing.title) {
-      await cdpService.evaluate(`
-        (() => {
-          const input = document.querySelector('input[name="title"]') ||
-                        document.querySelector('textarea[name="title"]');
-          if (input) { input.value = ''; input.focus(); }
-        })()
-      `);
-      await cdpService.type(listing.title, DELAYS.typing);
+      const ok = await this.setFieldValue('input[name="title"], textarea[name="title"]', listing.title);
+      if (!ok) {
+        await cdpService.evaluate(`
+          (() => {
+            const input = document.querySelector('input[name="title"]') ||
+                          document.querySelector('textarea[name="title"]');
+            if (input) { input.value = ''; input.focus(); }
+          })()
+        `);
+        await cdpService.type(listing.title, DELAYS.typing);
+      }
       await this.interruptibleDelay(DELAYS.short);
     }
 
@@ -440,23 +443,17 @@ class EtsyAutomationService {
     await this.uploadDigitalFile(listing);
 
     if (listing.description) {
-      await cdpService.evaluate(`
-        (() => {
-          const desc = document.querySelector('textarea[name="description"]');
-          if (desc) { desc.scrollIntoView({ block: 'center' }); desc.focus(); }
-        })()
-      `);
-      await this.interruptibleDelay(DELAYS.medium);
-
-      await cdpService.evaluate(`
-        (() => {
-          const desc = document.querySelector('textarea[name="description"]');
-          if (desc) {
-            desc.value = ${JSON.stringify(listing.description)};
-            desc.dispatchEvent(new Event('input', { bubbles: true }));
-          }
-        })()
-      `);
+      const ok = await this.setFieldValue('textarea[name="description"]', listing.description);
+      if (!ok) {
+        await cdpService.evaluate(`
+          (() => {
+            const desc = document.querySelector('textarea[name="description"]');
+            if (desc) { desc.scrollIntoView({ block: 'center' }); desc.focus(); }
+          })()
+        `);
+        await this.interruptibleDelay(DELAYS.medium);
+        await cdpService.type(listing.description, DELAYS.typing);
+      }
       await this.interruptibleDelay(DELAYS.short);
     }
   }
@@ -592,44 +589,50 @@ class EtsyAutomationService {
     await this.interruptibleDelay(DELAYS.long);
 
     if (listing.price) {
-      await cdpService.evaluate(`
-        (() => {
-          const input = document.querySelector('input[name="price"]') ||
-                        document.querySelector('input[id*="price"]');
-          if (input) { input.value = ''; input.focus(); }
-        })()
-      `);
-      await cdpService.type(String(listing.price), DELAYS.typing);
+      const priceOk = await this.setFieldValue('input[name="price"], input[id*="price"]', String(listing.price));
+      if (!priceOk) {
+        await cdpService.evaluate(`
+          (() => {
+            const input = document.querySelector('input[name="price"]') ||
+                          document.querySelector('input[id*="price"]');
+            if (input) { input.value = ''; input.focus(); }
+          })()
+        `);
+        await cdpService.type(String(listing.price), DELAYS.typing);
+      }
       await this.interruptibleDelay(DELAYS.short);
     }
 
     const quantity = listing.quantity || 999;
-    await cdpService.evaluate(`
-      (() => {
-        const input = document.querySelector('#listing-quantity-input') ||
-                      document.querySelector('input[name="quantity"]');
-        if (input) {
-          input.focus();
-          input.select();
-        }
-      })()
-    `);
-    await this.interruptibleDelay(100);
-    await cdpService.type(String(quantity), DELAYS.typing);
+    const qtyOk = await this.setFieldValue('#listing-quantity-input, input[name="quantity"]', String(quantity));
+    if (!qtyOk) {
+      await cdpService.evaluate(`
+        (() => {
+          const input = document.querySelector('#listing-quantity-input') ||
+                        document.querySelector('input[name="quantity"]');
+          if (input) { input.focus(); input.select(); }
+        })()
+      `);
+      await this.interruptibleDelay(100);
+      await cdpService.type(String(quantity), DELAYS.typing);
+    }
     await this.interruptibleDelay(DELAYS.short);
 
     if (listing.sku) {
       await this.clickByText('Add SKU');
       await this.interruptibleDelay(DELAYS.medium);
-      await cdpService.evaluate(`
-        (() => {
-          const input = document.querySelector('#listing-sku-input') ||
-                        document.querySelector('input[name="sku"]');
-          if (input) { input.focus(); }
-        })()
-      `);
-      await this.interruptibleDelay(100);
-      await cdpService.type(listing.sku, DELAYS.typing);
+      const skuOk = await this.setFieldValue('#listing-sku-input, input[name="sku"]', listing.sku);
+      if (!skuOk) {
+        await cdpService.evaluate(`
+          (() => {
+            const input = document.querySelector('#listing-sku-input') ||
+                          document.querySelector('input[name="sku"]');
+            if (input) { input.focus(); }
+          })()
+        `);
+        await this.interruptibleDelay(100);
+        await cdpService.type(listing.sku, DELAYS.typing);
+      }
       await this.interruptibleDelay(DELAYS.short);
     }
   }
@@ -654,16 +657,18 @@ class EtsyAutomationService {
     await this.interruptibleDelay(DELAYS.medium);
 
     for (const tag of tags.slice(0, 13)) {
-      await cdpService.evaluate(`
-        (() => {
-          const input = document.querySelector('#listing-tags-input') ||
-                        document.querySelector('input[placeholder*="tag"]');
-          if (input) { input.focus(); input.value = ''; }
-        })()
-      `);
-      await this.interruptibleDelay(100);
-
-      await cdpService.type(tag, DELAYS.typing);
+      const ok = await this.setFieldValue('#listing-tags-input, input[placeholder*="tag"]', tag);
+      if (!ok) {
+        await cdpService.evaluate(`
+          (() => {
+            const input = document.querySelector('#listing-tags-input') ||
+                          document.querySelector('input[placeholder*="tag"]');
+            if (input) { input.focus(); input.value = ''; }
+          })()
+        `);
+        await this.interruptibleDelay(100);
+        await cdpService.type(tag, DELAYS.typing);
+      }
 
       await cdpService.evaluate(`
         (() => {
@@ -691,14 +696,17 @@ class EtsyAutomationService {
     await this.interruptibleDelay(DELAYS.medium);
 
     for (const material of materials.slice(0, 13)) {
-      await cdpService.evaluate(`
-        (() => {
-          const input = document.querySelector('#listing-materials-input');
-          if (input) { input.focus(); input.value = ''; }
-        })()
-      `);
-      await this.interruptibleDelay(100);
-      await cdpService.type(material, DELAYS.typing);
+      const ok = await this.setFieldValue('#listing-materials-input', material);
+      if (!ok) {
+        await cdpService.evaluate(`
+          (() => {
+            const input = document.querySelector('#listing-materials-input');
+            if (input) { input.focus(); input.value = ''; }
+          })()
+        `);
+        await this.interruptibleDelay(100);
+        await cdpService.type(material, DELAYS.typing);
+      }
 
       await cdpService.evaluate(`
         (() => {
@@ -864,54 +872,53 @@ class EtsyAutomationService {
       await this.interruptibleDelay(DELAYS.short);
 
       if (t.title && String(t.title).trim()) {
-        const titleReady = await cdpService.evaluate(`
-          (() => {
-            const ta = document.querySelector('textarea[name="translations.${N}.title"]');
-            if (!ta) return false;
-            ta.scrollIntoView({ block: 'center' });
-            ta.focus();
-            ta.select();
-            return true;
-          })()
-        `);
-        if (titleReady) {
+        const titleSelector = `textarea[name="translations.${N}.title"]`;
+        const ok = await this.setFieldValue(titleSelector, String(t.title).substring(0, 140));
+        if (!ok) {
+          await cdpService.evaluate(`
+            (() => {
+              const ta = document.querySelector('textarea[name="translations.${N}.title"]');
+              if (ta) { ta.scrollIntoView({ block: 'center' }); ta.focus(); ta.select(); }
+            })()
+          `);
           await cdpService.type(String(t.title).substring(0, 140), DELAYS.typing);
-          await this.interruptibleDelay(DELAYS.short);
         }
+        await this.interruptibleDelay(DELAYS.short);
       }
 
       if (t.description && String(t.description).trim()) {
-        const descReady = await cdpService.evaluate(`
-          (() => {
-            const ta = document.querySelector('textarea[name="translations.${N}.description"]');
-            if (!ta) return false;
-            ta.scrollIntoView({ block: 'center' });
-            ta.focus();
-            ta.select();
-            return true;
-          })()
-        `);
-        if (descReady) {
+        const descSelector = `textarea[name="translations.${N}.description"]`;
+        const ok = await this.setFieldValue(descSelector, String(t.description));
+        if (!ok) {
+          await cdpService.evaluate(`
+            (() => {
+              const ta = document.querySelector('textarea[name="translations.${N}.description"]');
+              if (ta) { ta.scrollIntoView({ block: 'center' }); ta.focus(); ta.select(); }
+            })()
+          `);
           await cdpService.type(String(t.description), DELAYS.typing);
-          await this.interruptibleDelay(DELAYS.short);
         }
+        await this.interruptibleDelay(DELAYS.short);
       }
 
       const tags = Array.isArray(t.tags) ? t.tags.filter(x => x && String(x).trim()).slice(0, 13) : [];
+      const tagSelector = `[id="listing-translations.${N}.tags-input"]`;
       for (const tag of tags) {
         const tagText = String(tag).substring(0, 30);
-        const inputReady = await cdpService.evaluate(`
-          (() => {
-            const input = document.querySelector('[id="listing-translations.${N}.tags-input"]');
-            if (!input) return false;
-            input.focus();
-            input.value = '';
-            return true;
-          })()
-        `);
-        if (!inputReady) break;
-
-        await cdpService.type(tagText, DELAYS.typing);
+        const ok = await this.setFieldValue(tagSelector, tagText);
+        if (!ok) {
+          const inputReady = await cdpService.evaluate(`
+            (() => {
+              const input = document.querySelector('[id="listing-translations.${N}.tags-input"]');
+              if (!input) return false;
+              input.focus();
+              input.value = '';
+              return true;
+            })()
+          `);
+          if (!inputReady) break;
+          await cdpService.type(tagText, DELAYS.typing);
+        }
 
         await cdpService.evaluate(`
           (() => {
@@ -1224,6 +1231,35 @@ class EtsyAutomationService {
       await this.delay(500);
     }
     return false;
+  }
+
+  // Fast field-fill via native value setter + synthetic React events.
+  // Use for non-typeahead fields. Skips per-character keystrokes — populates the
+  // entire string in one CDP round-trip. Works on React-controlled inputs because
+  // we use the native value setter (React intercepts the prototype setter).
+  // Falls back to typing if the synthetic events don't take.
+  async setFieldValue(selector, text, options = {}) {
+    const result = await cdpService.evaluate(`
+      (() => {
+        const el = document.querySelector(${JSON.stringify(selector)});
+        if (!el) return { ok: false, reason: 'no element' };
+        el.scrollIntoView({ block: 'center' });
+        el.focus();
+        const proto = el instanceof window.HTMLTextAreaElement
+          ? window.HTMLTextAreaElement.prototype
+          : window.HTMLInputElement.prototype;
+        const setter = Object.getOwnPropertyDescriptor(proto, 'value').set;
+        setter.call(el, ${JSON.stringify(String(text))});
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+        return { ok: true, value: el.value };
+      })()
+    `);
+    if (!result?.ok && options.fallbackToTyping !== false) {
+      console.warn(`setFieldValue failed for "${selector}": ${result?.reason} — falling back to simulated typing`);
+      return false;
+    }
+    return result?.ok || false;
   }
 
   async clickByText(text, container = '') {
