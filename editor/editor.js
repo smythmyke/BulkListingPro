@@ -112,6 +112,10 @@ const els = {
   translateBulkProgress: document.getElementById('translate-bulk-progress'),
   translateProgressFill: document.getElementById('translate-progress-fill'),
   translateProgressText: document.getElementById('translate-progress-text'),
+  langDisclosureEditorModal: document.getElementById('lang-disclosure-editor-modal'),
+  langDisclosureEditorBackdrop: document.getElementById('lang-disclosure-editor-backdrop'),
+  langDisclosureEditorClose: document.getElementById('lang-disclosure-editor-close'),
+  langDisclosureEditorOk: document.getElementById('lang-disclosure-editor-ok'),
   tourBtn: document.getElementById('tour-btn')
 };
 
@@ -498,6 +502,10 @@ function setupEventListeners() {
   els.translateBulkScope.addEventListener('change', updateTranslateBulkCost);
   els.translateBulkLangs.addEventListener('change', updateTranslateBulkCost);
 
+  els.langDisclosureEditorOk.addEventListener('click', acknowledgeLangDisclosure);
+  els.langDisclosureEditorClose.addEventListener('click', acknowledgeLangDisclosure);
+  els.langDisclosureEditorBackdrop.addEventListener('click', acknowledgeLangDisclosure);
+
   const lightboxEl = document.getElementById('lightbox');
   if (lightboxEl) {
     lightboxEl.querySelector('.lightbox-backdrop').addEventListener('click', closeLightbox);
@@ -566,6 +574,7 @@ function handleGridChange(type, detail) {
         }
         listings[y].translate_languages = checked ? [...TRANSLATION_LANGUAGE_ISOS] : [];
         scheduleSave();
+        maybeShowLangDisclosure(checked);
         return;
       }
       if (x >= TRANSLATE_FIRST_LANG_COL && x <= TRANSLATE_LAST_LANG_COL) {
@@ -578,6 +587,7 @@ function handleGridChange(type, detail) {
         const allChecked = TRANSLATION_LANGUAGE_ISOS.every(l => current.has(l));
         updateCell(TRANSLATE_ALL_COL, y, allChecked);
         scheduleSave();
+        maybeShowLangDisclosure(checked);
         return;
       }
 
@@ -2650,6 +2660,29 @@ async function handleEvaluateListing(lid, btn) {
   }
 }
 
+async function maybeShowLangDisclosure(wasChecked) {
+  // Only show on check (not uncheck), and only once (until acknowledged)
+  if (!wasChecked) return;
+  try {
+    const data = await chrome.storage.local.get('bulklistingpro_translations');
+    const prefs = data.bulklistingpro_translations || {};
+    if (prefs.disclosure_acknowledged) return;
+    els.langDisclosureEditorModal.style.display = '';
+    els.langDisclosureEditorBackdrop.style.display = '';
+  } catch {}
+}
+
+async function acknowledgeLangDisclosure() {
+  els.langDisclosureEditorModal.style.display = 'none';
+  els.langDisclosureEditorBackdrop.style.display = 'none';
+  try {
+    const data = await chrome.storage.local.get('bulklistingpro_translations');
+    const prefs = data.bulklistingpro_translations || {};
+    prefs.disclosure_acknowledged = true;
+    await chrome.storage.local.set({ bulklistingpro_translations: prefs });
+  } catch {}
+}
+
 function handleTranslateAllToggle(checkbox) {
   const id = checkbox.dataset.listingId;
   const listing = findListingById(id);
@@ -2658,6 +2691,7 @@ function handleTranslateAllToggle(checkbox) {
   listing.translate_languages = checkbox.checked ? [...TRANSLATION_LANGUAGE_ISOS] : [];
   rerenderCard(id);
   scheduleSave();
+  maybeShowLangDisclosure(checkbox.checked);
 }
 
 function handleTranslateLangToggle(checkbox) {
@@ -2672,6 +2706,7 @@ function handleTranslateLangToggle(checkbox) {
   listing.translate_languages = [...set];
   rerenderCard(id);
   scheduleSave();
+  maybeShowLangDisclosure(checkbox.checked);
 }
 
 function handleTranslationFieldChange(input) {

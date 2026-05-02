@@ -2333,6 +2333,20 @@ body.lightbox-open {
   border-radius: 6px;
   margin-top: 4px;
 }
+
+.lang-disclosure-editor-modal {
+  max-width: 480px;
+}
+.lang-disclosure-list {
+  margin: 12px 0 8px 18px;
+  padding: 0;
+  font-size: 13px;
+  color: #555;
+  line-height: 1.5;
+}
+.lang-disclosure-list li {
+  margin-bottom: 6px;
+}
 .translate-bulk-langs label {
   display: flex;
   align-items: center;

@@ -23,6 +23,7 @@ class EtsyAutomationService {
     this.skipCurrent = false;
     this.onProgressCallback = null;
     this.onVerificationCallback = null;
+    this.translationsVerified = false;
   }
 
   static getInstance() {
@@ -36,6 +37,7 @@ class EtsyAutomationService {
     this.isPaused = false;
     this.isCancelled = false;
     this.skipCurrent = false;
+    this.translationsVerified = false;
   }
 
   pause() { this.isPaused = true; }
@@ -120,6 +122,28 @@ class EtsyAutomationService {
       if (!listing.category || !String(listing.category).trim()) {
         throw new Error('Category is required — set the "category" column to an Etsy taxonomy leaf');
       }
+
+      const needsTranslations = Array.isArray(listing.translate_languages) && listing.translate_languages.length > 0;
+      if (needsTranslations && !this.translationsVerified) {
+        const sectionPresent = await cdpService.evaluate(`
+          (() => !!document.querySelector('#field-translations'))()
+        `);
+        if (sectionPresent) {
+          this.translationsVerified = true;
+          console.log('Translation section present — shop languages already enabled');
+        } else {
+          console.log('Translation section missing — running shop language enable');
+          if (this.onProgressCallback) {
+            this.onProgressCallback({ status: 'enabling_languages', message: 'Enabling translation languages on your shop (one-time setup)...' });
+          }
+          await this.enableShopLanguages();
+          this.translationsVerified = true;
+          await cdpService.navigate(ETSY_URLS.newListing);
+          await this.interruptibleDelay(1000);
+          await this.waitForCategoryInput();
+        }
+      }
+
       await this.selectCategory(String(listing.category).trim());
       await this.fillItemDetails(listing);
       await this.fillAboutTab(listing);
