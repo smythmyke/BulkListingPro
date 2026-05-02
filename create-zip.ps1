@@ -1,5 +1,5 @@
 $source = 'C:\Projects\BulkListingPro-extension'
-$version = '0.9.2'
+$version = '0.9.3'
 $dest = "$source\BulkListingPro-v$version.zip"
 $temp = "$source\_temp_zip"
 

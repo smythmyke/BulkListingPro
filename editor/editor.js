@@ -1245,11 +1245,44 @@ function rerenderCard(id) {
   if (index === -1) return;
   const card = els.listingCards.querySelector(`[data-listing-id="${id}"]`);
   if (!card) return;
+
+  // Capture <details> open state so re-render doesn't collapse panels the user opened
+  const openDetailsKeys = new Set();
+  card.querySelectorAll('details').forEach(d => {
+    if (!d.open) return;
+    if (d.classList.contains('advanced-options')) {
+      openDetailsKeys.add('advanced-options');
+    } else if (d.classList.contains('translation-panel')) {
+      const lang = d.dataset.translationLang;
+      if (lang) openDetailsKeys.add(`translation-panel:${lang}`);
+    }
+  });
+
   const collapsed = !expandedIds.has(id) && expandedIds.size > 0;
   const temp = document.createElement('div');
   temp.innerHTML = renderListingCard(listings[index], index, collapsed);
   const newCard = temp.firstElementChild;
   card.replaceWith(newCard);
+
+  // Restore <details> open state
+  if (openDetailsKeys.has('advanced-options')) {
+    const adv = newCard.querySelector('details.advanced-options');
+    if (adv) adv.open = true;
+  }
+  newCard.querySelectorAll('details.translation-panel').forEach(d => {
+    const lang = d.dataset.translationLang;
+    if (lang && openDetailsKeys.has(`translation-panel:${lang}`)) {
+      d.open = true;
+    } else if (lang && !openDetailsKeys.has(`translation-panel:${lang}`)) {
+      // User had collapsed this panel previously — keep it collapsed even though
+      // form-view renders new panels as open by default.
+      // Only honor this for languages that were already present before re-render
+      // (newly checked languages remain open as form-view intends).
+      const wasPresent = card.querySelector(`details.translation-panel[data-translation-lang="${lang}"]`);
+      if (wasPresent) d.open = false;
+    }
+  });
+
   const tagInput = newCard.querySelector(`[data-field="tag_input"][data-listing-id="${id}"]`);
   if (tagInput) tagInput.focus();
   updateTagSuggestions(id);
