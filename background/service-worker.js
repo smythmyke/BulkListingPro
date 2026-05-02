@@ -42,6 +42,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       handleCreateCheckout(message.payload, sendResponse);
       return true;
 
+    case 'GET_SUBSCRIPTION_PLANS':
+      handleGetSubscriptionPlans(sendResponse);
+      return true;
+
+    case 'CREATE_SUBSCRIPTION_CHECKOUT':
+      handleCreateSubscriptionCheckout(message.payload, sendResponse);
+      return true;
+
+    case 'OPEN_CUSTOMER_PORTAL':
+      handleOpenCustomerPortal(sendResponse);
+      return true;
+
     case 'DEDUCT_CREDITS':
       handleDeductCredits(message.payload, sendResponse);
       return true;
@@ -161,6 +173,34 @@ async function handleCreateCheckout(payload, sendResponse) {
   try {
     const { packId } = payload;
     const result = await creditsService.createCheckoutSession(packId);
+    sendResponse({ success: true, ...result });
+  } catch (error) {
+    sendResponse({ success: false, error: error.message });
+  }
+}
+
+async function handleGetSubscriptionPlans(sendResponse) {
+  try {
+    const plans = await creditsService.getSubscriptionPlans();
+    sendResponse({ success: true, plans });
+  } catch (error) {
+    sendResponse({ success: false, plans: [], error: error.message });
+  }
+}
+
+async function handleCreateSubscriptionCheckout(payload, sendResponse) {
+  try {
+    const { planId } = payload;
+    const result = await creditsService.createSubscriptionCheckout(planId);
+    sendResponse({ success: true, ...result });
+  } catch (error) {
+    sendResponse({ success: false, error: error.message });
+  }
+}
+
+async function handleOpenCustomerPortal(sendResponse) {
+  try {
+    const result = await creditsService.openCustomerPortal();
     sendResponse({ success: true, ...result });
   } catch (error) {
     sendResponse({ success: false, error: error.message });

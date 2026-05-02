@@ -1,7 +1,7 @@
 # BulkListingPro Master Checklist
 
-> **Last Updated:** February 7, 2026
-> **Status:** Phase 1 Complete — Editor Phase 6 Complete
+> **Last Updated:** March 22, 2026
+> **Status:** Phase 1-2 Complete — Phase 3 Mostly Complete — Subscription Plans Live
 
 ---
 
@@ -33,7 +33,7 @@
   - [x] Title, description, price fields
   - [x] Category dropdown
   - [x] Image drag/drop zone (up to 5 images)
-  - [ ] Digital file path input with browse button
+  - [x] Digital file path input with browse button
   - [x] Tag input (comma separated)
   - [x] Add to Queue button
 - [x] Spreadsheet import
@@ -105,7 +105,7 @@
 - [x] Using existing Stripe products (shared with GovToolsPro)
 - [x] Using /api/stripe/create-credit-checkout endpoint
 - [x] Stripe webhook already configured in backend
-- [ ] Test purchase flow end-to-end
+- [x] Test purchase flow end-to-end
 - [x] Handle insufficient credits error (shows modal)
 - [x] Deduct credits on successful listing upload (2 credits/listing)
 
@@ -142,20 +142,18 @@
 - [x] Load settings on startup
 
 ### 2.3 Chrome Web Store Submission
-- [ ] Create 5 screenshots
+- [x] Create 6 screenshots → `store-listing/screenshots/`
 - [ ] Create promotional video (optional)
 - [x] Write store description → `store-listing/description.md`
 - [x] Create privacy policy → `store-listing/privacy-policy.html`
 - [x] Create terms of service → `store-listing/terms-of-service.html`
 - [x] Create packaging script → `create-zip.ps1`
-- [ ] Enable GitHub Pages (Settings → Pages → Source: Deploy from branch, /docs folder)
-  - URL: `https://smythmyke.github.io/BulkListingPro/` (landing page)
-  - URL: `https://smythmyke.github.io/BulkListingPro/privacy-policy.html`
-  - URL: `https://smythmyke.github.io/BulkListingPro/terms-of-service.html`
-- [ ] Set up developer account ($5 fee)
-- [ ] Submit for review
-- [ ] Respond to any review feedback
-- [ ] **LAUNCH**
+- [x] Enable GitHub Pages with landing page, SEO, sitemap, robots.txt
+  - URL: `https://smythmyke.github.io/BulkListingPro/`
+- [x] Set up developer account
+- [x] Submit and published on Chrome Web Store
+  - CWS URL: `https://chromewebstore.google.com/detail/gmmjdkdgejglelaemhpdekcmeaaccnab`
+- [x] **LAUNCHED** (v0.7.2, 4 weekly active users, 51 installs in first 21 days)
 
 ### 2.4 Native Host Distribution
 - [ ] Host installer files (S3, GitHub Releases, etc.)
@@ -166,11 +164,13 @@
 
 ### 2.5 Marketing
 - [ ] Register domain (bulklistingpro.com?)
-- [ ] Create landing page
+- [x] Create landing page (GitHub Pages)
 - [ ] Create Etsy listing for the extension
 - [ ] Create tutorial video
 - [ ] Write help documentation
 - [ ] Set up support email
+- [x] Google Ads campaign (Search Ads, $5/day budget)
+- [x] Reddit outreach strategy
 
 ---
 
@@ -182,30 +182,28 @@
 - [ ] Fix reported bugs
 
 ### 3.2 Referral & Affiliate System (Port from GovToolsPro)
-- [x] Welcome bonus: 10 free credits for new users (backend change)
+- [x] Welcome bonus: 10 free credits for new users (backend DEFAULT_CREDITS = 10, deployed)
 - [x] Welcome toast notification in sidepanel
-- [ ] **Deploy backend change** (DEFAULT_CREDITS = 10) to production
-- [ ] **Referral System** (USR codes)
-  - [ ] Port referral code generation/validation from GovToolsPro
-  - [ ] 100 credits for referrer when code used
-  - [ ] 100 credits for new user who uses code
-  - [ ] Share referral code pool with GovToolsPro (same codes work in both)
-- [ ] **Affiliate System** (AFF codes)
-  - [ ] Port affiliate code generation/validation from GovToolsPro
-  - [ ] 10% commission via Stripe Connect
-  - [ ] Share affiliate code pool with GovToolsPro
-- [ ] **Welcome Modal for New Users**
-  - [ ] Show modal on first sign-in
-  - [ ] Input field for referral/affiliate code
-  - [ ] Apply code and show success message
-- [ ] Account tab: Show user's referral code and copy button
-- [ ] Account tab: Show referral stats (invites, credits earned)
+- [x] **Deploy backend change** (DEFAULT_CREDITS = 10) to production
+- [x] **Referral System** (USR codes)
+  - [x] Port referral code generation/validation from GovToolsPro
+  - [x] 100 credits for referrer when code used
+  - [x] 100 credits for new user who uses code
+  - [x] Share referral code pool with GovToolsPro (same codes work in both)
+- [x] **Affiliate System** (AFF codes)
+  - [x] Port affiliate code generation/validation from GovToolsPro
+  - [x] 10% commission via Stripe Connect
+  - [x] Share affiliate code pool with GovToolsPro
+- [x] **Welcome Modal for New Users**
+  - [x] Show modal on first sign-in
+  - [x] Input field for referral/affiliate code
+  - [x] Apply code and show success message
+- [x] Account tab: Show user's referral code and copy button
+- [x] Account tab: Show referral stats (invites, credits earned)
 
 ### 3.3 Feature Ideas (Prioritize Later)
-- [ ] **Retry failed listings** - Auto-retry or manual "Retry Failed" button after upload completes
-- [ ] **Publish vs Draft toggle** - Let users choose to publish immediately or save as draft (default: draft)
-  - UI: Toggle button or dropdown in queue section before starting upload
-  - Spreadsheet: Optional `listing_state` column (values: `draft` or `active`)
+- [x] **Retry failed listings** - Auto-retry after initial batch pass
+- [x] **Publish vs Draft toggle** - listing_state field, dropdown in queue, default: draft
 - [ ] **Optional category attributes** - Support Craft Type, Occasion, Holiday for enhanced discoverability
 - [ ] Listing templates (save & reuse)
 - [ ] Scheduled uploads
@@ -213,7 +211,29 @@
 - [ ] Multi-shop support
 - [ ] Bulk edit existing listings
 - [x] AI description generator (Editor Phase 6)
+- [x] AI listing evaluation (quality scoring, tag analysis, recommendations)
 - [ ] Other platforms (Amazon, Shopify)
+
+### 3.5 Etsy Field Automation Phase 2 (Completed)
+- [x] Primary/Secondary Color — typeahead dropdowns
+- [x] Personalization — instructions, character limit, required flag
+- [x] Listing type toggle — with confirmation dialog
+- [x] Featured/Etsy Ads toggles
+
+### 3.6 Etsy Field Automation Phase 3 (Pending)
+- [ ] Shipping profile — overlay modal selection
+- [ ] Return policy — overlay modal selection
+- [ ] Processing time/readiness state
+- [ ] Production partners (conditional on who_made=another)
+
+### 3.7 Subscription Plans (Completed March 2026)
+- [x] Monthly subscription plans (Starter $4.99, Pro $9.99, Power $19.99)
+- [x] Stripe live products created on govtoolspro.com account
+- [x] Backend: subscription checkout, portal, webhook handlers
+- [x] Frontend: MarkItUp-style modal with plans grid + credit packs
+- [x] Subscription credits deducted first, topup credits as overflow
+- [x] Credit display shows subscription info (X/Y credits, reset date)
+- [x] Removed Pro/Power credit packs (kept Starter $1.99 + Standard $4.99)
 
 ### 3.4 Account Tab (Implemented)
 - [x] Profile section (name, email, picture)
@@ -239,8 +259,9 @@
 |----------|---------|--------|
 | Backend architecture | A: Extend GovToolsPro API / B: New standalone | **Resolved: Option A** |
 | Domain name | bulklistingpro.com / other? | **Pending** |
-| Pricing validation | ~$0.03-0.05/listing (2 credits) | **Resolved** |
+| Pricing validation | Packs: $0.04-0.08/listing, Subs: $0.02-0.06/listing | **Resolved** |
 | Google OAuth client ID | Create new or share? | **Pending** |
+| Subscription pricing | Starter $4.99, Pro $9.99, Power $19.99 | **Resolved** |
 
 ---
 
@@ -283,6 +304,13 @@
 | 2026-02-07 | Editor Phase 5 complete (tag library integration, category suggestions, competitor import, frequency analysis, batch tag operations, similar tag warnings) |
 | 2026-02-07 | Editor Phase 6 complete (AI generation — titles, descriptions, tags; bulk generation; AI panel; credit-based via Gemini backend) |
 | 2026-02-07 | Listing Evaluation feature complete (AI quality scoring for all fields, inline score chips, hover tooltips with recommendations, tag swap actions, bulk evaluate modal, 2 credits/eval) |
+| 2026-02-08 | Published on Chrome Web Store (v0.2.0+) |
+| 2026-02 | Phase 2 field automation complete (colors, personalization, listing type, featured/ads toggles) |
+| 2026-02 | Referral & Affiliate system ported from GovToolsPro (USR/AFF codes, Stripe Connect, welcome modal) |
+| 2026-03 | Landing page, SEO infrastructure, GitHub Pages, Google Search Console |
+| 2026-03-19 | Google Ads campaign launched ($5/day budget, 96 keywords) |
+| 2026-03-22 | Monthly subscription plans live (Starter $4.99, Pro $9.99, Power $19.99) |
+| 2026-03-22 | Credit packs trimmed (removed Pro $11.99 + Power $24.99, kept Starter $1.99 + Standard $4.99) |
 | | |
 
 ---

@@ -92,10 +92,8 @@ class CreditsService {
 
   async getCreditPacks() {
     try {
-      const response = await fetch(`${API_BASE}/api/stripe/credit-packs`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch credit packs');
-      }
+      const response = await fetch(`${API_BASE}/api/stripe/credit-packs`, { headers: getExtensionHeaders() });
+      if (!response.ok) throw new Error('Failed to fetch credit packs');
       const data = await response.json();
       return data.packs;
     } catch (error) {
@@ -103,10 +101,58 @@ class CreditsService {
       return [
         { id: 'starter', name: 'Starter Pack', credits: 50, price: 199, priceFormatted: '$1.99', badge: null },
         { id: 'standard', name: 'Standard Pack', credits: 150, price: 499, priceFormatted: '$4.99', badge: 'popular' },
-        { id: 'pro', name: 'Pro Pack', credits: 400, price: 1199, priceFormatted: '$11.99', badge: null },
-        { id: 'power', name: 'Power Pack', credits: 1000, price: 2499, priceFormatted: '$24.99', badge: 'best_value' }
       ];
     }
+  }
+
+  async getSubscriptionPlans() {
+    try {
+      const response = await fetch(`${API_BASE}/api/stripe/subscription-plans`, { headers: getExtensionHeaders() });
+      if (!response.ok) throw new Error('Failed to fetch plans');
+      const data = await response.json();
+      return data.plans;
+    } catch (error) {
+      console.error('[Credits] Failed to fetch plans:', error);
+      return [
+        { id: 'starter', name: 'Starter', monthlyCredits: 160, price: 499, priceFormatted: '$4.99', perCredit: '$0.031', listingsPerMonth: 80 },
+        { id: 'pro', name: 'Pro', monthlyCredits: 400, price: 999, priceFormatted: '$9.99', perCredit: '$0.025', badge: 'popular', listingsPerMonth: 200 },
+        { id: 'power', name: 'Power', monthlyCredits: 1000, price: 1999, priceFormatted: '$19.99', perCredit: '$0.020', badge: 'best_value', listingsPerMonth: 500 },
+      ];
+    }
+  }
+
+  async createSubscriptionCheckout(planId) {
+    const headers = await getApiHeaders();
+    const response = await fetch(`${API_BASE}/api/stripe/create-subscription-checkout`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        planId,
+        successUrl: chrome.runtime.getURL('sidepanel/sidepanel.html?subscription=success'),
+        cancelUrl: chrome.runtime.getURL('sidepanel/sidepanel.html?subscription=cancelled')
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to create subscription checkout');
+    }
+    return response.json();
+  }
+
+  async openCustomerPortal() {
+    const headers = await getApiHeaders();
+    const response = await fetch(`${API_BASE}/api/stripe/subscription-portal`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({})
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to open portal');
+    }
+    return response.json();
   }
 
   async createCheckoutSession(packId) {

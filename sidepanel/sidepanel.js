@@ -66,8 +66,10 @@ const elements = {
   skipBtn: document.getElementById('skip-btn'),
   cancelBtn: document.getElementById('cancel-btn'),
   creditsModal: document.getElementById('credits-modal'),
+  creditsModalTitle: document.getElementById('credits-modal-title'),
+  creditsModalBalance: document.getElementById('credits-modal-balance-value'),
+  subscriptionPlans: document.getElementById('subscription-plans'),
   creditPacksContainer: document.getElementById('credit-packs'),
-  buyCreditsBtn: document.getElementById('buy-credits-btn'),
   closeModalBtn: document.getElementById('close-modal-btn'),
   resultsSection: document.getElementById('results-section'),
   resultsSuccess: document.getElementById('results-success'),
@@ -148,6 +150,7 @@ document.addEventListener('DOMContentLoaded', init);
 async function init() {
   console.log('BulkListingPro sidepanel initializing...');
   setupEventListeners();
+  setupCalculator();
   await checkPageStatus();
   await loadResearchClipboard();
   await loadTagLibrary();
@@ -161,8 +164,8 @@ async function init() {
   await checkAuth();
 
   const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get('purchase') === 'success') {
-    showToast('Purchase successful! Credits added.', 'success');
+  if (urlParams.get('purchase') === 'success' || urlParams.get('subscription') === 'success') {
+    showToast(urlParams.get('subscription') ? 'Subscription activated!' : 'Purchase successful! Credits added.', 'success');
     await loadCredits(true);
     window.history.replaceState({}, '', window.location.pathname);
   }
@@ -303,7 +306,6 @@ function setupEventListeners() {
   elements.signInBtn.addEventListener('click', signIn);
   elements.signOutBtn.addEventListener('click', signOut);
   elements.creditBalance.addEventListener('click', showCreditsModal);
-  elements.buyCreditsBtn.addEventListener('click', purchaseCredits);
   elements.closeModalBtn.addEventListener('click', hideCreditsModal);
   elements.creditsModal.addEventListener('click', (e) => {
     if (e.target === elements.creditsModal) hideCreditsModal();
@@ -616,11 +618,19 @@ function updateCreditsDisplay(oldValue) {
   const newValue = credits.available;
   const creditsSpan = elements.creditBalance.querySelector('.credits');
 
-  creditsSpan.textContent = newValue;
-
-  elements.accountCredits.textContent = newValue;
-  const listingsEstimate = Math.floor(newValue / CREDITS_PER_LISTING);
-  elements.accountCreditsEstimate.textContent = `(~${listingsEstimate} listings)`;
+  if (credits.subscription?.status === 'active') {
+    const sub = credits.subscription;
+    creditsSpan.textContent = `${credits.subscriptionCredits || 0}/${sub.monthlyAllocation}`;
+    const resetDate = sub.currentPeriodEnd ? new Date(sub.currentPeriodEnd).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+    elements.accountCredits.textContent = `${credits.subscriptionCredits || 0} / ${sub.monthlyAllocation}`;
+    const topup = credits.topupCredits || 0;
+    elements.accountCreditsEstimate.textContent = `(resets ${resetDate})${topup > 0 ? ` + ${topup} bonus` : ''}`;
+  } else {
+    creditsSpan.textContent = newValue;
+    elements.accountCredits.textContent = newValue;
+    const listingsEstimate = Math.floor(newValue / CREDITS_PER_LISTING);
+    elements.accountCreditsEstimate.textContent = `(~${listingsEstimate} listings)`;
+  }
 
   if (oldValue !== undefined && oldValue !== newValue) {
     elements.creditBalance.classList.remove('animate-pop', 'animate-deduct');
@@ -885,13 +895,100 @@ async function showAffiliateDashboard() {
   }
 }
 
+let currentSubscription = null;
+let subscriptionPlans = [];
+
 async function showCreditsModal() {
   elements.creditsModal.classList.remove('hidden');
-  await loadCreditPacks();
+
+  const creditsResponse = await chrome.runtime.sendMessage({ type: 'CHECK_CREDITS' });
+  if (creditsResponse.success) {
+    const balance = creditsResponse.credits;
+    elements.creditsModalBalance.textContent = balance.available || 0;
+    currentSubscription = balance.subscription || null;
+    elements.creditsModalTitle.textContent = currentSubscription?.status === 'active' ? 'Manage Plan' : 'Get Credits';
+  }
+
+  await Promise.all([loadSubscriptionPlans(), loadCreditPacks()]);
 }
 
 function hideCreditsModal() {
   elements.creditsModal.classList.add('hidden');
+}
+
+async function loadSubscriptionPlans() {
+  const response = await chrome.runtime.sendMessage({ type: 'GET_SUBSCRIPTION_PLANS' });
+  subscriptionPlans = response.success && response.plans.length > 0 ? response.plans : [
+    { id: 'starter', name: 'Starter', monthlyCredits: 160, price: 499, priceFormatted: '$4.99', perCredit: '$0.031', listingsPerMonth: 80 },
+    { id: 'pro', name: 'Pro', monthlyCredits: 400, price: 999, priceFormatted: '$9.99', perCredit: '$0.025', badge: 'popular', listingsPerMonth: 200 },
+    { id: 'power', name: 'Power', monthlyCredits: 1000, price: 1999, priceFormatted: '$19.99', perCredit: '$0.020', badge: 'best_value', listingsPerMonth: 500 },
+  ];
+  renderSubscriptionPlans();
+}
+
+function renderSubscriptionPlans() {
+  const activePlanId = currentSubscription?.status === 'active' ? currentSubscription.planId : null;
+
+  elements.subscriptionPlans.innerHTML = subscriptionPlans.map(plan => {
+    const isCurrent = plan.id === activePlanId;
+    const priceFormatted = plan.priceFormatted || `$${(plan.price / 100).toFixed(2)}`;
+    let badgeHtml = '';
+    if (isCurrent) {
+      badgeHtml = '<span class="sub-plan-badge current-badge">CURRENT</span>';
+    } else if (plan.badge === 'popular' && !activePlanId) {
+      badgeHtml = '<span class="sub-plan-badge">POPULAR</span>';
+    }
+
+    const btnClass = isCurrent ? 'manage' : 'subscribe';
+    const btnText = isCurrent ? 'Manage' : 'Subscribe';
+
+    return `
+      <div class="sub-plan ${isCurrent ? 'current' : ''}" data-plan-id="${plan.id}">
+        ${badgeHtml}
+        <div class="sub-plan-name">${plan.name}</div>
+        <div class="sub-plan-price">${priceFormatted}<span>/mo</span></div>
+        <div class="sub-plan-credits">${plan.listingsPerMonth} listings/mo</div>
+        <div class="sub-plan-per">${plan.monthlyCredits} credits</div>
+        <button class="sub-plan-btn ${btnClass}" data-plan-id="${plan.id}" data-action="${isCurrent ? 'manage' : 'subscribe'}">${btnText}</button>
+      </div>
+    `;
+  }).join('');
+
+  elements.subscriptionPlans.querySelectorAll('.sub-plan-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const action = btn.dataset.action;
+      const planId = btn.dataset.planId;
+
+      btn.textContent = 'Opening...';
+      btn.disabled = true;
+
+      try {
+        if (action === 'manage') {
+          const response = await chrome.runtime.sendMessage({ type: 'OPEN_CUSTOMER_PORTAL' });
+          if (response.success && response.url) {
+            window.open(response.url, '_blank');
+          } else {
+            showToast(response.error || 'Failed to open portal', 'error');
+          }
+        } else {
+          const response = await chrome.runtime.sendMessage({ type: 'CREATE_SUBSCRIPTION_CHECKOUT', payload: { planId } });
+          if (response.success && response.checkoutUrl) {
+            window.open(response.checkoutUrl, '_blank');
+            hideCreditsModal();
+            showToast('Redirecting to checkout...', 'success');
+          } else {
+            showToast(response.error || 'Failed to create checkout', 'error');
+          }
+        }
+      } catch (error) {
+        showToast('Error: ' + error.message, 'error');
+      } finally {
+        btn.textContent = action === 'manage' ? 'Manage' : 'Subscribe';
+        btn.disabled = false;
+      }
+    });
+  });
 }
 
 async function loadCreditPacks() {
@@ -903,8 +1000,6 @@ async function loadCreditPacks() {
     creditPacks = [
       { id: 'starter', name: 'Starter Pack', credits: 50, price: 199, priceFormatted: '$1.99', badge: null },
       { id: 'standard', name: 'Standard Pack', credits: 150, price: 499, priceFormatted: '$4.99', badge: 'popular' },
-      { id: 'pro', name: 'Pro Pack', credits: 400, price: 1199, priceFormatted: '$11.99', badge: null },
-      { id: 'power', name: 'Power Pack', credits: 1000, price: 2499, priceFormatted: '$24.99', badge: 'best_value' }
     ];
   }
 
@@ -912,63 +1007,50 @@ async function loadCreditPacks() {
 }
 
 function renderCreditPacks() {
-  elements.creditPacksContainer.innerHTML = creditPacks.map((pack, index) => {
-    const isSelected = pack.id === selectedPackId;
-    const badgeHtml = pack.badge
-      ? `<span class="pack-badge ${pack.badge === 'popular' ? 'popular' : 'best-value'}">${pack.badge === 'popular' ? 'Popular' : 'Best Value'}</span>`
-      : '';
+  elements.creditPacksContainer.innerHTML = creditPacks.map(pack => {
     const priceFormatted = pack.priceFormatted || `$${(pack.price / 100).toFixed(2)}`;
     const listingsCount = Math.floor(pack.credits / CREDITS_PER_LISTING);
 
     return `
-      <label class="pack ${isSelected ? 'selected' : ''}" style="animation-delay: ${index * 0.1}s">
-        <input type="radio" name="pack" value="${pack.id}" ${isSelected ? 'checked' : ''}>
-        <span class="pack-info">
-          <strong>${pack.name} ${badgeHtml}</strong>
-          <span>${pack.credits} credits (~${listingsCount} listings)</span>
-        </span>
-        <span class="pack-price">${priceFormatted}</span>
-      </label>
+      <button class="credit-pack-btn" data-pack-id="${pack.id}">
+        <div class="credit-pack-info">
+          <div class="credit-pack-label">${pack.credits} credits</div>
+          <div class="credit-pack-per">~${listingsCount} listings</div>
+        </div>
+        <div class="credit-pack-price">${priceFormatted}</div>
+      </button>
     `;
   }).join('');
 
-  elements.creditPacksContainer.querySelectorAll('.pack').forEach(pack => {
-    pack.addEventListener('click', () => {
-      elements.creditPacksContainer.querySelectorAll('.pack').forEach(p => p.classList.remove('selected'));
-      pack.classList.add('selected');
-      selectedPackId = pack.querySelector('input').value;
+  elements.creditPacksContainer.querySelectorAll('.credit-pack-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const packId = btn.dataset.packId;
+      const priceEl = btn.querySelector('.credit-pack-price');
+      const origText = priceEl.textContent;
+      priceEl.textContent = 'Opening...';
+      btn.disabled = true;
+
+      try {
+        const response = await chrome.runtime.sendMessage({
+          type: 'CREATE_CHECKOUT',
+          payload: { packId }
+        });
+
+        if (response.success && response.checkoutUrl) {
+          window.open(response.checkoutUrl, '_blank');
+          hideCreditsModal();
+          showToast('Redirecting to checkout...', 'success');
+        } else {
+          showToast(response.error || 'Failed to create checkout', 'error');
+        }
+      } catch (error) {
+        showToast('Purchase failed: ' + error.message, 'error');
+      } finally {
+        priceEl.textContent = origText;
+        btn.disabled = false;
+      }
     });
   });
-}
-
-async function purchaseCredits() {
-  if (!selectedPackId) {
-    showToast('Please select a credit pack', 'error');
-    return;
-  }
-
-  elements.buyCreditsBtn.classList.add('btn-loading');
-  elements.buyCreditsBtn.disabled = true;
-
-  try {
-    const response = await chrome.runtime.sendMessage({
-      type: 'CREATE_CHECKOUT',
-      payload: { packId: selectedPackId }
-    });
-
-    if (response.success && response.checkoutUrl) {
-      window.open(response.checkoutUrl, '_blank');
-      hideCreditsModal();
-      showToast('Redirecting to checkout...', 'success');
-    } else {
-      showToast(response.error || 'Failed to create checkout', 'error');
-    }
-  } catch (error) {
-    showToast('Purchase failed: ' + error.message, 'error');
-  } finally {
-    elements.buyCreditsBtn.classList.remove('btn-loading');
-    elements.buyCreditsBtn.disabled = false;
-  }
 }
 
 function handleDragOver(e) {
@@ -1824,13 +1906,13 @@ function updateProgress(completed, total) {
   elements.progressText.textContent = `${completed} of ${total} listings`;
 }
 
-function showToast(message, type = 'success') {
+function showToast(message, type = 'success', duration = 3000) {
   elements.toast.textContent = message;
   elements.toast.className = `toast ${type} show`;
 
   setTimeout(() => {
     elements.toast.classList.remove('show');
-  }, 3000);
+  }, duration);
 }
 
 function delay(ms) {
@@ -1941,7 +2023,56 @@ function showResults() {
   }
 
   renderResultsList();
+  showPromoBanners(successCount);
   clearUploadState();
+}
+
+function showPromoBanners(successCount) {
+  const container = document.getElementById('promo-banners');
+  container.innerHTML = '';
+
+  if (successCount > 0) {
+    container.innerHTML += `
+      <div class="promo-banner marketeer">
+        <img class="promo-banner-icon" src="../assets/icons/marketeer-48.png" alt="Marketeer">
+        <div class="promo-banner-content">
+          <div class="promo-banner-text">
+            <strong>${successCount} listing${successCount > 1 ? 's' : ''} live!</strong> Promote them on Reddit & Facebook to drive early sales.
+          </div>
+          <a class="promo-banner-cta" href="https://chromewebstore.google.com/detail/eipifhbdaempeaeohmcfnldmiciofbib?utm_source=item-share-cb" target="_blank">Try Marketeer →</a>
+        </div>
+        <button class="promo-banner-dismiss" onclick="this.closest('.promo-banner').remove()">&times;</button>
+      </div>
+    `;
+  }
+
+  const missingImages = uploadResults.filter(r => r.status === 'success' && (!r.listing?.image_1 && !r.listing?.image_url_1)).length;
+  if (missingImages > 0) {
+    container.innerHTML += `
+      <div class="promo-banner markitup">
+        <img class="promo-banner-icon" src="../assets/icons/markitup-48.png" alt="MarkItUp">
+        <div class="promo-banner-content">
+          <div class="promo-banner-text">
+            <strong>${missingImages} listing${missingImages > 1 ? 's' : ''}</strong> had missing images. Create professional mockups in seconds.
+          </div>
+          <a class="promo-banner-cta" href="https://markitup.app/" target="_blank">Try MarkItUp →</a>
+        </div>
+        <button class="promo-banner-dismiss" onclick="this.closest('.promo-banner').remove()">&times;</button>
+      </div>
+    `;
+  }
+
+  // One-time MarkItUp promo toast on first successful upload
+  if (successCount > 0) {
+    chrome.storage.local.get(['blp_promo_markitup_shown'], (result) => {
+      if (!result.blp_promo_markitup_shown) {
+        chrome.storage.local.set({ blp_promo_markitup_shown: true });
+        setTimeout(() => {
+          showToast('Need product photos? MarkItUp creates mockups from screenshots with AI → markitup.app', 'info', 8000);
+        }, 3000);
+      }
+    });
+  }
 }
 
 function retryFailed() {
@@ -2153,8 +2284,140 @@ function switchTab(tabName) {
 
   if (tabName === 'research') {
     loadTagLibrary();
+    calculateProfit();
   } else if (tabName === 'account') {
     updateAccountTab();
+  }
+}
+
+function setupCalculator() {
+  const inputs = ['calc-price', 'calc-shipping', 'calc-cost', 'calc-shipping-cost', 'calc-quantity', 'calc-misc', 'calc-discount', 'calc-labor-time', 'calc-hourly-rate', 'calc-target-profit'];
+  inputs.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', calculateProfit);
+  });
+
+  const toggles = ['calc-offsite-ads', 'calc-free-shipping', 'calc-digital'];
+  toggles.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', () => {
+      if (id === 'calc-free-shipping') {
+        const wrap = document.getElementById('calc-shipping-wrap');
+        wrap.classList.toggle('disabled', el.checked);
+        if (el.checked) document.getElementById('calc-shipping').value = '0.00';
+      }
+      if (id === 'calc-digital') {
+        const wrap = document.getElementById('calc-shipping-cost-wrap');
+        wrap.classList.toggle('disabled', el.checked);
+        if (el.checked) document.getElementById('calc-shipping-cost').value = '0.00';
+      }
+      calculateProfit();
+    });
+  });
+
+  const discountType = document.getElementById('calc-discount-type');
+  if (discountType) discountType.addEventListener('change', () => {
+    document.getElementById('calc-discount-symbol').textContent = discountType.value === 'percent' ? '%' : '$';
+    calculateProfit();
+  });
+
+  // Apply initial disabled states
+  document.getElementById('calc-shipping-wrap').classList.add('disabled');
+}
+
+function calculateProfit() {
+  const price = parseFloat(document.getElementById('calc-price').value) || 0;
+  const shippingCharged = parseFloat(document.getElementById('calc-shipping').value) || 0;
+  const costOfGoods = parseFloat(document.getElementById('calc-cost').value) || 0;
+  const miscCosts = parseFloat(document.getElementById('calc-misc').value) || 0;
+  const shippingCost = parseFloat(document.getElementById('calc-shipping-cost').value) || 0;
+  const quantity = parseInt(document.getElementById('calc-quantity').value) || 1;
+  const offsiteAds = document.getElementById('calc-offsite-ads').checked;
+  const freeShipping = document.getElementById('calc-free-shipping').checked;
+  const isDigital = document.getElementById('calc-digital').checked;
+  const discountVal = parseFloat(document.getElementById('calc-discount').value) || 0;
+  const discountType = document.getElementById('calc-discount-type').value;
+  const laborMinutes = parseFloat(document.getElementById('calc-labor-time').value) || 0;
+  const hourlyRate = parseFloat(document.getElementById('calc-hourly-rate').value) || 0;
+
+  const effectiveShipping = freeShipping ? 0 : shippingCharged;
+  const discountAmount = discountType === 'percent' ? price * (discountVal / 100) : discountVal;
+  const salePrice = Math.max(0, price - discountAmount);
+  const totalSale = salePrice + effectiveShipping;
+
+  const listingFee = 0.20;
+  const transactionFee = totalSale * 0.065;
+  const processingFee = totalSale * 0.03 + 0.25;
+  const offsiteFee = offsiteAds ? totalSale * 0.15 : 0;
+  const actualShipping = isDigital ? 0 : shippingCost;
+  const laborCost = (laborMinutes / 60) * hourlyRate;
+
+  const totalFees = listingFee + transactionFee + processingFee + offsiteFee;
+  const productCosts = costOfGoods + miscCosts + actualShipping;
+  const revenue = totalSale * quantity;
+  const totalCostsAll = (totalFees + productCosts + laborCost) * quantity;
+  const profit = revenue - totalCostsAll;
+  const margin = revenue > 0 ? (profit / revenue * 100) : 0;
+  const effectiveFeeRate = totalSale > 0 ? (totalFees / totalSale * 100) : 0;
+
+  document.getElementById('calc-listing-fee').textContent = `-$${listingFee.toFixed(2)}`;
+  document.getElementById('calc-transaction-fee').textContent = `-$${transactionFee.toFixed(2)}`;
+  document.getElementById('calc-processing-fee').textContent = `-$${processingFee.toFixed(2)}`;
+
+  document.getElementById('calc-offsite-row').style.display = offsiteAds ? 'flex' : 'none';
+  document.getElementById('calc-offsite-fee').textContent = `-$${offsiteFee.toFixed(2)}`;
+
+  document.getElementById('calc-total-fees').textContent = `-$${totalFees.toFixed(2)}`;
+  document.getElementById('calc-effective-fee').textContent = `${effectiveFeeRate.toFixed(1)}%`;
+
+  document.getElementById('calc-revenue').textContent = `$${revenue.toFixed(2)}`;
+
+  const discountRow = document.getElementById('calc-discount-row');
+  discountRow.style.display = discountAmount > 0 ? 'flex' : 'none';
+  document.getElementById('calc-discount-amount').textContent = `-$${(discountAmount * quantity).toFixed(2)}`;
+
+  document.getElementById('calc-fees-summary').textContent = `-$${(totalFees * quantity).toFixed(2)}`;
+  document.getElementById('calc-product-costs').textContent = `-$${(productCosts * quantity).toFixed(2)}`;
+
+  const laborRow = document.getElementById('calc-labor-row');
+  laborRow.style.display = laborCost > 0 ? 'flex' : 'none';
+  document.getElementById('calc-labor-cost').textContent = `-$${(laborCost * quantity).toFixed(2)}`;
+
+  const profitEl = document.getElementById('calc-profit');
+  profitEl.textContent = `$${profit.toFixed(2)}`;
+  profitEl.className = `calc-amount ${profit >= 0 ? 'positive' : 'negative'}`;
+
+  const marginEl = document.getElementById('calc-margin');
+  marginEl.textContent = `${margin.toFixed(1)}%`;
+  marginEl.className = `calc-amount ${margin >= 0 ? 'positive' : 'negative'}`;
+
+  const perUnitSection = document.getElementById('calc-per-unit');
+  if (quantity > 1) {
+    perUnitSection.style.display = 'block';
+    document.getElementById('calc-qty-label').textContent = quantity;
+    const profitPer = profit / quantity;
+    const profitPerEl = document.getElementById('calc-profit-per');
+    profitPerEl.textContent = `$${profitPer.toFixed(2)}`;
+    profitPerEl.className = `calc-amount ${profitPer >= 0 ? 'positive' : 'negative'}`;
+  } else {
+    perUnitSection.style.display = 'none';
+  }
+
+  // Reverse calculator
+  const targetProfit = parseFloat(document.getElementById('calc-target-profit').value);
+  const suggestedEl = document.getElementById('calc-suggested-price');
+  if (targetProfit > 0) {
+    // target = price - fees(price) - costs
+    // fees = 0.20 + price*0.065 + price*0.03 + 0.25 + (offsiteAds ? price*0.15 : 0)
+    // target = price - 0.45 - price*(0.065+0.03+(offsiteAds?0.15:0)) - productCosts - laborCost
+    // target + 0.45 + productCosts + laborCost = price * (1 - feeRate)
+    const feeRate = 0.065 + 0.03 + (offsiteAds ? 0.15 : 0);
+    const fixedFees = 0.20 + 0.25;
+    const needed = targetProfit + fixedFees + productCosts + laborCost;
+    const suggestedPrice = needed / (1 - feeRate);
+    suggestedEl.textContent = suggestedPrice > 0 ? `$${suggestedPrice.toFixed(2)}` : '—';
+  } else {
+    suggestedEl.textContent = '—';
   }
 }
 

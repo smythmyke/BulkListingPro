@@ -468,6 +468,7 @@
           <div class="stat skipped"><span id="results-skipped">0</span> Skipped</div>
         </div>
         <div id="results-list" class="results-list"></div>
+        <div id="promo-banners" class="promo-banners"></div>
         <div class="results-actions">
           <button id="retry-failed-btn" class="btn btn-secondary hidden">Retry Failed</button>
           <button id="new-upload-btn" class="btn btn-primary">Upload More</button>
@@ -585,6 +586,191 @@
           </div>
         </div>
 
+        <!-- Profit Calculator -->
+        <div class="calc-section research-calc-section">
+          <h3>Etsy Profit Calculator</h3>
+
+          <div class="calc-inputs">
+            <div class="calc-row-2">
+              <div class="calc-field">
+                <label>Item Price</label>
+                <div class="calc-input-wrap">
+                  <span class="calc-currency">$</span>
+                  <input type="number" id="calc-price" step="0.01" min="0" value="25.00" class="calc-input">
+                </div>
+              </div>
+              <div class="calc-field">
+                <label>Quantity</label>
+                <input type="number" id="calc-quantity" min="1" value="1" class="calc-input calc-input-bordered">
+              </div>
+            </div>
+
+            <div class="calc-row-2">
+              <div class="calc-field">
+                <label>Shipping Charged to Buyer</label>
+                <div class="calc-input-wrap" id="calc-shipping-wrap">
+                  <span class="calc-currency">$</span>
+                  <input type="number" id="calc-shipping" step="0.01" min="0" value="0.00" class="calc-input">
+                </div>
+              </div>
+              <div class="calc-field">
+                <label>Your Shipping Cost</label>
+                <div class="calc-input-wrap" id="calc-shipping-cost-wrap">
+                  <span class="calc-currency">$</span>
+                  <input type="number" id="calc-shipping-cost" step="0.01" min="0" value="0.00" class="calc-input">
+                </div>
+              </div>
+            </div>
+
+            <div class="calc-row-2">
+              <div class="calc-field">
+                <label>Materials / Cost of Goods</label>
+                <div class="calc-input-wrap">
+                  <span class="calc-currency">$</span>
+                  <input type="number" id="calc-cost" step="0.01" min="0" value="5.00" class="calc-input">
+                </div>
+              </div>
+              <div class="calc-field">
+                <label>Packaging / Misc Costs</label>
+                <div class="calc-input-wrap">
+                  <span class="calc-currency">$</span>
+                  <input type="number" id="calc-misc" step="0.01" min="0" value="0.00" class="calc-input">
+                </div>
+              </div>
+            </div>
+
+            <div class="calc-row-2">
+              <div class="calc-field">
+                <label>Discount</label>
+                <div class="calc-input-wrap">
+                  <span class="calc-currency" id="calc-discount-symbol">$</span>
+                  <input type="number" id="calc-discount" step="0.01" min="0" value="0" class="calc-input">
+                </div>
+              </div>
+              <div class="calc-field">
+                <label>Discount Type</label>
+                <select id="calc-discount-type" class="calc-select">
+                  <option value="flat">Flat ($)</option>
+                  <option value="percent">Percent (%)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="calc-row-2">
+              <div class="calc-field">
+                <label>Labor Time (minutes)</label>
+                <input type="number" id="calc-labor-time" min="0" value="0" class="calc-input calc-input-bordered">
+              </div>
+              <div class="calc-field">
+                <label>Hourly Rate</label>
+                <div class="calc-input-wrap">
+                  <span class="calc-currency">$</span>
+                  <input type="number" id="calc-hourly-rate" step="0.01" min="0" value="15.00" class="calc-input">
+                </div>
+              </div>
+            </div>
+
+            <div class="calc-toggles">
+              <label class="calc-toggle">
+                <input type="checkbox" id="calc-free-shipping" checked>
+                <span>Free Shipping</span>
+              </label>
+              <label class="calc-toggle">
+                <input type="checkbox" id="calc-digital">
+                <span>Digital Download</span>
+              </label>
+              <label class="calc-toggle">
+                <input type="checkbox" id="calc-offsite-ads">
+                <span>Offsite Ads (15%)</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="calc-results">
+            <div class="calc-result-header">Fee Breakdown</div>
+            <div class="calc-fee-list">
+              <div class="calc-fee-row">
+                <span>Listing Fee</span>
+                <span id="calc-listing-fee" class="calc-fee-amount">-$0.20</span>
+              </div>
+              <div class="calc-fee-row">
+                <span>Transaction Fee (6.5%)</span>
+                <span id="calc-transaction-fee" class="calc-fee-amount">-$0.00</span>
+              </div>
+              <div class="calc-fee-row">
+                <span>Processing Fee (3% + $0.25)</span>
+                <span id="calc-processing-fee" class="calc-fee-amount">-$0.00</span>
+              </div>
+              <div class="calc-fee-row" id="calc-offsite-row" style="display: none;">
+                <span>Offsite Ads (15%)</span>
+                <span id="calc-offsite-fee" class="calc-fee-amount">-$0.00</span>
+              </div>
+              <div class="calc-fee-row calc-fee-total">
+                <span>Total Etsy Fees</span>
+                <span id="calc-total-fees" class="calc-fee-amount">-$0.00</span>
+              </div>
+              <div class="calc-fee-row">
+                <span>Effective Fee Rate</span>
+                <span id="calc-effective-fee" class="calc-fee-amount">0%</span>
+              </div>
+            </div>
+
+            <div class="calc-result-header" style="margin-top: 12px;">Profit Summary</div>
+            <div class="calc-summary">
+              <div class="calc-summary-row">
+                <span>Revenue</span>
+                <span id="calc-revenue" class="calc-amount positive">$0.00</span>
+              </div>
+              <div class="calc-summary-row" id="calc-discount-row" style="display: none;">
+                <span>Discount</span>
+                <span id="calc-discount-amount" class="calc-amount negative">-$0.00</span>
+              </div>
+              <div class="calc-summary-row">
+                <span>Etsy Fees</span>
+                <span id="calc-fees-summary" class="calc-amount negative">-$0.00</span>
+              </div>
+              <div class="calc-summary-row">
+                <span>Product Costs</span>
+                <span id="calc-product-costs" class="calc-amount negative">-$0.00</span>
+              </div>
+              <div class="calc-summary-row" id="calc-labor-row" style="display: none;">
+                <span>Labor Cost</span>
+                <span id="calc-labor-cost" class="calc-amount negative">-$0.00</span>
+              </div>
+              <div class="calc-summary-row calc-profit-row">
+                <span>Net Profit</span>
+                <span id="calc-profit" class="calc-amount">$0.00</span>
+              </div>
+              <div class="calc-summary-row">
+                <span>Profit Margin</span>
+                <span id="calc-margin" class="calc-amount">0%</span>
+              </div>
+            </div>
+
+            <div id="calc-per-unit" class="calc-per-unit" style="display: none;">
+              <div class="calc-result-header">Per Unit (x<span id="calc-qty-label">1</span>)</div>
+              <div class="calc-summary">
+                <div class="calc-summary-row">
+                  <span>Profit Per Unit</span>
+                  <span id="calc-profit-per" class="calc-amount">$0.00</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="calc-reverse">
+              <div class="calc-result-header">Price Finder</div>
+              <div class="calc-reverse-row">
+                <label>Target Profit</label>
+                <div class="calc-input-wrap calc-input-wrap-sm">
+                  <span class="calc-currency">$</span>
+                  <input type="number" id="calc-target-profit" step="0.01" min="0" value="" placeholder="0.00" class="calc-input">
+                </div>
+                <span class="calc-reverse-result">Sell at <strong id="calc-suggested-price">—</strong></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Tag Library -->
         <div class="tag-library-section">
           <h3>Tag Library</h3>
@@ -593,6 +779,7 @@
           </div>
         </div>
       </div><!-- End tab-research -->
+
 
       <!-- Tab: Account -->
       <div id="tab-account" class="tab-content">
@@ -670,6 +857,27 @@
           </div>
         </div>
 
+        <!-- Our Tools Section -->
+        <div class="account-section">
+          <div class="section-header">Our Tools</div>
+          <a class="tool-card" href="https://markitup.app/" target="_blank">
+            <img class="tool-card-icon" src="../assets/icons/markitup-48.png" alt="MarkItUp">
+            <div class="tool-card-info">
+              <div class="tool-card-name">MarkItUp</div>
+              <div class="tool-card-desc">Turn screenshots into marketing visuals with AI. 50+ templates.</div>
+            </div>
+            <span class="tool-card-arrow">›</span>
+          </a>
+          <a class="tool-card" href="https://chromewebstore.google.com/detail/eipifhbdaempeaeohmcfnldmiciofbib?utm_source=item-share-cb" target="_blank">
+            <img class="tool-card-icon" src="../assets/icons/marketeer-48.png" alt="Marketeer">
+            <div class="tool-card-info">
+              <div class="tool-card-name">Marketeer</div>
+              <div class="tool-card-desc">Promote products on Reddit & Facebook with AI comments in 5 tones.</div>
+            </div>
+            <span class="tool-card-arrow">›</span>
+          </a>
+        </div>
+
         <!-- Links Section -->
         <div class="account-section">
           <div class="section-header">Links</div>
@@ -689,19 +897,26 @@
 
     <!-- Buy Credits Modal -->
     <div id="credits-modal" class="modal hidden">
-      <div class="modal-content">
-        <h2>Buy Credits</h2>
-        <p class="modal-subtitle">Select a credit pack to continue uploading</p>
-        <div id="credit-packs" class="credit-packs">
-          <!-- Packs loaded dynamically -->
-          <div class="skeleton skeleton-text" style="height: 60px; margin-bottom: 8px;"></div>
-          <div class="skeleton skeleton-text" style="height: 60px; margin-bottom: 8px;"></div>
-          <div class="skeleton skeleton-text" style="height: 60px; margin-bottom: 8px;"></div>
+      <div class="modal-content credits-modal-content">
+        <div class="credits-modal-header">
+          <div>
+            <h2 id="credits-modal-title">Get Credits</h2>
+            <p class="credits-modal-balance">Current balance: <span id="credits-modal-balance-value">0</span> credits</p>
+          </div>
+          <button id="close-modal-btn" class="credits-modal-close">&times;</button>
         </div>
-        <div class="modal-actions">
-          <button id="buy-credits-btn" class="btn btn-primary">Buy Now</button>
-          <button id="close-modal-btn" class="btn btn-secondary">Cancel</button>
+
+        <div id="subscription-plans" class="subscription-plans-grid"></div>
+
+        <div class="credits-divider">
+          <span class="credits-divider-line"></span>
+          <span class="credits-divider-text">Need more? Add credits anytime</span>
+          <span class="credits-divider-line"></span>
         </div>
+
+        <div id="credit-packs" class="credit-packs-row"></div>
+
+        <p class="credits-modal-footer">2 credits = 1 Etsy listing upload</p>
       </div>
     </div>
 

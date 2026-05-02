@@ -114,7 +114,10 @@ class EtsyAutomationService {
         await this.delay(1000);
       }
 
-      await this.selectCategory(listing.category || 'Digital Prints');
+      if (!listing.category || !String(listing.category).trim()) {
+        throw new Error('Category is required — set the "category" column to an Etsy taxonomy leaf');
+      }
+      await this.selectCategory(String(listing.category).trim());
       await this.fillItemDetails(listing);
       await this.fillAboutTab(listing);
       await this.fillPriceTab(listing);
@@ -150,15 +153,11 @@ class EtsyAutomationService {
     return 'unknown';
   }
 
-  async waitForCategoryInput(maxWait = 3000) {
+  async waitForCategoryInput(maxWait = 5000) {
     const startTime = Date.now();
     while (Date.now() - startTime < maxWait) {
       const found = await cdpService.evaluate(`
-        (() => {
-          const input = document.querySelector('#wt-portals #category-field-search') ||
-                        document.querySelector('input[placeholder*="Search for a category"]');
-          return !!input;
-        })()
+        (() => !!document.querySelector('input#category-field-search'))()
       `);
       if (found) return true;
       await this.delay(300);
@@ -167,61 +166,106 @@ class EtsyAutomationService {
   }
 
   async selectCategory(categoryName) {
-    await cdpService.evaluate(`
+    const focused = await cdpService.evaluate(`
       (() => {
-        const input = document.querySelector('#wt-portals #category-field-search') ||
-                      document.querySelector('input[placeholder*="Search for a category"]');
-        if (input) { input.click(); input.focus(); }
+        const input = document.querySelector('input#category-field-search');
+        if (!input) return false;
+        input.scrollIntoView({ block: 'center' });
+        input.click();
+        input.focus();
+        const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+        setter.call(input, '');
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        return true;
       })()
     `);
+    if (!focused) throw new Error('Category search input not found');
     await this.interruptibleDelay(200);
 
     await cdpService.type(categoryName, DELAYS.typing);
-    await this.interruptibleDelay(DELAYS.long);
+
+    const optionsAppeared = await this.waitForCategoryOptions(3000);
+    if (!optionsAppeared) {
+      throw new Error(`Category typeahead returned no results for "${categoryName}"`);
+    }
 
     const maxRetries = 3;
+    let lastReason = '';
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       const clicked = await cdpService.evaluate(`
         (() => {
-          const categoryName = ${JSON.stringify(categoryName.toLowerCase())};
-          const options = document.querySelectorAll('#wt-portals li[role="option"]');
-          for (const option of options) {
-            const text = option.textContent.toLowerCase();
-            if (text.includes(categoryName)) {
-              option.scrollIntoView({ block: 'center' });
-              option.click();
-              return { success: true, text: option.textContent.trim() };
-            }
-          }
-          if (options.length > 0) {
-            options[0].scrollIntoView({ block: 'center' });
-            options[0].click();
-            return { success: true, text: options[0].textContent.trim(), fallback: true };
-          }
-          return { success: false, optionCount: options.length };
+          const target = ${JSON.stringify(categoryName.trim().toLowerCase())};
+          const options = [...document.querySelectorAll('ul[role="listbox"][id^="category-search-options"] li[role="option"]')];
+          if (!options.length) return { success: false, reason: 'no options rendered' };
+
+          const candidates = options.map(li => {
+            const leafEl = li.querySelector('p.wt-text-body');
+            const pathSpans = [...li.querySelectorAll('span[data-test-id="seller-taxonomy-path-name"]')];
+            return {
+              li,
+              leaf: (leafEl?.textContent || '').trim().toLowerCase(),
+              path: pathSpans.map(s => s.textContent.trim()).join(' > ').toLowerCase()
+            };
+          });
+
+          let match = candidates.find(c => c.leaf === target);
+          if (!match) match = candidates.find(c => c.leaf.includes(target) || target.includes(c.leaf));
+          if (!match) match = candidates.find(c => c.path.includes(target));
+
+          if (!match) return { success: false, reason: 'no match', leaves: candidates.map(c => c.leaf) };
+
+          match.li.scrollIntoView({ block: 'center' });
+          match.li.click();
+          return { success: true, leaf: match.leaf, path: match.path };
         })()
       `);
 
       if (clicked?.success) {
-        console.log(`Category selected: ${clicked.text}${clicked.fallback ? ' (fallback)' : ''}`);
-        break;
+        await this.interruptibleDelay(DELAYS.short);
+        const committed = await cdpService.evaluate(`
+          (() => {
+            const input = document.querySelector('input#category-field-search');
+            const stillInvalid = input?.getAttribute('aria-invalid') === 'true';
+            const selectedOption = document.querySelector('ul[role="listbox"][id^="category-search-options"] li[aria-selected="true"]');
+            return { invalid: stillInvalid, hasSelected: !!selectedOption };
+          })()
+        `);
+
+        if (!committed.invalid || committed.hasSelected) {
+          console.log(`Category selected: ${clicked.path || clicked.leaf}`);
+          await this.interruptibleDelay(DELAYS.medium);
+          return;
+        }
+        lastReason = 'click did not commit';
+      } else {
+        lastReason = clicked?.reason || 'unknown';
+        if (clicked?.leaves) lastReason += ` (available: ${clicked.leaves.join(', ')})`;
       }
 
       if (attempt < maxRetries) {
-        console.log(`Category selection attempt ${attempt} failed, retrying...`);
+        console.log(`Category selection attempt ${attempt} failed: ${lastReason}, retrying...`);
         await this.interruptibleDelay(DELAYS.medium);
-      } else {
-        console.warn(`Failed to select category after ${maxRetries} attempts`);
       }
     }
 
-    await this.interruptibleDelay(DELAYS.medium);
-    await this.clickByText('Continue', '#wt-portals');
-    await this.interruptibleDelay(DELAYS.medium);
+    throw new Error(`Could not select category "${categoryName}": ${lastReason}`);
+  }
+
+  async waitForCategoryOptions(maxWait = 3000) {
+    const startTime = Date.now();
+    while (Date.now() - startTime < maxWait) {
+      const count = await cdpService.evaluate(`
+        (() => document.querySelectorAll('ul[role="listbox"][id^="category-search-options"] li[role="option"]').length)()
+      `);
+      if (count > 0) return true;
+      await this.delay(200);
+    }
+    return false;
   }
 
   async fillCategoryAttributes(listing) {
-    const category = listing.category || 'Digital Prints';
+    const category = String(listing.category || '').trim();
+    if (!category) return;
     const categoriesWithCraftType = ['Clip Art & Image Files', 'Fonts'];
 
     if (categoriesWithCraftType.includes(category)) {

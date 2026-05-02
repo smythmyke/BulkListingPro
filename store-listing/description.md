@@ -6,73 +6,74 @@
 
 ## Name
 
-BulkListingPro - Etsy Bulk Upload Tool
+Etsy Bulk Upload & Listing Tool: AI Tags, CSV Import | BulkListingPro
 
 ## Short Description (132 char max)
 
-Bulk upload Etsy listings with AI-powered titles, tags & descriptions. Import spreadsheets, research competitors, upload in minutes.
+Bulk upload Etsy listings in minutes. AI-generated titles, tags & descriptions. Import CSV/Excel. No monthly fees — pay per listing.
 
 ## Detailed Description
 
-BulkListingPro automates Etsy listing creation for digital product sellers. Upload dozens of SVG files, digital planners, printables, and templates in minutes instead of hours.
+Stop spending hours creating Etsy listings one by one. BulkListingPro lets you upload 10, 50, or 100+ listings in a single session — directly from your browser. Import a spreadsheet, let AI optimize your titles and tags, and hit upload.
 
-NEW IN v0.7.1: Redesigned welcome experience — guided tour intro with animated feature cards, unified onboarding flow, and referral/affiliate code entry for new users.
+No monthly subscription. No expiring credits. No separate app to learn.
 
-HOW IT WORKS
-1. Import your spreadsheet (XLSX/CSV) or use the built-in form
-2. Edit listings in the full-page editor — form view or grid view
-3. Click Upload — listings are created automatically on Etsy
-4. Track progress with pause, skip, and resume controls
+WHY SELLERS SWITCH TO BULKLISTINGPRO
+Other bulk upload tools charge $19-39/month with hard listing limits. BulkListingPro uses simple credit packs — upload 25 listings for just $1.99. No recurring fees, no surprises. Buy credits when you need them, use them whenever you want.
 
-LISTING EDITOR
-• Form & Grid views — card-based editing or spreadsheet-style bulk edits
-• AI-powered generation — titles, descriptions, and tags with one click
-• Listing evaluation — SEO quality scores and actionable recommendations
-• Tag intelligence — category suggestions, competitor tag import, frequency analysis
-• Validation — catch missing fields, duplicates, similar tags, and price outliers
+AI-POWERED LISTING CREATION
+Generate SEO-optimized titles, descriptions, and all 13 tags with one click. Every listing gets a quality score with actionable recommendations to improve your search ranking before you publish. Stop guessing what tags work — let AI analyze your category and competitors.
+
+BULK IMPORT & UPLOAD
+Import your product catalog from Excel (XLSX) or CSV. Edit everything in a full-page editor with form view for detailed edits or grid view for fast spreadsheet-style changes. Upload to Etsy as drafts or live listings with real-time progress tracking, auto-retry on failures, and pause/resume controls.
+
+COMPETITOR RESEARCH BUILT IN
+Capture any competitor's tags, titles, pricing, and descriptions directly from their Etsy listing. Save winning tag sets to your library and apply them to new listings instantly. See tag frequency analysis and category suggestions based on real market data.
+
+WORKS INSIDE YOUR BROWSER
+No separate app. No API keys. No complicated setup. Install the Chrome extension, sign in, and start uploading. BulkListingPro works right where you already manage your Etsy shop.
+
+KEY FEATURES
+• Spreadsheet import — XLSX and CSV with drag-and-drop
+• AI generation — titles, descriptions, and tags optimized for Etsy search
+• SEO scoring — quality evaluation with specific recommendations
+• Tag intelligence — competitor tag import, frequency analysis, category suggestions
+• Form & Grid editing — card-based or spreadsheet-style bulk edits
+• Draft or Publish — review listings as drafts before going live
+• Image management — drag-and-drop up to 5 images per listing, reorder, preview
+• Smart validation — catch missing fields, duplicate tags, and price outliers
+• Auto-retry — failed uploads retried automatically, manual retry for remaining
+• Progress tracking — real-time status with pause, skip, and resume
 • Undo/Redo — every action tracked, up to 50 steps (Ctrl+Z / Ctrl+Y)
-• Image management — drag-and-drop, reorder, lightbox preview
 • Export — save your work as XLSX or CSV anytime
 
-BULK UPLOAD FEATURES
-• Spreadsheet import — upload 10, 50, or 100+ listings at once
-• 24 digital product categories — SVG cut files, fonts, planners, templates, and more
-• Smart tag management — up to 13 tags per listing
-• Draft or Publish — choose to save as draft for review or publish immediately
-• Image support — drag-and-drop up to 5 images per listing
-• Progress tracking — real-time status with error details
-• Auto-retry failed listings — transient failures retried automatically, no manual intervention
-• Manual retry — re-queue any remaining failures with one click
+PERFECT FOR ETSY SELLERS WHO
+• List more than a handful of products at a time
+• Sell digital downloads, printables, templates, SVGs, fonts, or planners
+• Want AI help writing optimized titles and tags
+• Are tired of copying and pasting the same fields over and over
+• Need to research competitor listings and tags
+• Want to save hours every week on shop management
 
-REFERRAL & AFFILIATE PROGRAM
-• Share your referral code — earn bonus credits when friends sign up
-• Affiliate program — earn commissions on referred purchases
-• Apply codes during signup or anytime from your account
+YOUR DATA STAYS PRIVATE
+Your Etsy credentials never leave your browser. Listing content is not transmitted to our servers. We use Google sign-in for authentication and sync only your credit balance. No browsing history collected, no personal content stored.
 
-RESEARCH TOOLS
-• Capture competitor listings — extract tags, title, price, and description
-• Tag Library — save and reuse tag sets across listings
-• Use as Template — apply captured data to new listings instantly
+PRICING — PAY PER LISTING, NOT PER MONTH
+2 credits per listing. Credit packs start at $1.99 for 50 credits (~25 listings).
+New users get 10 free credits to try it out — no credit card required.
 
-PERFECT FOR
-• SVG & cut file sellers (Cricut, Silhouette, Glowforge)
-• Digital planner creators
-• Printable art and wall art shops
-• Template sellers (Canva, social media, resume)
-• Font designers
-• Embroidery pattern shops
+Compare: Other tools charge $19-39/month for 200-500 listings. With BulkListingPro, 200 listings costs ~$16 total — not $19 every single month.
+
+REFERRAL PROGRAM
+Share your referral code and earn bonus credits when friends sign up. Affiliate program available for commissions on referred purchases.
 
 REQUIREMENTS
-• Google Chrome on Windows
+• Google Chrome (Windows; Mac support coming soon)
 • Etsy seller account
-• Free helper app for local file paths (optional, one-time install)
+• Optional: free helper app for local file access (one-time install)
 
-PRICING
-2 credits per listing. Packs start at $1.99 for 50 credits (~25 listings).
-New users get 10 free credits to try it out!
-
-SUPPORT & FEEDBACK
-https://github.com/smythmyke/BulkListingPro/issues
+SUPPORT
+Questions or feedback? Visit our GitHub: https://github.com/smythmyke/BulkListingPro/issues
 
 ## Category
 

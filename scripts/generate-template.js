@@ -2,13 +2,12 @@ const ExcelJS = require('exceljs');
 const path = require('path');
 
 const CATEGORIES = [
-  'Digital Prints',
+  'Digital',
   'Guides & How Tos',
-  'Drawing & Illustration',
   'Digital Patterns',
-  'Planners & Templates',
+  'Planner Templates',
   'Clip Art & Image Files',
-  'Cutting Machine Files (SVG)',
+  'Cutting Machine Files',
   'Embroidery Machine Files',
   '3D Printer Files',
   'Knitting Machine Files',
@@ -29,13 +28,12 @@ const CATEGORIES = [
 ];
 
 const CATEGORY_DESCRIPTIONS = {
-  'Digital Prints': 'Wall art, printable artwork',
+  'Digital': 'Digital art, illustrations, wall art (Art & Collectibles > Drawing & Illustration > Digital)',
   'Guides & How Tos': 'eBooks, tutorials, instructional guides',
-  'Drawing & Illustration': 'Digital art, illustrations, drawings',
   'Digital Patterns': 'Sewing, knitting, crochet patterns',
-  'Planners & Templates': 'Daily, weekly, monthly planners and templates',
+  'Planner Templates': 'Daily, weekly, monthly planner templates',
   'Clip Art & Image Files': 'Clipart, PNG bundles, graphic elements',
-  'Cutting Machine Files (SVG)': 'SVG files for Cricut, Silhouette',
+  'Cutting Machine Files': 'SVG files for Cricut, Silhouette',
   'Embroidery Machine Files': 'PES, DST embroidery designs',
   '3D Printer Files': 'STL, OBJ 3D print models',
   'Knitting Machine Files': 'Machine knitting patterns',
@@ -171,7 +169,7 @@ async function generateTemplate() {
     title: 'Daily Planner 2026 Printable PDF - Minimalist Hourly Schedule With Weekly Goals and Habit Tracker - Instant Download',
     description: 'Stay organized all year with this beautifully designed 2026 daily planner! Includes hourly scheduling, weekly goal setting, and habit tracking pages.\n\nWhat\'s included:\n- 365 daily planner pages\n- 52 weekly review pages\n- 12 monthly overview pages\n- Printable on US Letter & A4',
     price: 4.99,
-    category: 'Planners & Templates',
+    category: 'Planner Templates',
     who_made: 'I did',
     what_is_it: 'A finished product',
     ai_content: 'Created by me',
@@ -338,7 +336,7 @@ async function generateTemplate() {
     { column: 'title', required: 'Yes', description: 'Product title shown on Etsy (max 140 chars)', example: 'Daily Planner Template Printable PDF', default: '' },
     { column: 'description', required: 'Yes', description: 'Full product description', example: 'Beautiful daily planner...', default: '' },
     { column: 'price', required: 'Yes', description: 'Price in USD (minimum $0.20)', example: '5.99', default: '' },
-    { column: 'category', required: 'Yes', description: 'Select from dropdown (see Categories sheet)', example: 'Planners & Templates', default: 'Digital Prints' },
+    { column: 'category', required: 'Yes', description: 'Must match an Etsy taxonomy LEAF exactly. If unsure, type your term into Etsy\'s "Find a category" search and copy the bottom of the breadcrumb shown.', example: 'Planner Templates', default: '' },
     { column: 'who_made', required: 'No', description: 'Who made this product? (select from dropdown)', example: 'I did', default: 'I did' },
     { column: 'what_is_it', required: 'No', description: 'Finished product or supply? (select from dropdown)', example: 'A finished product', default: 'A finished product' },
     { column: 'ai_content', required: 'No', description: 'Was AI used to create this? (select from dropdown)', example: 'Created by me', default: 'Created by me' },
@@ -355,6 +353,9 @@ async function generateTemplate() {
   ];
 
   instructions.forEach(instr => instructionsSheet.addRow(instr));
+  instructionsSheet.addRow({});
+  instructionsSheet.addRow({ column: '--- CATEGORIES ---' });
+  instructionsSheet.addRow({ column: 'Etsy taxonomy:', description: 'Etsy requires the most-specific (leaf) category name. The Categories sheet lists common digital-product leaves, but Etsy can rename or remove them at any time. If a listing fails on category, type the name into Etsy\'s "Find a category" search and copy the leaf shown at the end of the breadcrumb.' });
   instructionsSheet.addRow({});
   instructionsSheet.addRow({ column: '--- FILE PATHS ---' });
   instructionsSheet.addRow({ column: 'Local files:', description: 'Right-click file > "Copy as path" > Paste into spreadsheet' });
