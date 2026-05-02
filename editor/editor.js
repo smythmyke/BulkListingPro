@@ -112,10 +112,6 @@ const els = {
   translateBulkProgress: document.getElementById('translate-bulk-progress'),
   translateProgressFill: document.getElementById('translate-progress-fill'),
   translateProgressText: document.getElementById('translate-progress-text'),
-  langDisclosureEditorModal: document.getElementById('lang-disclosure-editor-modal'),
-  langDisclosureEditorBackdrop: document.getElementById('lang-disclosure-editor-backdrop'),
-  langDisclosureEditorClose: document.getElementById('lang-disclosure-editor-close'),
-  langDisclosureEditorOk: document.getElementById('lang-disclosure-editor-ok'),
   tourBtn: document.getElementById('tour-btn')
 };
 
@@ -502,10 +498,6 @@ function setupEventListeners() {
   els.translateBulkScope.addEventListener('change', updateTranslateBulkCost);
   els.translateBulkLangs.addEventListener('change', updateTranslateBulkCost);
 
-  els.langDisclosureEditorOk.addEventListener('click', acknowledgeLangDisclosure);
-  els.langDisclosureEditorClose.addEventListener('click', acknowledgeLangDisclosure);
-  els.langDisclosureEditorBackdrop.addEventListener('click', acknowledgeLangDisclosure);
-
   const lightboxEl = document.getElementById('lightbox');
   if (lightboxEl) {
     lightboxEl.querySelector('.lightbox-backdrop').addEventListener('click', closeLightbox);
@@ -574,7 +566,6 @@ function handleGridChange(type, detail) {
         }
         listings[y].translate_languages = checked ? [...TRANSLATION_LANGUAGE_ISOS] : [];
         scheduleSave();
-        maybeShowLangDisclosure(checked);
         return;
       }
       if (x >= TRANSLATE_FIRST_LANG_COL && x <= TRANSLATE_LAST_LANG_COL) {
@@ -587,7 +578,6 @@ function handleGridChange(type, detail) {
         const allChecked = TRANSLATION_LANGUAGE_ISOS.every(l => current.has(l));
         updateCell(TRANSLATE_ALL_COL, y, allChecked);
         scheduleSave();
-        maybeShowLangDisclosure(checked);
         return;
       }
 
@@ -2660,29 +2650,6 @@ async function handleEvaluateListing(lid, btn) {
   }
 }
 
-async function maybeShowLangDisclosure(wasChecked) {
-  // Only show on check (not uncheck), and only once (until acknowledged)
-  if (!wasChecked) return;
-  try {
-    const data = await chrome.storage.local.get('bulklistingpro_translations');
-    const prefs = data.bulklistingpro_translations || {};
-    if (prefs.disclosure_acknowledged) return;
-    els.langDisclosureEditorModal.style.display = '';
-    els.langDisclosureEditorBackdrop.style.display = '';
-  } catch {}
-}
-
-async function acknowledgeLangDisclosure() {
-  els.langDisclosureEditorModal.style.display = 'none';
-  els.langDisclosureEditorBackdrop.style.display = 'none';
-  try {
-    const data = await chrome.storage.local.get('bulklistingpro_translations');
-    const prefs = data.bulklistingpro_translations || {};
-    prefs.disclosure_acknowledged = true;
-    await chrome.storage.local.set({ bulklistingpro_translations: prefs });
-  } catch {}
-}
-
 function handleTranslateAllToggle(checkbox) {
   const id = checkbox.dataset.listingId;
   const listing = findListingById(id);
@@ -2691,7 +2658,6 @@ function handleTranslateAllToggle(checkbox) {
   listing.translate_languages = checkbox.checked ? [...TRANSLATION_LANGUAGE_ISOS] : [];
   rerenderCard(id);
   scheduleSave();
-  maybeShowLangDisclosure(checkbox.checked);
 }
 
 function handleTranslateLangToggle(checkbox) {
@@ -2706,7 +2672,6 @@ function handleTranslateLangToggle(checkbox) {
   listing.translate_languages = [...set];
   rerenderCard(id);
   scheduleSave();
-  maybeShowLangDisclosure(checkbox.checked);
 }
 
 function handleTranslationFieldChange(input) {
@@ -2806,13 +2771,27 @@ async function handleTranslateListing(lid, btn) {
 
     rerenderCard(lid);
     scheduleSave();
+    expandTranslationsForCard(lid);
+    const langs = Object.keys(result.translations || {}).map(l => l.toUpperCase()).join(', ');
     const langCount = Object.keys(result.translations || {}).length;
-    showToast(`Translated to ${langCount} language${langCount !== 1 ? 's' : ''}`, 'success');
+    if (langCount > 0) {
+      showToast(`✓ Translated to ${langs} — see Advanced Options → Translations`, 'success', 4000);
+    } else {
+      showToast('Translated 0 languages', 'success', 4000);
+    }
   } catch (err) {
     btn.classList.remove('loading');
     btn.textContent = '🌐 Translate';
     handleAiError(err);
   }
+}
+
+function expandTranslationsForCard(lid) {
+  const card = els.listingCards.querySelector(`[data-listing-id="${lid}"]`);
+  if (!card) return;
+  const advanced = card.querySelector('details.advanced-options');
+  if (advanced) advanced.open = true;
+  // Per-language panels are rendered with `open` already, so they're visible.
 }
 
 function applyEvalTagSwap(el) {
@@ -3072,15 +3051,21 @@ async function startBulkTranslate() {
   closeTranslateBulkModal();
   translateBulkCancelFn = null;
 
+  // Auto-expand Advanced Options for all listings that successfully got translations
+  for (const r of results) {
+    if (r.success) expandTranslationsForCard(r.listingId);
+  }
+
   if (applied > 0) await decrementLocalCredits(applied);
 
+  const langStr = langs.map(l => l.toUpperCase()).join(', ');
   const creditsFailed = results.some(r => !r.success && r.error && r.error.error === 'insufficient_credits');
   if (creditsFailed) {
-    showToast(`Translated ${applied} listing(s) — ran out of credits. Buy more from the sidepanel Account tab.`, 'error');
+    showToast(`Translated ${applied} listing(s) — ran out of credits. Buy more from Account tab.`, 'error', 4000);
   } else if (failed > 0) {
-    showToast(`Translated ${applied} listing(s), ${failed} failed`, applied > 0 ? 'success' : 'error');
+    showToast(`Translated ${applied} listing(s), ${failed} failed — see Advanced Options → Translations`, applied > 0 ? 'success' : 'error', 4000);
   } else {
-    showToast(`Translated ${applied} listing(s) to ${langs.map(l => l.toUpperCase()).join(', ')}`, 'success');
+    showToast(`✓ Translated ${applied} listing(s) to ${langStr} — see Advanced Options → Translations`, 'success', 4000);
   }
 }
 
@@ -3109,12 +3094,12 @@ function clampTooltipPosition(e) {
   });
 }
 
-function showToast(message, type = 'success') {
+function showToast(message, type = 'success', duration = 3000) {
   els.toast.textContent = message;
   els.toast.className = `toast ${type} show`;
   setTimeout(() => {
     els.toast.classList.remove('show');
-  }, 3000);
+  }, duration);
 }
 
 function showImportFromUrlModal() {
