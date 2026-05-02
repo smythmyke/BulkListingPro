@@ -176,6 +176,12 @@ export function sanitizeListing(row, rowIndex) {
   const etsyAdsRaw = (row.etsy_ads || row.EtsyAds || row['Etsy Ads'] || '').toString().trim().toLowerCase();
   const etsyAds = etsyAdsRaw === 'true' || etsyAdsRaw === 'yes' || etsyAdsRaw === '1';
 
+  const VALID_TRANSLATION_LANGS = ['nl', 'fr', 'de', 'it', 'ja', 'pl', 'pt', 'ru', 'es', 'sv'];
+  const translateLangsRaw = (row.translate_languages || row.TranslateLanguages || row['Translate Languages'] || '').toString().trim();
+  const translate_languages = translateLangsRaw
+    ? translateLangsRaw.split(',').map(l => l.trim().toLowerCase()).filter(l => VALID_TRANSLATION_LANGS.includes(l))
+    : [];
+
   const listing = {
     id: String(Date.now() + rowIndex),
     title,
@@ -206,6 +212,8 @@ export function sanitizeListing(row, rowIndex) {
     image_4: row.image_4 || row.Image4 || row['Image 4'] || '',
     image_5: row.image_5 || row.Image5 || row['Image 5'] || '',
     digital_file_1: row.digital_file_1 || row.DigitalFile || row['Digital File'] || '',
+    translate_languages,
+    translations: {},
     status: 'pending',
     selected: true
   };
@@ -233,7 +241,9 @@ export function readSpreadsheetFile(file) {
         header: true,
         skipEmptyLines: true,
         complete: (results) => {
-          resolve(results.data);
+          const rows = results.data;
+          rows.translations = [];
+          resolve(rows);
         },
         error: (err) => {
           reject(new Error(err.message));
@@ -247,6 +257,14 @@ export function readSpreadsheetFile(file) {
           const workbook = XLSX.read(data, { type: 'array' });
           const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
           const rows = XLSX.utils.sheet_to_json(firstSheet);
+
+          const translationsSheetName = workbook.SheetNames.find(n => n.toLowerCase() === 'translations');
+          if (translationsSheetName) {
+            const tSheet = workbook.Sheets[translationsSheetName];
+            rows.translations = XLSX.utils.sheet_to_json(tSheet);
+          } else {
+            rows.translations = [];
+          }
           resolve(rows);
         } catch (err) {
           reject(err);

@@ -110,6 +110,20 @@ const COLUMNS = [
   { key: 'quantity', header: 'quantity', width: 10, note: 'Optional. Stock quantity (1-999). Defaults to 999 for digital products.' },
   { key: 'renewal', header: 'renewal', width: 14, note: 'Optional. Use dropdown. Auto-renew when expired?\nDefault: Automatic ($0.20/renewal)' },
   { key: 'listing_state', header: 'listing_state', width: 14, note: 'Optional. Use dropdown. Save as draft or publish?\nDefault: Draft' },
+  { key: 'translate_languages', header: 'translate_languages', width: 22, note: 'Optional. Comma-separated ISO codes for translations to upload.\nValid: nl, fr, de, it, ja, pl, pt, ru, es, sv\nExample: de,fr,it\nFill the matching rows on the Translations sheet.' },
+];
+
+const TRANSLATION_LANGUAGES = [
+  { iso: 'nl', name: 'Dutch' },
+  { iso: 'fr', name: 'French' },
+  { iso: 'de', name: 'German' },
+  { iso: 'it', name: 'Italian' },
+  { iso: 'ja', name: 'Japanese' },
+  { iso: 'pl', name: 'Polish' },
+  { iso: 'pt', name: 'Portuguese' },
+  { iso: 'ru', name: 'Russian' },
+  { iso: 'es', name: 'Spanish' },
+  { iso: 'sv', name: 'Swedish' },
 ];
 
 function applyDropdown(sheet, colKey, optionsList, errorTitle, errorMsg) {
@@ -186,7 +200,8 @@ async function generateTemplate() {
     materials: '',
     quantity: 999,
     renewal: 'Automatic',
-    listing_state: 'Draft'
+    listing_state: 'Draft',
+    translate_languages: ''
   });
 
   const exampleRow = productsSheet.getRow(2);
@@ -279,6 +294,102 @@ async function generateTemplate() {
     categoriesSheet.addRow({ name: cat, desc: CATEGORY_DESCRIPTIONS[cat] || '' });
   });
 
+  // ========== SHEET: Translations ==========
+  const translationsSheet = workbook.addWorksheet('Translations', {
+    views: [{ state: 'frozen', xSplit: 0, ySplit: 1 }]
+  });
+
+  const TRANSLATION_COLS = [
+    { key: 'sku', header: 'sku', width: 18 },
+    { key: 'language', header: 'language', width: 14 },
+    { key: 'title', header: 'title', width: 50 },
+    { key: 'description', header: 'description', width: 60 },
+    ...Array.from({ length: 13 }, (_, i) => ({ key: `tag_${i + 1}`, header: `tag_${i + 1}`, width: 22 })),
+  ];
+
+  translationsSheet.columns = TRANSLATION_COLS;
+
+  const tHeaderRow = translationsSheet.getRow(1);
+  tHeaderRow.height = 25;
+  tHeaderRow.alignment = { vertical: 'middle', horizontal: 'center' };
+
+  TRANSLATION_COLS.forEach((col, i) => {
+    const cell = tHeaderRow.getCell(i + 1);
+    cell.font = { bold: true, color: { argb: THEME.white } };
+    cell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: ['sku', 'language'].includes(col.key) ? THEME.required : THEME.optional }
+    };
+  });
+
+  translationsSheet.getCell(1, 1).note = 'One row per (listing × language). Match SKU to a row in the Products sheet.';
+  translationsSheet.getCell(1, 2).note = 'ISO 639-1 lowercase code. Valid: nl, fr, de, it, ja, pl, pt, ru, es, sv';
+  translationsSheet.getCell(1, 3).note = 'Translated title. Max 140 characters.';
+  translationsSheet.getCell(1, 4).note = 'Translated description.';
+  translationsSheet.getCell(1, 5).note = 'Tags 1-13. Max 30 chars each (Etsy allows 30 for non-English tags vs 20 for English).';
+
+  // Example row showing the shape
+  translationsSheet.addRow({
+    sku: 'PLAN-2026-001',
+    language: 'de',
+    title: '2026 Tagesplaner Druckbar PDF - Minimalistischer Stundenplan mit Wochenzielen und Habit Tracker',
+    description: 'Bleiben Sie das ganze Jahr organisiert mit diesem schönen 2026 Tagesplaner!\n\nEnthalten:\n- 365 Tagesplaner-Seiten\n- 52 Wochenübersichten\n- 12 Monatsübersichten',
+    tag_1: 'tagesplaner druckbar', tag_2: 'digitaler kalender 2026', tag_3: 'planer pdf druckbar',
+    tag_4: 'goodnotes vorlage', tag_5: 'habit tracker deutsch', tag_6: 'stundenplan pdf',
+    tag_7: 'minimalistischer planer', tag_8: 'ipad kalender vorlage', tag_9: 'sofort download',
+    tag_10: 'wochenziele tracker', tag_11: 'pdf planer 2026', tag_12: 'produktivität pdf', tag_13: 'digitaler download'
+  });
+
+  const tExampleRow = translationsSheet.getRow(2);
+  tExampleRow.eachCell({ includeEmpty: true }, (cell) => {
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: THEME.example } };
+    cell.font = { italic: true, color: { argb: THEME.exampleText } };
+  });
+  translationsSheet.getCell('A2').note = 'DELETE THIS ROW - it is just an example';
+
+  // Language dropdown
+  const validLanguages = TRANSLATION_LANGUAGES.map(l => l.iso);
+  for (let row = 2; row <= 1001; row++) {
+    translationsSheet.getCell(row, 2).dataValidation = {
+      type: 'list',
+      allowBlank: true,
+      formulae: ['"' + validLanguages.join(',') + '"'],
+      showDropDown: false,
+      errorTitle: 'Invalid Language',
+      error: 'Use a 2-letter ISO code: ' + validLanguages.join(', ')
+    };
+  }
+
+  // Title 140-char validation per row
+  for (let row = 2; row <= 1001; row++) {
+    translationsSheet.getCell(row, 3).dataValidation = {
+      type: 'textLength',
+      operator: 'lessThanOrEqual',
+      allowBlank: true,
+      formulae: [140],
+      showErrorMessage: true,
+      errorTitle: 'Title Too Long',
+      error: 'Translated title must be 140 characters or fewer.'
+    };
+  }
+
+  // Tag 30-char validation (intl tags get 30, not 20)
+  for (let tagNum = 1; tagNum <= 13; tagNum++) {
+    const tagCol = 4 + tagNum;
+    for (let row = 2; row <= 1001; row++) {
+      translationsSheet.getCell(row, tagCol).dataValidation = {
+        type: 'textLength',
+        operator: 'lessThanOrEqual',
+        allowBlank: true,
+        formulae: [30],
+        showErrorMessage: true,
+        errorTitle: 'Tag Too Long',
+        error: 'Each translated tag must be 30 characters or fewer.'
+      };
+    }
+  }
+
   // ========== SHEET 3: Options ==========
   const optionsSheet = workbook.addWorksheet('Options');
 
@@ -350,12 +461,19 @@ async function generateTemplate() {
     { column: 'quantity', required: 'No', description: 'Stock quantity (1-999)', example: '999', default: '999' },
     { column: 'renewal', required: 'No', description: 'Auto-renew when listing expires? (select from dropdown)', example: 'Automatic', default: 'Automatic' },
     { column: 'listing_state', required: 'No', description: 'Save as draft or publish? (select from dropdown)', example: 'Draft', default: 'Draft' },
+    { column: 'translate_languages', required: 'No', description: 'Comma-separated ISO codes. Add matching rows on the Translations sheet.', example: 'de,fr,it', default: '' },
   ];
 
   instructions.forEach(instr => instructionsSheet.addRow(instr));
   instructionsSheet.addRow({});
   instructionsSheet.addRow({ column: '--- CATEGORIES ---' });
   instructionsSheet.addRow({ column: 'Etsy taxonomy:', description: 'Etsy requires the most-specific (leaf) category name. The Categories sheet lists common digital-product leaves, but Etsy can rename or remove them at any time. If a listing fails on category, type the name into Etsy\'s "Find a category" search and copy the leaf shown at the end of the breadcrumb.' });
+  instructionsSheet.addRow({});
+  instructionsSheet.addRow({ column: '--- TRANSLATIONS ---' });
+  instructionsSheet.addRow({ column: 'translate_languages:', description: 'Comma-separated ISO codes (de,fr,it). Determines which languages to upload for each listing.' });
+  instructionsSheet.addRow({ column: 'Translations sheet:', description: 'One row per (listing × language). Match SKU to the Products sheet. Fill title, description, and up to 13 tags per row.' });
+  instructionsSheet.addRow({ column: 'Tag character limit:', description: 'Etsy allows 30 chars for non-English tags (vs 20 for English). Use this to your advantage.' });
+  instructionsSheet.addRow({ column: 'Auto-translate:', description: 'Or skip the Translations sheet — use the Translate button in the editor. 1 credit per listing for all checked languages.' });
   instructionsSheet.addRow({});
   instructionsSheet.addRow({ column: '--- FILE PATHS ---' });
   instructionsSheet.addRow({ column: 'Local files:', description: 'Right-click file > "Copy as path" > Paste into spreadsheet' });
@@ -398,9 +516,10 @@ async function generateTemplate() {
   console.log('Sheets:');
   console.log('  1. Products     - Data entry with dropdowns and validation (' + COLUMNS.length + ' columns)');
   console.log('  2. Categories   - ' + CATEGORIES.length + ' category options');
-  console.log('  3. Options      - Dropdown values reference for all selection fields');
-  console.log('  4. Instructions - Column-by-column guide with defaults');
-  console.log('  5. File Paths   - How to get file paths and URLs');
+  console.log('  3. Translations - Per-language title/description/tags (' + TRANSLATION_LANGUAGES.length + ' languages supported)');
+  console.log('  4. Options      - Dropdown values reference for all selection fields');
+  console.log('  5. Instructions - Column-by-column guide with defaults');
+  console.log('  6. File Paths   - How to get file paths and URLs');
 }
 
 generateTemplate().catch(console.error);

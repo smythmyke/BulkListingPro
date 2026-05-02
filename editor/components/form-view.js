@@ -30,10 +30,25 @@ export function createBlankListing() {
     listing_type: 'digital',
     featured: false,
     etsy_ads: false,
+    translate_languages: [],
+    translations: {},
     status: 'pending',
     selected: true
   };
 }
+
+const TRANSLATION_LANGS_FORM = [
+  { iso: 'nl', name: 'Dutch' },
+  { iso: 'fr', name: 'French' },
+  { iso: 'de', name: 'German' },
+  { iso: 'it', name: 'Italian' },
+  { iso: 'ja', name: 'Japanese' },
+  { iso: 'pl', name: 'Polish' },
+  { iso: 'pt', name: 'Portuguese' },
+  { iso: 'ru', name: 'Russian' },
+  { iso: 'es', name: 'Spanish' },
+  { iso: 'sv', name: 'Swedish' }
+];
 
 function escapeHtml(text) {
   const div = document.createElement('div');
@@ -148,6 +163,72 @@ function renderEvalBtn(listing) {
   return `<button class="eval-btn${hasTitle ? '' : ' disabled'}" data-listing-id="${listing.id}" title="${hasTitle ? 'Evaluate listing quality (2 credits)' : 'Add a title first'}" ${hasTitle ? '' : 'disabled'}>Evaluate (2 credits)</button>`;
 }
 
+function renderTranslateBtn(listing) {
+  const hasTitle = !!(listing.title && listing.title.trim());
+  const hasLangs = Array.isArray(listing.translate_languages) && listing.translate_languages.length > 0;
+  const enabled = hasTitle && hasLangs;
+  let tip;
+  if (!hasTitle) tip = 'Add a title first';
+  else if (!hasLangs) tip = 'Check at least one language below';
+  else tip = `Translate to ${listing.translate_languages.map(l => l.toUpperCase()).join(', ')} (1 credit)`;
+  return `<button class="translate-btn${enabled ? '' : ' disabled'}" data-listing-id="${listing.id}" title="${escapeHtml(tip)}" ${enabled ? '' : 'disabled'}>🌐 Translate</button>`;
+}
+
+function renderTranslationsBlock(listing) {
+  const checked = new Set((listing.translate_languages || []).map(l => String(l).toLowerCase()));
+  const allChecked = TRANSLATION_LANGS_FORM.every(({ iso }) => checked.has(iso));
+  const translations = listing.translations || {};
+
+  const langToggles = TRANSLATION_LANGS_FORM.map(({ iso, name }) => {
+    const isChecked = checked.has(iso);
+    const hasContent = !!(translations[iso] && (translations[iso].title || translations[iso].description || (translations[iso].tags && translations[iso].tags.length)));
+    const warnClass = isChecked && !hasContent ? ' translate-warn' : '';
+    return `<label class="translate-toggle${warnClass}"><input type="checkbox" data-translate-lang="${iso}" data-listing-id="${listing.id}" ${isChecked ? 'checked' : ''}> ${name}${isChecked && !hasContent ? ' ⚠' : ''}</label>`;
+  }).join('');
+
+  const langPanels = TRANSLATION_LANGS_FORM.filter(({ iso }) => checked.has(iso)).map(({ iso, name }) => {
+    const t = translations[iso] || {};
+    const tags = Array.isArray(t.tags) ? t.tags : [];
+    const titleLen = (t.title || '').length;
+    const descLen = (t.description || '').length;
+    return `
+      <details class="translation-panel" data-translation-lang="${iso}" data-listing-id="${listing.id}" open>
+        <summary>${name} <span class="translation-summary-meta">${titleLen}/140 · ${tags.length}/13 tags</span></summary>
+        <div class="form-group">
+          <label>Title (${name})</label>
+          <input type="text" data-translation-field="title" data-translation-lang="${iso}" data-listing-id="${listing.id}" value="${escapeHtml(t.title || '')}" maxlength="140" placeholder="Translated title">
+          <div class="char-counter ${titleLen > 140 ? 'over' : titleLen > 120 ? 'warn' : ''}">${titleLen}/140</div>
+        </div>
+        <div class="form-group">
+          <label>Description (${name})</label>
+          <textarea data-translation-field="description" data-translation-lang="${iso}" data-listing-id="${listing.id}" rows="6" placeholder="Translated description">${escapeHtml(t.description || '')}</textarea>
+          <div class="char-counter">${descLen} chars</div>
+        </div>
+        <div class="form-group">
+          <label>Tags (${name}) <span class="translation-tag-hint">30-char limit per tag</span></label>
+          <input type="text" data-translation-field="tags" data-translation-lang="${iso}" data-listing-id="${listing.id}" value="${escapeHtml(tags.join(', '))}" placeholder="Comma-separated, max 13 tags">
+          <div class="char-counter ${tags.length > 13 ? 'over' : ''}">${tags.length}/13 tags</div>
+        </div>
+      </details>
+    `;
+  }).join('');
+
+  const checkedCount = checked.size;
+
+  return `
+    <div class="form-group translations-section">
+      <div class="translations-header">
+        <label>Translations <span class="translations-count">${checkedCount > 0 ? `${checkedCount} language${checkedCount > 1 ? 's' : ''}` : 'none selected'}</span></label>
+      </div>
+      <div class="translation-toggles">
+        <label class="translate-toggle translate-all"><input type="checkbox" data-translate-all="true" data-listing-id="${listing.id}" ${allChecked ? 'checked' : ''}> All languages</label>
+        ${langToggles}
+      </div>
+      ${langPanels ? `<div class="translation-panels">${langPanels}</div>` : ''}
+    </div>
+  `;
+}
+
 function renderScoreChip(listing, field) {
   const evalData = listing[`_eval_${field}`];
   if (!evalData) return '';
@@ -253,6 +334,7 @@ export function renderListingCard(listing, index, collapsed = false) {
         <span class="card-title-preview ${titleClass}">${titlePreview}</span>
         ${renderSourceBadge(listing)}
         <span class="validation-badge ${badgeClass}"></span>
+        ${renderTranslateBtn(listing)}
         ${renderEvalBtn(listing)}
         <button class="card-remove" data-action="remove" data-listing-id="${listing.id}">&times;</button>
       </div>
@@ -399,6 +481,7 @@ export function renderListingCard(listing, index, collapsed = false) {
               </label>
             </div>
           </div>
+          ${renderTranslationsBlock(listing)}
         </details>
       </div>
       ${validationHtml}

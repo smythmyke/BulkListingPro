@@ -2178,6 +2178,176 @@ body.lightbox-open {
   border-color: #ccc;
 }
 
+/* Translate button — mirrors eval-btn but in purple */
+.translate-btn {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border: 1px solid #6c5ce7;
+  background: #6c5ce7;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 4px;
+  transition: all 0.15s ease;
+  line-height: 1.4;
+}
+.translate-btn:hover {
+  background: #5546d6;
+  border-color: #5546d6;
+}
+.translate-btn.disabled,
+.translate-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  border-color: #ccc;
+  background: #ccc;
+  color: white;
+  pointer-events: auto;
+}
+.translate-btn.disabled:hover,
+.translate-btn:disabled:hover {
+  background: #ccc;
+  border-color: #ccc;
+}
+.translate-btn.loading {
+  pointer-events: none;
+  opacity: 0.6;
+  background: #ccc;
+  border-color: #ccc;
+}
+
+/* Translations section in advanced options */
+.translations-section {
+  border-top: 1px dashed #e5e5e5;
+  padding-top: 14px;
+  margin-top: 14px;
+}
+.translations-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.translations-count {
+  font-size: 11px;
+  color: #6c5ce7;
+  font-weight: 600;
+  margin-left: 6px;
+}
+.translation-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  padding: 8px 10px;
+  background: #faf9ff;
+  border: 1px solid #e8e5f5;
+  border-radius: 6px;
+}
+.translate-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #444;
+  cursor: pointer;
+  font-weight: normal !important;
+  margin: 0 !important;
+}
+.translate-toggle input[type="checkbox"] {
+  margin: 0;
+  accent-color: #6c5ce7;
+}
+.translate-toggle.translate-all {
+  font-weight: 600 !important;
+  color: #6c5ce7;
+  padding-right: 8px;
+  border-right: 1px solid #d8d2ee;
+  margin-right: 4px !important;
+}
+.translate-toggle.translate-warn {
+  color: #d97706;
+}
+.translation-panels {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.translation-panel {
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  background: #fafafa;
+  padding: 0;
+}
+.translation-panel summary {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.translation-panel summary::-webkit-details-marker {
+  display: none;
+}
+.translation-panel summary::before {
+  content: '▶';
+  font-size: 9px;
+  margin-right: 6px;
+  transition: transform 0.15s;
+  display: inline-block;
+}
+.translation-panel[open] summary::before {
+  transform: rotate(90deg);
+}
+.translation-summary-meta {
+  font-size: 10px;
+  color: #888;
+  font-weight: normal;
+}
+.translation-panel[open] {
+  background: #fff;
+}
+.translation-panel .form-group {
+  padding: 0 12px 10px;
+  margin-bottom: 0;
+}
+.translation-tag-hint {
+  font-size: 10px;
+  color: #6c5ce7;
+  font-weight: normal;
+  margin-left: 6px;
+}
+
+.translate-bulk-langs {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px 14px;
+  padding: 10px 12px;
+  background: #faf9ff;
+  border: 1px solid #e8e5f5;
+  border-radius: 6px;
+  margin-top: 4px;
+}
+.translate-bulk-langs label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #444;
+  font-weight: normal;
+  cursor: pointer;
+  margin: 0;
+}
+.translate-bulk-langs input[type="checkbox"] {
+  margin: 0;
+  accent-color: #6c5ce7;
+}
+
 .eval-score-chip {
   display: inline-block;
   padding: 1px 6px;

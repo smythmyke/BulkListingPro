@@ -142,7 +142,22 @@ const elements = {
   hideSuggestionsBtn: document.getElementById('hide-suggestions-btn'),
   openEditorBtn: document.getElementById('open-editor-btn'),
   generateFullBtn: document.getElementById('generate-full-btn'),
-  generateHint: document.getElementById('generate-hint')
+  generateHint: document.getElementById('generate-hint'),
+  langPrimary: document.getElementById('lang-primary'),
+  langDefaults: document.getElementById('lang-defaults'),
+  enableShopLanguagesBtn: document.getElementById('enable-shop-languages-btn'),
+  langEnableStatus: document.getElementById('lang-enable-status'),
+  langDisclosureModal: document.getElementById('lang-disclosure-modal'),
+  langDisclosureCancel: document.getElementById('lang-disclosure-cancel'),
+  langDisclosureEnable: document.getElementById('lang-disclosure-enable')
+};
+
+const TRANSLATIONS_STORAGE_KEY = 'bulklistingpro_translations';
+const DEFAULT_TRANSLATIONS_PREFS = {
+  primary_language: 'en',
+  default_languages: [],
+  shop_languages_enabled: false,
+  shop_languages_enabled_at: null
 };
 
 document.addEventListener('DOMContentLoaded', init);
@@ -151,9 +166,11 @@ async function init() {
   console.log('BulkListingPro sidepanel initializing...');
   setupEventListeners();
   setupCalculator();
+  setupLanguagesPrefs();
   await checkPageStatus();
   await loadResearchClipboard();
   await loadTagLibrary();
+  await loadLanguagesPrefs();
 
   const setupComplete = await checkSetup();
   if (!setupComplete) {
@@ -1051,6 +1068,129 @@ function renderCreditPacks() {
       }
     });
   });
+}
+
+function setupLanguagesPrefs() {
+  if (!elements.langPrimary) return;
+
+  elements.langPrimary.addEventListener('change', saveLanguagesPrefs);
+
+  if (elements.langDefaults) {
+    elements.langDefaults.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+      cb.addEventListener('change', saveLanguagesPrefs);
+    });
+  }
+
+  if (elements.enableShopLanguagesBtn) {
+    elements.enableShopLanguagesBtn.addEventListener('click', () => {
+      if (elements.langDisclosureModal) elements.langDisclosureModal.classList.remove('hidden');
+    });
+  }
+  if (elements.langDisclosureCancel) {
+    elements.langDisclosureCancel.addEventListener('click', () => {
+      if (elements.langDisclosureModal) elements.langDisclosureModal.classList.add('hidden');
+    });
+  }
+  if (elements.langDisclosureEnable) {
+    elements.langDisclosureEnable.addEventListener('click', enableShopLanguages);
+  }
+}
+
+async function loadLanguagesPrefs() {
+  if (!elements.langPrimary) return;
+  try {
+    const data = await chrome.storage.local.get(TRANSLATIONS_STORAGE_KEY);
+    const prefs = { ...DEFAULT_TRANSLATIONS_PREFS, ...(data[TRANSLATIONS_STORAGE_KEY] || {}) };
+
+    elements.langPrimary.value = prefs.primary_language || 'en';
+    if (elements.langDefaults) {
+      const defaults = new Set(prefs.default_languages || []);
+      elements.langDefaults.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        cb.checked = defaults.has(cb.dataset.lang);
+      });
+    }
+
+    if (elements.enableShopLanguagesBtn && prefs.shop_languages_enabled) {
+      elements.enableShopLanguagesBtn.classList.add('success');
+      elements.enableShopLanguagesBtn.textContent = '✓ Languages enabled — re-run setup';
+      if (elements.langEnableStatus) {
+        const ts = prefs.shop_languages_enabled_at ? new Date(prefs.shop_languages_enabled_at).toLocaleDateString() : '';
+        elements.langEnableStatus.textContent = ts ? `Enabled on ${ts}. Click button to re-run.` : 'Already enabled.';
+      }
+    }
+  } catch (err) {
+    console.warn('Failed to load language preferences:', err);
+  }
+}
+
+async function saveLanguagesPrefs() {
+  if (!elements.langPrimary) return;
+  try {
+    const data = await chrome.storage.local.get(TRANSLATIONS_STORAGE_KEY);
+    const prefs = { ...DEFAULT_TRANSLATIONS_PREFS, ...(data[TRANSLATIONS_STORAGE_KEY] || {}) };
+
+    prefs.primary_language = elements.langPrimary.value || 'en';
+    if (elements.langDefaults) {
+      prefs.default_languages = [...elements.langDefaults.querySelectorAll('input[type="checkbox"]:checked')]
+        .map(cb => cb.dataset.lang);
+    }
+
+    await chrome.storage.local.set({ [TRANSLATIONS_STORAGE_KEY]: prefs });
+  } catch (err) {
+    console.warn('Failed to save language preferences:', err);
+  }
+}
+
+async function enableShopLanguages() {
+  if (elements.langDisclosureModal) elements.langDisclosureModal.classList.add('hidden');
+
+  const btn = elements.enableShopLanguagesBtn;
+  const status = elements.langEnableStatus;
+  if (!btn) return;
+
+  btn.disabled = true;
+  const originalText = btn.textContent;
+  btn.textContent = 'Enabling languages on Etsy...';
+  if (status) status.textContent = 'Working — keep this Chrome window open.';
+
+  try {
+    const tab = await findOrOpenEtsyTab();
+    if (!tab) throw new Error('Could not open an Etsy tab');
+
+    const response = await chrome.runtime.sendMessage({
+      type: 'ENABLE_SHOP_LANGUAGES',
+      payload: { tabId: tab.id }
+    });
+    if (!response?.success) {
+      throw new Error(response?.error || 'Could not enable shop languages');
+    }
+
+    const data = await chrome.storage.local.get(TRANSLATIONS_STORAGE_KEY);
+    const prefs = { ...DEFAULT_TRANSLATIONS_PREFS, ...(data[TRANSLATIONS_STORAGE_KEY] || {}) };
+    prefs.shop_languages_enabled = true;
+    prefs.shop_languages_enabled_at = Date.now();
+    await chrome.storage.local.set({ [TRANSLATIONS_STORAGE_KEY]: prefs });
+
+    btn.classList.add('success');
+    btn.textContent = '✓ Languages enabled — re-run setup';
+    btn.disabled = false;
+
+    const enabled = response.enabled || [];
+    const already = response.alreadyEnabled || [];
+    const total = enabled.length + already.length;
+    if (status) {
+      status.textContent = enabled.length > 0
+        ? `Enabled ${enabled.length} new language${enabled.length > 1 ? 's' : ''} (${total} total). Translation tabs now appear on every listing edit page.`
+        : `All ${total} languages were already enabled.`;
+    }
+    showToast(`Shop languages enabled (${total} languages)`, 'success');
+  } catch (err) {
+    console.error('Enable shop languages failed:', err);
+    btn.disabled = false;
+    btn.textContent = originalText;
+    if (status) status.textContent = `Error: ${err.message || 'unknown'}`;
+    showToast(err.message || 'Failed to enable languages', 'error', 5000);
+  }
 }
 
 function handleDragOver(e) {

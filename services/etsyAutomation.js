@@ -1,8 +1,11 @@
 import { cdpService } from './cdp.js';
 
 const ETSY_URLS = {
-  newListing: 'https://www.etsy.com/your/shops/me/listing-editor/create'
+  newListing: 'https://www.etsy.com/your/shops/me/listing-editor/create',
+  shopLanguages: 'https://www.etsy.com/your/shops/me/languages-translations'
 };
+
+const TRANSLATION_LANGUAGES = ['nl', 'fr', 'de', 'it', 'ja', 'pl', 'pt', 'ru', 'es', 'sv'];
 
 const DELAYS = {
   short: 300,
@@ -126,6 +129,7 @@ class EtsyAutomationService {
       await this.fillPersonalization(listing);
       await this.fillTags(listing);
       await this.fillMaterials(listing);
+      await this.fillTranslations(listing);
       await this.fillSettingsTab(listing);
       await this.fillToggles(listing);
       await this.saveListing(listing.listing_state !== 'active');
@@ -684,6 +688,222 @@ class EtsyAutomationService {
         })()
       `);
       await this.interruptibleDelay(DELAYS.short);
+    }
+  }
+
+  async enableShopLanguages() {
+    console.log('Enabling all shop languages on Etsy...');
+    await cdpService.navigate(ETSY_URLS.shopLanguages);
+    await this.interruptibleDelay(DELAYS.long * 2);
+
+    const onLoginPage = await cdpService.evaluate(`
+      (() => location.pathname.startsWith('/signin') || location.pathname.startsWith('/sell'))()
+    `);
+    if (onLoginPage) {
+      throw new Error('Etsy redirected to login. Please sign in to Etsy in this Chrome window first.');
+    }
+
+    const opened = await cdpService.evaluate(`
+      (() => {
+        const btn = document.querySelector('button[aria-controls="shop-languages-overlay"]');
+        if (!btn) return { ok: false, reason: 'trigger button not found' };
+        btn.scrollIntoView({ block: 'center' });
+        btn.click();
+        return { ok: true };
+      })()
+    `);
+    if (!opened?.ok) {
+      throw new Error(`Could not open shop languages modal: ${opened?.reason || 'unknown'}`);
+    }
+    await this.interruptibleDelay(DELAYS.long);
+
+    const toggleResult = await cdpService.evaluate(`
+      (() => {
+        const langs = ${JSON.stringify(TRANSLATION_LANGUAGES)};
+        const enabled = [];
+        const skipped = [];
+        const missing = [];
+        for (const iso of langs) {
+          const input = document.querySelector('input#language-' + iso);
+          if (!input) { missing.push(iso); continue; }
+          if (input.checked) {
+            skipped.push(iso);
+          } else {
+            const wrapper = input.closest('label, .wt-switch, [role="switch"]') || input;
+            wrapper.click();
+            enabled.push(iso);
+          }
+        }
+        return { enabled, skipped, missing };
+      })()
+    `);
+    console.log(`Languages: enabled=[${toggleResult.enabled.join(',')}] already-on=[${toggleResult.skipped.join(',')}] missing=[${toggleResult.missing.join(',')}]`);
+    await this.interruptibleDelay(DELAYS.short);
+
+    if (toggleResult.enabled.length === 0) {
+      const allAlreadyOn = toggleResult.skipped.length === TRANSLATION_LANGUAGES.length;
+      if (allAlreadyOn) {
+        await cdpService.evaluate(`
+          (() => {
+            const overlay = document.querySelector('#shop-languages-overlay');
+            const cancel = overlay && [...overlay.querySelectorAll('button')].find(b => b.textContent.trim() === 'Cancel');
+            if (cancel) cancel.click();
+          })()
+        `);
+        return { enabled: [], alreadyEnabled: toggleResult.skipped, missing: toggleResult.missing };
+      }
+    }
+
+    const saved = await cdpService.evaluate(`
+      (() => {
+        const overlay = document.querySelector('#shop-languages-overlay');
+        if (!overlay) return { ok: false, reason: 'overlay closed' };
+        const buttons = [...overlay.querySelectorAll('button')];
+        const save = buttons.find(b => /save changes/i.test(b.textContent.trim()));
+        if (!save) return { ok: false, reason: 'save button not found' };
+        save.scrollIntoView({ block: 'center' });
+        save.click();
+        return { ok: true };
+      })()
+    `);
+    if (!saved?.ok) {
+      throw new Error(`Could not save shop languages: ${saved?.reason || 'unknown'}`);
+    }
+    await this.interruptibleDelay(DELAYS.long * 2);
+
+    return {
+      enabled: toggleResult.enabled,
+      alreadyEnabled: toggleResult.skipped,
+      missing: toggleResult.missing
+    };
+  }
+
+  async fillTranslations(listing) {
+    const requested = Array.isArray(listing.translate_languages) ? listing.translate_languages : [];
+    const translations = listing.translations || {};
+
+    const langsToFill = requested
+      .map(l => String(l).toLowerCase())
+      .filter(l => translations[l] && (translations[l].title || translations[l].description || (translations[l].tags && translations[l].tags.length)));
+
+    if (langsToFill.length === 0) return;
+
+    const sectionInfo = await cdpService.evaluate(`
+      (() => {
+        const section = document.querySelector('#field-translations');
+        if (!section) return { found: false };
+        section.scrollIntoView({ block: 'center' });
+        const tabs = [...section.querySelectorAll('button[id$="-translation-tab"]')];
+        const tabOrder = tabs.map(t => {
+          const m = t.id.match(/^([a-z]{2})-translation-tab$/);
+          return m ? m[1] : null;
+        }).filter(Boolean);
+        return { found: true, tabOrder };
+      })()
+    `);
+
+    if (!sectionInfo?.found) {
+      console.warn('Translations section not found on listing page — shop languages may not be enabled. Skipping translations.');
+      return;
+    }
+
+    const tabOrder = sectionInfo.tabOrder || [];
+    if (tabOrder.length === 0) {
+      console.warn('No translation tabs rendered — skipping translations.');
+      return;
+    }
+
+    await this.interruptibleDelay(DELAYS.medium);
+
+    for (const lang of langsToFill) {
+      const N = tabOrder.indexOf(lang);
+      if (N === -1) {
+        console.warn(`Language ${lang} not enabled at shop level — skipping`);
+        continue;
+      }
+
+      const t = translations[lang];
+
+      const tabClicked = await cdpService.evaluate(`
+        (() => {
+          const tab = document.getElementById('${lang}-translation-tab');
+          if (!tab) return false;
+          tab.scrollIntoView({ block: 'center' });
+          tab.click();
+          return true;
+        })()
+      `);
+      if (!tabClicked) {
+        console.warn(`Could not click tab for ${lang}`);
+        continue;
+      }
+      await this.interruptibleDelay(DELAYS.short);
+
+      if (t.title && String(t.title).trim()) {
+        const titleReady = await cdpService.evaluate(`
+          (() => {
+            const ta = document.querySelector('textarea[name="translations.${N}.title"]');
+            if (!ta) return false;
+            ta.scrollIntoView({ block: 'center' });
+            ta.focus();
+            ta.select();
+            return true;
+          })()
+        `);
+        if (titleReady) {
+          await cdpService.type(String(t.title).substring(0, 140), DELAYS.typing);
+          await this.interruptibleDelay(DELAYS.short);
+        }
+      }
+
+      if (t.description && String(t.description).trim()) {
+        const descReady = await cdpService.evaluate(`
+          (() => {
+            const ta = document.querySelector('textarea[name="translations.${N}.description"]');
+            if (!ta) return false;
+            ta.scrollIntoView({ block: 'center' });
+            ta.focus();
+            ta.select();
+            return true;
+          })()
+        `);
+        if (descReady) {
+          await cdpService.type(String(t.description), DELAYS.typing);
+          await this.interruptibleDelay(DELAYS.short);
+        }
+      }
+
+      const tags = Array.isArray(t.tags) ? t.tags.filter(x => x && String(x).trim()).slice(0, 13) : [];
+      for (const tag of tags) {
+        const tagText = String(tag).substring(0, 30);
+        const inputReady = await cdpService.evaluate(`
+          (() => {
+            const input = document.querySelector('[id="listing-translations.${N}.tags-input"]');
+            if (!input) return false;
+            input.focus();
+            input.value = '';
+            return true;
+          })()
+        `);
+        if (!inputReady) break;
+
+        await cdpService.type(tagText, DELAYS.typing);
+
+        await cdpService.evaluate(`
+          (() => {
+            const btn = document.querySelector('[id="listing-translations.${N}.tags-button"]');
+            if (btn) {
+              btn.click();
+            } else {
+              const input = document.querySelector('[id="listing-translations.${N}.tags-input"]');
+              if (input) input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', keyCode: 13, bubbles: true }));
+            }
+          })()
+        `);
+        await this.interruptibleDelay(DELAYS.short);
+      }
+
+      console.log(`Filled translation for ${lang} (tab index ${N})`);
     }
   }
 

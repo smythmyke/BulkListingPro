@@ -39,6 +39,7 @@
             <button data-action="titlecase-all">Title Case All Titles</button>
             <button data-action="ai-generate-all">AI Generate All...</button>
             <button data-action="evaluate-all">Evaluate All...</button>
+            <button data-action="translate-all">Translate All...</button>
             <hr>
             <button data-action="add-tags-to-selected">Add Tags to Selected</button>
             <button data-action="remove-tag-from-all">Remove Tag from All</button>
@@ -222,6 +223,50 @@
     <div class="ai-bulk-footer">
       <button id="eval-bulk-cancel" class="btn btn-secondary" style="display:none;">Cancel</button>
       <button id="eval-bulk-start" class="btn btn-primary">Evaluate</button>
+    </div>
+  </div>
+
+  <div id="translate-bulk-backdrop" class="ai-bulk-backdrop" style="display:none;"></div>
+  <div id="translate-bulk-modal" class="ai-bulk-modal" style="display:none;">
+    <div class="ai-bulk-header">
+      <h2>Bulk Translate</h2>
+      <button id="translate-bulk-close" class="btn btn-close">&times;</button>
+    </div>
+    <div class="ai-bulk-body">
+      <div class="ai-bulk-section">
+        <label class="ai-bulk-label">Languages to translate to:</label>
+        <div class="translate-bulk-langs" id="translate-bulk-langs">
+          <label><input type="checkbox" data-lang="nl"> Dutch</label>
+          <label><input type="checkbox" data-lang="fr"> French</label>
+          <label><input type="checkbox" data-lang="de"> German</label>
+          <label><input type="checkbox" data-lang="it"> Italian</label>
+          <label><input type="checkbox" data-lang="ja"> Japanese</label>
+          <label><input type="checkbox" data-lang="pl"> Polish</label>
+          <label><input type="checkbox" data-lang="pt"> Portuguese</label>
+          <label><input type="checkbox" data-lang="ru"> Russian</label>
+          <label><input type="checkbox" data-lang="es"> Spanish</label>
+          <label><input type="checkbox" data-lang="sv"> Swedish</label>
+        </div>
+      </div>
+      <div class="ai-bulk-section">
+        <label class="ai-bulk-label">Scope:</label>
+        <select id="translate-bulk-scope" class="filter-select">
+          <option value="all">All listings</option>
+          <option value="selected">Selected listings only</option>
+          <option value="checked">Listings with languages already checked</option>
+          <option value="missing">Untranslated only (no translations data yet)</option>
+        </select>
+      </div>
+      <div class="ai-bulk-cost" id="translate-bulk-cost">Estimated cost: 0 credits (0 listings x 1 credit)</div>
+      <div class="ai-bulk-credit-warning" id="translate-bulk-credit-warning" style="display:none;">Not enough credits. Buy more from the sidepanel Account tab.</div>
+      <div class="ai-bulk-progress" id="translate-bulk-progress" style="display:none;">
+        <div class="ai-progress-bar"><div class="ai-progress-fill" id="translate-progress-fill"></div></div>
+        <span class="ai-progress-text" id="translate-progress-text">0 / 0</span>
+      </div>
+    </div>
+    <div class="ai-bulk-footer">
+      <button id="translate-bulk-cancel" class="btn btn-secondary" style="display:none;">Cancel</button>
+      <button id="translate-bulk-start" class="btn btn-primary">Translate</button>
     </div>
   </div>
 

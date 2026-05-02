@@ -63,6 +63,33 @@ export function validateListing(listing) {
     }
   }
 
+  // Translations validation
+  const translateLangs = Array.isArray(listing.translate_languages) ? listing.translate_languages : [];
+  const translations = listing.translations || {};
+  const langsMissingContent = [];
+  for (const lang of translateLangs) {
+    const t = translations[lang];
+    const hasContent = t && (t.title || t.description || (t.tags && t.tags.length));
+    if (!hasContent) {
+      langsMissingContent.push(lang);
+      continue;
+    }
+    if (t.title && t.title.length > 140) {
+      errors.push(`${lang.toUpperCase()} title exceeds 140 characters`);
+    }
+    if (Array.isArray(t.tags)) {
+      if (t.tags.length > 13) errors.push(`${lang.toUpperCase()} has more than 13 tags`);
+      for (const tag of t.tags) {
+        if (tag && tag.length > 30) {
+          errors.push(`${lang.toUpperCase()} tag "${tag.substring(0, 15)}..." exceeds 30 characters`);
+        }
+      }
+    }
+  }
+  if (langsMissingContent.length > 0) {
+    warnings.push(`${langsMissingContent.length} language${langsMissingContent.length > 1 ? 's' : ''} checked but empty: ${langsMissingContent.map(l => l.toUpperCase()).join(', ')} — Etsy will auto-translate at upload`);
+  }
+
   return {
     valid: errors.length === 0,
     errors,

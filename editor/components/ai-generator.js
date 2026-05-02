@@ -160,3 +160,82 @@ export async function bulkEvaluate(listings, onProgress) {
 
   return results;
 }
+
+export async function translateListing(listing, targetLanguages, primaryLanguage = 'en') {
+  const token = await getAuthToken();
+  if (!token) {
+    throw { error: 'not_authenticated', message: 'Sign in required to use translation' };
+  }
+
+  if (!Array.isArray(targetLanguages) || targetLanguages.length === 0) {
+    throw { error: 'validation', message: 'Select at least one target language' };
+  }
+
+  if (!listing.title || !String(listing.title).trim()) {
+    throw { error: 'validation', message: 'Add primary content first — title is required to translate' };
+  }
+
+  const response = await fetch(`${API_BASE}/api/v1/translate-listing`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+      'X-Extension-Id': chrome.runtime.id || 'bulklistingpro',
+      'X-Extension-Version': chrome.runtime.getManifest?.()?.version || '1.0.0'
+    },
+    body: JSON.stringify({
+      primary_language: primaryLanguage || 'en',
+      target_languages: targetLanguages.map(l => String(l).toLowerCase()),
+      title: listing.title || '',
+      description: listing.description || '',
+      tags: Array.isArray(listing.tags) ? listing.tags : [],
+      category: listing.category || ''
+    })
+  });
+
+  if (!response.ok) {
+    let data = {};
+    try { data = await response.json(); } catch (e) {}
+
+    if (response.status === 401) {
+      throw { error: 'not_authenticated', message: 'Sign in required' };
+    }
+    if (response.status === 402) {
+      throw { error: 'insufficient_credits', message: data.message || 'Not enough credits', creditsRemaining: data.creditsRemaining || 0 };
+    }
+    if (response.status === 503) {
+      throw { error: 'unavailable', message: 'AI service temporarily unavailable' };
+    }
+    throw { error: 'api_error', message: data.message || 'Translation failed' };
+  }
+
+  return await response.json();
+}
+
+export async function bulkTranslate(listings, targetLanguages, primaryLanguage = 'en', onProgress) {
+  const results = [];
+  let cancelled = false;
+
+  const cancel = () => { cancelled = true; };
+
+  for (let i = 0; i < listings.length; i++) {
+    if (cancelled) break;
+
+    if (onProgress) onProgress({ current: i, total: listings.length, cancel });
+
+    try {
+      const result = await translateListing(listings[i], targetLanguages, primaryLanguage);
+      results.push({ listingId: listings[i].id, success: true, result });
+    } catch (err) {
+      if (err.error === 'insufficient_credits') {
+        results.push({ listingId: listings[i].id, success: false, error: err });
+        break;
+      }
+      results.push({ listingId: listings[i].id, success: false, error: err });
+    }
+  }
+
+  if (onProgress) onProgress({ current: listings.length, total: listings.length, done: true, cancel });
+
+  return results;
+}

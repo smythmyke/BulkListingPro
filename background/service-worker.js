@@ -54,6 +54,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       handleOpenCustomerPortal(sendResponse);
       return true;
 
+    case 'ENABLE_SHOP_LANGUAGES':
+      handleEnableShopLanguages(message.payload, sendResponse);
+      return true;
+
     case 'DEDUCT_CREDITS':
       handleDeductCredits(message.payload, sendResponse);
       return true;
@@ -204,6 +208,23 @@ async function handleOpenCustomerPortal(sendResponse) {
     sendResponse({ success: true, ...result });
   } catch (error) {
     sendResponse({ success: false, error: error.message });
+  }
+}
+
+async function handleEnableShopLanguages(payload, sendResponse) {
+  const { tabId } = payload || {};
+  if (!tabId) {
+    sendResponse({ success: false, error: 'No Etsy tab provided' });
+    return;
+  }
+
+  try {
+    await cdpService.attach(tabId);
+    const result = await etsyAutomationService.enableShopLanguages();
+    sendResponse({ success: true, ...result });
+  } catch (error) {
+    console.error('ENABLE_SHOP_LANGUAGES error:', error);
+    sendResponse({ success: false, error: error.message || 'Unknown error' });
   }
 }
 

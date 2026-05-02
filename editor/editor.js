@@ -1,11 +1,11 @@
 import { STORAGE_KEYS, CATEGORIES, CATEGORY_ATTRIBUTES, sanitizeListing, readSpreadsheetFile } from '../services/listingUtils.js';
 import { renderListingCard, renderAllCards, createBlankListing } from './components/form-view.js';
 import { validateListing, formatPrice, validateTag, autoformatTitle, autoformatDescription, autoformatListing, titleCaseTitle, validateAllListings } from './components/validator.js';
-import { initGrid, destroyGrid, refreshGridData, getGridListings, addGridRow, deleteGridRows, updateCell, IMAGES_COL } from './components/grid-view.js';
+import { initGrid, destroyGrid, refreshGridData, getGridListings, addGridRow, deleteGridRows, updateCell, IMAGES_COL, TRANSLATE_ALL_COL, TRANSLATE_FIRST_LANG_COL, TRANSLATE_LAST_LANG_COL, TRANSLATION_LANGUAGE_ISOS } from './components/grid-view.js';
 import { openImageDB } from '../services/imageStore.js';
 import { loadTagLibrary, mapFormCategoryToInternal, getSuggestionsForCategory, fetchCompetitorTags, getTagFrequency, importListingFromUrl } from './components/tag-manager.js';
 import { processImageFiles, processImageURL, removeImage, removeAllImages, getFullResolutionImages, reorderImages, showLightbox, closeLightbox, processDigitalFile, removeDigitalFile, hasImage } from './components/image-handler.js';
-import { generateForListing, bulkGenerate, evaluateListing, bulkEvaluate } from './components/ai-generator.js';
+import { generateForListing, bulkGenerate, evaluateListing, bulkEvaluate, translateListing, bulkTranslate } from './components/ai-generator.js';
 import { startEditorTour, shouldAutoStart, showTourIntro } from '../services/tourService.js';
 
 let listings = [];
@@ -22,6 +22,7 @@ let aiPanelListingId = null;
 let aiPanelField = null;
 let bulkCancelFn = null;
 let evalBulkCancelFn = null;
+let translateBulkCancelFn = null;
 
 const undoStack = [];
 const redoStack = [];
@@ -99,6 +100,18 @@ const els = {
   evalBulkProgress: document.getElementById('eval-bulk-progress'),
   evalProgressFill: document.getElementById('eval-progress-fill'),
   evalProgressText: document.getElementById('eval-progress-text'),
+  translateBulkModal: document.getElementById('translate-bulk-modal'),
+  translateBulkBackdrop: document.getElementById('translate-bulk-backdrop'),
+  translateBulkClose: document.getElementById('translate-bulk-close'),
+  translateBulkStart: document.getElementById('translate-bulk-start'),
+  translateBulkCancel: document.getElementById('translate-bulk-cancel'),
+  translateBulkScope: document.getElementById('translate-bulk-scope'),
+  translateBulkLangs: document.getElementById('translate-bulk-langs'),
+  translateBulkCost: document.getElementById('translate-bulk-cost'),
+  translateBulkCreditWarning: document.getElementById('translate-bulk-credit-warning'),
+  translateBulkProgress: document.getElementById('translate-bulk-progress'),
+  translateProgressFill: document.getElementById('translate-progress-fill'),
+  translateProgressText: document.getElementById('translate-progress-text'),
   tourBtn: document.getElementById('tour-btn')
 };
 
@@ -478,6 +491,13 @@ function setupEventListeners() {
   els.evalBulkCancel.addEventListener('click', cancelBulkEvaluate);
   els.evalBulkScope.addEventListener('change', updateEvalBulkCost);
 
+  els.translateBulkClose.addEventListener('click', closeTranslateBulkModal);
+  els.translateBulkBackdrop.addEventListener('click', closeTranslateBulkModal);
+  els.translateBulkStart.addEventListener('click', startBulkTranslate);
+  els.translateBulkCancel.addEventListener('click', cancelBulkTranslate);
+  els.translateBulkScope.addEventListener('change', updateTranslateBulkCost);
+  els.translateBulkLangs.addEventListener('change', updateTranslateBulkCost);
+
   const lightboxEl = document.getElementById('lightbox');
   if (lightboxEl) {
     lightboxEl.querySelector('.lightbox-backdrop').addEventListener('click', closeLightbox);
@@ -537,6 +557,30 @@ function handleGridChange(type, detail) {
     if (listings[y]) {
       const fields = ['_selected', 'title', 'description', 'price', 'category', 'tags', 'who_made', 'what_is_it', 'ai_content', 'when_made', 'renewal', 'listing_state', 'materials', 'quantity', 'sku', '_images'];
       const field = fields[x];
+
+      if (x === TRANSLATE_ALL_COL) {
+        const checked = value === true || value === 'true';
+        pushUndo('toggle all translations');
+        for (let i = 0; i < TRANSLATION_LANGUAGE_ISOS.length; i++) {
+          updateCell(TRANSLATE_FIRST_LANG_COL + i, y, checked);
+        }
+        listings[y].translate_languages = checked ? [...TRANSLATION_LANGUAGE_ISOS] : [];
+        scheduleSave();
+        return;
+      }
+      if (x >= TRANSLATE_FIRST_LANG_COL && x <= TRANSLATE_LAST_LANG_COL) {
+        const iso = TRANSLATION_LANGUAGE_ISOS[x - TRANSLATE_FIRST_LANG_COL];
+        const checked = value === true || value === 'true';
+        pushUndo('toggle translation language');
+        const current = new Set((listings[y].translate_languages || []).map(l => String(l).toLowerCase()));
+        if (checked) current.add(iso); else current.delete(iso);
+        listings[y].translate_languages = [...current];
+        const allChecked = TRANSLATION_LANGUAGE_ISOS.every(l => current.has(l));
+        updateCell(TRANSLATE_ALL_COL, y, allChecked);
+        scheduleSave();
+        return;
+      }
+
       if (field === '_images') return;
       if (field === '_selected') {
         listings[y]._selected = value === true || value === 'true';
@@ -617,6 +661,7 @@ function handleMenuAction(action) {
   else if (action === 'titlecase-all') runTitleCaseAll();
   else if (action === 'ai-generate-all') showAiBulkModal();
   else if (action === 'evaluate-all') showEvalBulkModal();
+  else if (action === 'translate-all') showTranslateBulkModal();
   else if (action === 'add-tags-to-selected') addBatchTags();
   else if (action === 'remove-tag-from-all') removeBatchTag();
   else if (action === 'import-from-url') showImportFromUrlModal();
@@ -805,6 +850,20 @@ function handleFieldChange(e) {
     return;
   }
 
+  // Translation toggles + fields
+  if (e.target.dataset.translateAll) {
+    handleTranslateAllToggle(e.target);
+    return;
+  }
+  if (e.target.dataset.translateLang && e.target.type === 'checkbox') {
+    handleTranslateLangToggle(e.target);
+    return;
+  }
+  if (e.target.dataset.translationField) {
+    handleTranslationFieldChange(e.target);
+    return;
+  }
+
   const field = e.target.dataset.field;
   const id = e.target.dataset.listingId;
   if (!field || !id) return;
@@ -872,7 +931,7 @@ function handleCardClick(e) {
   }
 
   const header = e.target.closest('[data-action="toggle"]');
-  if (header && !e.target.closest('.card-remove') && !e.target.closest('.card-select') && !e.target.closest('.eval-btn')) {
+  if (header && !e.target.closest('.card-remove') && !e.target.closest('.card-select') && !e.target.closest('.eval-btn') && !e.target.closest('.translate-btn')) {
     const id = header.dataset.listingId;
     toggleCard(id);
     return;
@@ -952,6 +1011,12 @@ function handleCardClick(e) {
   if (e.target.classList.contains('eval-btn')) {
     if (e.target.disabled || e.target.classList.contains('disabled')) return;
     handleEvaluateListing(e.target.dataset.listingId, e.target);
+    return;
+  }
+
+  if (e.target.classList.contains('translate-btn')) {
+    if (e.target.disabled || e.target.classList.contains('disabled')) return;
+    handleTranslateListing(e.target.dataset.listingId, e.target);
     return;
   }
 
@@ -1450,9 +1515,16 @@ function clearImageDragIndicators() {
   });
 }
 
-function addListing() {
+async function addListing() {
   pushUndo('add listing');
   const blank = createBlankListing();
+  // Apply Account preferences default-languages
+  try {
+    const prefs = await getTranslationPrefs();
+    if (Array.isArray(prefs.default_languages) && prefs.default_languages.length > 0) {
+      blank.translate_languages = [...prefs.default_languages];
+    }
+  } catch {}
   listings.push(blank);
 
   if (currentView === 'form') {
@@ -1636,6 +1708,34 @@ async function importFile(file) {
     if (imported.length === 0) {
       showToast('No valid listings found (title and valid price required)', 'error');
       return;
+    }
+
+    const translationsRows = Array.isArray(data.translations) ? data.translations : [];
+    if (translationsRows.length > 0) {
+      const VALID_LANGS = new Set(['nl', 'fr', 'de', 'it', 'ja', 'pl', 'pt', 'ru', 'es', 'sv']);
+      let attached = 0;
+      for (const tRow of translationsRows) {
+        const sku = (tRow.sku || tRow.SKU || '').toString().trim();
+        const lang = (tRow.language || tRow.Language || '').toString().trim().toLowerCase();
+        if (!sku || !lang || !VALID_LANGS.has(lang)) continue;
+        const target = imported.find(l => (l.sku || '').toString().trim() === sku);
+        if (!target) continue;
+        if (!target.translations) target.translations = {};
+        const tTags = [];
+        for (let i = 1; i <= 13; i++) {
+          const v = tRow[`tag_${i}`];
+          if (v && String(v).trim()) tTags.push(String(v).trim().substring(0, 30));
+        }
+        target.translations[lang] = {
+          title: (tRow.title || '').toString().substring(0, 140),
+          description: (tRow.description || '').toString(),
+          tags: tTags
+        };
+        if (!target.translate_languages) target.translate_languages = [];
+        if (!target.translate_languages.includes(lang)) target.translate_languages.push(lang);
+        attached++;
+      }
+      if (attached > 0) allWarnings.push(`Loaded ${attached} translation row(s) from Translations sheet`);
     }
 
     listings = [...listings, ...imported];
@@ -2550,6 +2650,136 @@ async function handleEvaluateListing(lid, btn) {
   }
 }
 
+function handleTranslateAllToggle(checkbox) {
+  const id = checkbox.dataset.listingId;
+  const listing = findListingById(id);
+  if (!listing) return;
+  pushUndo('toggle all translations');
+  listing.translate_languages = checkbox.checked ? [...TRANSLATION_LANGUAGE_ISOS] : [];
+  rerenderCard(id);
+  scheduleSave();
+}
+
+function handleTranslateLangToggle(checkbox) {
+  const id = checkbox.dataset.listingId;
+  const lang = checkbox.dataset.translateLang;
+  const listing = findListingById(id);
+  if (!listing) return;
+  pushUndo('toggle translation language');
+  const set = new Set((listing.translate_languages || []).map(l => String(l).toLowerCase()));
+  if (checkbox.checked) set.add(lang);
+  else set.delete(lang);
+  listing.translate_languages = [...set];
+  rerenderCard(id);
+  scheduleSave();
+}
+
+function handleTranslationFieldChange(input) {
+  const id = input.dataset.listingId;
+  const lang = input.dataset.translationLang;
+  const fieldName = input.dataset.translationField;
+  const listing = findListingById(id);
+  if (!listing || !lang || !fieldName) return;
+
+  if (!listing.translations) listing.translations = {};
+  if (!listing.translations[lang]) listing.translations[lang] = {};
+
+  if (fieldName === 'tags') {
+    listing.translations[lang].tags = input.value
+      .split(',')
+      .map(t => t.trim())
+      .filter(t => t)
+      .slice(0, 13)
+      .map(t => t.length > 30 ? t.substring(0, 30) : t);
+  } else if (fieldName === 'title') {
+    listing.translations[lang].title = (input.value || '').substring(0, 140);
+  } else {
+    listing.translations[lang][fieldName] = input.value;
+  }
+
+  scheduleSave();
+}
+
+async function getTranslationPrefs() {
+  try {
+    const data = await chrome.storage.local.get('bulklistingpro_translations');
+    return data.bulklistingpro_translations || { primary_language: 'en', default_languages: [], shop_languages_enabled: false };
+  } catch {
+    return { primary_language: 'en', default_languages: [], shop_languages_enabled: false };
+  }
+}
+
+async function handleTranslateListing(lid, btn) {
+  const listing = findListingById(lid);
+  if (!listing) return;
+
+  const targets = (listing.translate_languages || []).map(l => String(l).toLowerCase());
+  if (targets.length === 0) {
+    showToast('Check at least one language for this listing first', 'error');
+    return;
+  }
+
+  if (!listing.title || !listing.title.trim()) {
+    showToast('Add a title first — required to translate', 'error');
+    return;
+  }
+
+  const available = await getAvailableCredits();
+  if (available < 1) {
+    showToast('Not enough credits. Buy more from the sidepanel Account tab.', 'error');
+    return;
+  }
+
+  const prefs = await getTranslationPrefs();
+  const primary = prefs.primary_language || 'en';
+
+  // Gap-fill: if tags are empty, generate them first (no extra credit)
+  if (!listing.tags || listing.tags.length === 0) {
+    btn.classList.add('loading');
+    btn.textContent = 'Filling tags...';
+    try {
+      const tagResult = await generateForListing(listing, ['tags']);
+      if (tagResult && Array.isArray(tagResult.tags) && tagResult.tags.length > 0) {
+        pushUndo('AI gap-fill tags');
+        listing.tags = tagResult.tags;
+      }
+    } catch (err) {
+      console.warn('Tag gap-fill failed (continuing):', err);
+    }
+  }
+
+  btn.classList.add('loading');
+  btn.textContent = 'Translating...';
+
+  try {
+    const result = await translateListing(listing, targets, primary);
+    btn.classList.remove('loading');
+    btn.textContent = '🌐 Translate';
+    await decrementLocalCredits(1);
+
+    if (result.translations && typeof result.translations === 'object') {
+      pushUndo('translate listing');
+      if (!listing.translations) listing.translations = {};
+      for (const [lang, t] of Object.entries(result.translations)) {
+        listing.translations[lang] = {
+          title: (t.title || '').substring(0, 140),
+          description: t.description || '',
+          tags: Array.isArray(t.tags) ? t.tags.slice(0, 13).map(tag => String(tag).substring(0, 30)) : []
+        };
+      }
+    }
+
+    rerenderCard(lid);
+    scheduleSave();
+    const langCount = Object.keys(result.translations || {}).length;
+    showToast(`Translated to ${langCount} language${langCount !== 1 ? 's' : ''}`, 'success');
+  } catch (err) {
+    btn.classList.remove('loading');
+    btn.textContent = '🌐 Translate';
+    handleAiError(err);
+  }
+}
+
 function applyEvalTagSwap(el) {
   const lid = el.dataset.listingId;
   const listing = findListingById(lid);
@@ -2681,6 +2911,146 @@ async function startBulkEvaluate() {
 
 function cancelBulkEvaluate() {
   if (evalBulkCancelFn) evalBulkCancelFn();
+}
+
+function getTranslateBulkLanguages() {
+  return [...els.translateBulkLangs.querySelectorAll('input[type="checkbox"]:checked')].map(cb => cb.dataset.lang);
+}
+
+function getTranslateBulkTargetListings() {
+  const scope = els.translateBulkScope.value;
+  if (scope === 'selected') return listings.filter(l => l._selected);
+  if (scope === 'checked') return listings.filter(l => Array.isArray(l.translate_languages) && l.translate_languages.length > 0);
+  if (scope === 'missing') return listings.filter(l => !l.translations || Object.keys(l.translations).length === 0);
+  return [...listings];
+}
+
+function showTranslateBulkModal() {
+  if (listings.length === 0) {
+    showToast('No listings to translate', 'error');
+    return;
+  }
+  els.translateBulkScope.value = 'all';
+  els.translateBulkProgress.style.display = 'none';
+  els.translateBulkStart.style.display = '';
+  els.translateBulkCancel.style.display = 'none';
+  els.translateBulkStart.disabled = false;
+  // Pre-check langs that have any per-listing checkboxes set, so the modal is useful out of the box
+  const aggregateLangs = new Set();
+  listings.forEach(l => (l.translate_languages || []).forEach(iso => aggregateLangs.add(iso)));
+  els.translateBulkLangs.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+    cb.checked = aggregateLangs.has(cb.dataset.lang);
+  });
+  updateTranslateBulkCost();
+  els.translateBulkModal.style.display = '';
+  els.translateBulkBackdrop.style.display = '';
+}
+
+function closeTranslateBulkModal() {
+  els.translateBulkModal.style.display = 'none';
+  els.translateBulkBackdrop.style.display = 'none';
+  translateBulkCancelFn = null;
+}
+
+async function updateTranslateBulkCost() {
+  const target = getTranslateBulkTargetListings();
+  const langs = getTranslateBulkLanguages();
+  // Cost = count of (listings with at least one target lang either checked or selected in modal)
+  const count = langs.length === 0 ? 0 : target.length;
+  const cost = count;
+  els.translateBulkCost.textContent = langs.length === 0
+    ? 'Pick at least one language above.'
+    : `Estimated cost: ${cost} credit${cost !== 1 ? 's' : ''} (${count} listing${count !== 1 ? 's' : ''} x 1 credit)`;
+
+  const available = await getAvailableCredits();
+  if (cost > 0 && cost > available) {
+    els.translateBulkCreditWarning.textContent = `Not enough credits (${available} available, ${cost} needed). Buy more from the sidepanel Account tab.`;
+    els.translateBulkCreditWarning.style.display = '';
+    els.translateBulkStart.disabled = true;
+  } else if (cost === 0) {
+    els.translateBulkCreditWarning.style.display = 'none';
+    els.translateBulkStart.disabled = true;
+  } else {
+    els.translateBulkCreditWarning.style.display = 'none';
+    els.translateBulkStart.disabled = false;
+  }
+}
+
+async function startBulkTranslate() {
+  const langs = getTranslateBulkLanguages();
+  if (langs.length === 0) {
+    showToast('Pick at least one language', 'error');
+    return;
+  }
+  const target = getTranslateBulkTargetListings();
+  if (target.length === 0) {
+    showToast('No listings match the selected scope', 'error');
+    return;
+  }
+
+  pushUndo('bulk translate');
+
+  // Apply checkbox state to listings (so each listing has these langs marked)
+  for (const l of target) {
+    const set = new Set((l.translate_languages || []).map(x => String(x).toLowerCase()));
+    langs.forEach(lang => set.add(lang));
+    l.translate_languages = [...set];
+  }
+
+  els.translateBulkStart.style.display = 'none';
+  els.translateBulkCancel.style.display = '';
+  els.translateBulkProgress.style.display = '';
+  els.translateProgressFill.style.width = '0%';
+  els.translateProgressText.textContent = `0 / ${target.length}`;
+
+  const prefs = await getTranslationPrefs();
+  const primary = prefs.primary_language || 'en';
+
+  let applied = 0;
+  let failed = 0;
+
+  const results = await bulkTranslate(target, langs, primary, (progress) => {
+    if (progress.cancel) translateBulkCancelFn = progress.cancel;
+    const pct = Math.round((progress.current / progress.total) * 100);
+    els.translateProgressFill.style.width = `${pct}%`;
+    els.translateProgressText.textContent = `${progress.current} / ${progress.total}`;
+  });
+
+  for (const r of results) {
+    if (!r.success) { failed++; continue; }
+    const listing = findListingById(r.listingId);
+    if (!listing) continue;
+    if (!listing.translations) listing.translations = {};
+    const t = r.result?.translations || {};
+    for (const [lang, payload] of Object.entries(t)) {
+      listing.translations[lang] = {
+        title: (payload.title || '').substring(0, 140),
+        description: payload.description || '',
+        tags: Array.isArray(payload.tags) ? payload.tags.slice(0, 13).map(tag => String(tag).substring(0, 30)) : []
+      };
+    }
+    applied++;
+  }
+
+  render();
+  scheduleSave();
+  closeTranslateBulkModal();
+  translateBulkCancelFn = null;
+
+  if (applied > 0) await decrementLocalCredits(applied);
+
+  const creditsFailed = results.some(r => !r.success && r.error && r.error.error === 'insufficient_credits');
+  if (creditsFailed) {
+    showToast(`Translated ${applied} listing(s) — ran out of credits. Buy more from the sidepanel Account tab.`, 'error');
+  } else if (failed > 0) {
+    showToast(`Translated ${applied} listing(s), ${failed} failed`, applied > 0 ? 'success' : 'error');
+  } else {
+    showToast(`Translated ${applied} listing(s) to ${langs.map(l => l.toUpperCase()).join(', ')}`, 'success');
+  }
+}
+
+function cancelBulkTranslate() {
+  if (translateBulkCancelFn) translateBulkCancelFn();
 }
 
 function clampTooltipPosition(e) {

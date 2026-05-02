@@ -23,6 +23,10 @@ const LISTING_TYPE_LABELS = { digital: 'Digital', physical: 'Physical' };
 const BOOLEAN_OPTIONS = ['false', 'true'];
 const BOOLEAN_LABELS = { 'false': 'No', 'true': 'Yes' };
 
+export const TRANSLATION_LANGUAGE_ISOS = ['nl', 'fr', 'de', 'it', 'ja', 'pl', 'pt', 'ru', 'es', 'sv'];
+const TRANSLATION_LANGUAGE_LABELS = { nl: 'NL', fr: 'FR', de: 'DE', it: 'IT', ja: 'JA', pl: 'PL', pt: 'PT', ru: 'RU', es: 'ES', sv: 'SV' };
+const TRANSLATION_LANGUAGE_NAMES = { nl: 'Dutch', fr: 'French', de: 'German', it: 'Italian', ja: 'Japanese', pl: 'Polish', pt: 'Portuguese', ru: 'Russian', es: 'Spanish', sv: 'Swedish' };
+
 const COLUMN_TOOLTIPS = [
   'Select rows for batch actions',
   'Listing title (required, max 140 chars)',
@@ -47,6 +51,8 @@ const COLUMN_TOOLTIPS = [
   'Digital or physical listing',
   'Feature this listing in shop',
   'Promote with Etsy Ads',
+  'Translate listing to all 10 languages (master toggle)',
+  ...TRANSLATION_LANGUAGE_ISOS.map(iso => `Translate to ${TRANSLATION_LANGUAGE_NAMES[iso]}`),
   'Click to add images (0/5 to 5/5)',
 ];
 
@@ -74,8 +80,14 @@ const COLUMNS = [
   { type: 'dropdown', title: 'Type', width: 90, name: 'listing_type', source: LISTING_TYPE_OPTIONS },
   { type: 'dropdown', title: 'Featured', width: 80, name: 'featured', source: BOOLEAN_OPTIONS },
   { type: 'dropdown', title: 'Etsy Ads', width: 80, name: 'etsy_ads', source: BOOLEAN_OPTIONS },
+  { type: 'checkbox', title: 'All', width: 36, name: '_translate_all' },
+  ...TRANSLATION_LANGUAGE_ISOS.map(iso => ({ type: 'checkbox', title: TRANSLATION_LANGUAGE_LABELS[iso], width: 36, name: `_translate_${iso}` })),
   { type: 'text', title: 'Imgs', width: 55, name: '_images', readOnly: true },
 ];
+
+export const TRANSLATE_ALL_COL = COLUMNS.findIndex(c => c.name === '_translate_all');
+export const TRANSLATE_FIRST_LANG_COL = TRANSLATE_ALL_COL + 1;
+export const TRANSLATE_LAST_LANG_COL = TRANSLATE_FIRST_LANG_COL + TRANSLATION_LANGUAGE_ISOS.length - 1;
 
 export const IMAGES_COL = COLUMNS.length - 1;
 
@@ -88,35 +100,47 @@ function countImages(listing) {
 }
 
 function listingsToRows(listings) {
-  return listings.map(l => [
-    l._selected ? true : false,
-    l.title || '',
-    l.description || '',
-    l.price || '',
-    l.category || '',
-    (l.tags || []).join(', '),
-    l.who_made || 'i_did',
-    l.what_is_it || 'finished_product',
-    l.ai_content || 'original',
-    l.when_made || 'made_to_order',
-    l.renewal || 'automatic',
-    l.listing_state || 'draft',
-    (l.materials || []).join(', '),
-    l.quantity || 999,
-    l.sku || '',
-    l.primary_color || '',
-    l.secondary_color || '',
-    l.personalization_instructions || '',
-    l.personalization_char_limit || '',
-    l.personalization_required ? 'true' : 'false',
-    l.listing_type || 'digital',
-    l.featured ? 'true' : 'false',
-    l.etsy_ads ? 'true' : 'false',
-    `${countImages(l)}/5`
-  ]);
+  return listings.map(l => {
+    const tlangs = new Set((l.translate_languages || []).map(x => String(x).toLowerCase()));
+    const allChecked = TRANSLATION_LANGUAGE_ISOS.every(iso => tlangs.has(iso));
+    return [
+      l._selected ? true : false,
+      l.title || '',
+      l.description || '',
+      l.price || '',
+      l.category || '',
+      (l.tags || []).join(', '),
+      l.who_made || 'i_did',
+      l.what_is_it || 'finished_product',
+      l.ai_content || 'original',
+      l.when_made || 'made_to_order',
+      l.renewal || 'automatic',
+      l.listing_state || 'draft',
+      (l.materials || []).join(', '),
+      l.quantity || 999,
+      l.sku || '',
+      l.primary_color || '',
+      l.secondary_color || '',
+      l.personalization_instructions || '',
+      l.personalization_char_limit || '',
+      l.personalization_required ? 'true' : 'false',
+      l.listing_type || 'digital',
+      l.featured ? 'true' : 'false',
+      l.etsy_ads ? 'true' : 'false',
+      allChecked,
+      ...TRANSLATION_LANGUAGE_ISOS.map(iso => tlangs.has(iso)),
+      `${countImages(l)}/5`
+    ];
+  });
 }
 
 function rowToListingUpdate(rowData) {
+  const translate_languages = [];
+  TRANSLATION_LANGUAGE_ISOS.forEach((iso, i) => {
+    const cell = rowData[TRANSLATE_FIRST_LANG_COL + i];
+    if (cell === true || cell === 'true') translate_languages.push(iso);
+  });
+
   return {
     _selected: rowData[0] === true || rowData[0] === 'true',
     title: rowData[1] || '',
@@ -140,7 +164,8 @@ function rowToListingUpdate(rowData) {
     personalization_required: rowData[19] === 'true',
     listing_type: rowData[20] || 'digital',
     featured: rowData[21] === 'true',
-    etsy_ads: rowData[22] === 'true'
+    etsy_ads: rowData[22] === 'true',
+    translate_languages
   };
 }
 
