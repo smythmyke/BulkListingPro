@@ -2225,9 +2225,15 @@ body.lightbox-open {
 }
 .translations-header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   margin-bottom: 8px;
+  gap: 8px;
+}
+.translations-header .translate-btn {
+  font-size: 12px;
+  padding: 4px 12px;
+  margin-left: 0;
 }
 .translations-count {
   font-size: 11px;

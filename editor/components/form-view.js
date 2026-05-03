@@ -219,6 +219,7 @@ function renderTranslationsBlock(listing) {
     <div class="form-group translations-section">
       <div class="translations-header">
         <label>Translations <span class="translations-count">${checkedCount > 0 ? `${checkedCount} language${checkedCount > 1 ? 's' : ''}` : 'none selected'}</span></label>
+        ${renderTranslateBtn(listing)}
       </div>
       <div class="translation-toggles">
         <label class="translate-toggle translate-all"><input type="checkbox" data-translate-all="true" data-listing-id="${listing.id}" ${allChecked ? 'checked' : ''}> All languages</label>
@@ -334,7 +335,6 @@ export function renderListingCard(listing, index, collapsed = false) {
         <span class="card-title-preview ${titleClass}">${titlePreview}</span>
         ${renderSourceBadge(listing)}
         <span class="validation-badge ${badgeClass}"></span>
-        ${renderTranslateBtn(listing)}
         ${renderEvalBtn(listing)}
         <button class="card-remove" data-action="remove" data-listing-id="${listing.id}">&times;</button>
       </div>
