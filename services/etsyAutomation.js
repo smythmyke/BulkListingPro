@@ -23,7 +23,7 @@ class EtsyAutomationService {
     this.skipCurrent = false;
     this.onProgressCallback = null;
     this.onVerificationCallback = null;
-    this.translationsVerified = false;
+    this.translationsVerifiedLangs = new Set();
   }
 
   static getInstance() {
@@ -37,7 +37,7 @@ class EtsyAutomationService {
     this.isPaused = false;
     this.isCancelled = false;
     this.skipCurrent = false;
-    this.translationsVerified = false;
+    this.translationsVerifiedLangs = new Set();
   }
 
   pause() { this.isPaused = true; }
@@ -123,21 +123,38 @@ class EtsyAutomationService {
         throw new Error('Category is required — set the "category" column to an Etsy taxonomy leaf');
       }
 
-      const needsTranslations = Array.isArray(listing.translate_languages) && listing.translate_languages.length > 0;
-      if (needsTranslations && !this.translationsVerified) {
-        const sectionPresent = await cdpService.evaluate(`
-          (() => !!document.querySelector('#field-translations'))()
+      const needsLangs = Array.isArray(listing.translate_languages)
+        ? listing.translate_languages.map(l => String(l).toLowerCase()).filter(l => TRANSLATION_LANGUAGES.includes(l))
+        : [];
+      const unverifiedNeeded = needsLangs.filter(l => !this.translationsVerifiedLangs.has(l));
+
+      if (unverifiedNeeded.length > 0) {
+        const status = await cdpService.evaluate(`
+          (() => {
+            const section = document.querySelector('#field-translations');
+            const sectionPresent = !!section;
+            const langs = ${JSON.stringify(unverifiedNeeded)};
+            const missing = langs.filter(l => !document.getElementById(l + '-translation-tab'));
+            return { sectionPresent, missing };
+          })()
         `);
-        if (sectionPresent) {
-          this.translationsVerified = true;
-          console.log('Translation section present — shop languages already enabled');
+
+        if (status.sectionPresent && status.missing.length === 0) {
+          unverifiedNeeded.forEach(l => this.translationsVerifiedLangs.add(l));
+          console.log(`Translation tabs present for: [${unverifiedNeeded.join(',')}]`);
         } else {
-          console.log('Translation section missing — running shop language enable');
+          const reason = !status.sectionPresent
+            ? 'no translation section'
+            : `missing tabs: [${status.missing.join(',')}]`;
+          console.log(`Enabling shop languages — ${reason}`);
           if (this.onProgressCallback) {
-            this.onProgressCallback({ status: 'enabling_languages', message: 'Enabling translation languages on your shop (one-time setup)...' });
+            this.onProgressCallback({
+              status: 'enabling_languages',
+              message: 'Enabling translation languages on your shop...'
+            });
           }
           await this.enableShopLanguages();
-          this.translationsVerified = true;
+          TRANSLATION_LANGUAGES.forEach(l => this.translationsVerifiedLangs.add(l));
           await cdpService.navigate(ETSY_URLS.newListing);
           await this.interruptibleDelay(1000);
           await this.waitForCategoryInput();
@@ -497,16 +514,16 @@ class EtsyAutomationService {
   }
 
   async uploadBase64Image(dataUrl, name) {
+    // Etsy 2026 form uses a WtUploadArea Web Component with a hidden file input.
+    // Primary path: dispatch a synthetic drag-drop sequence on the upload area
+    // (matches what the widget actually listens to). Fall back to change-on-input
+    // if the upload area isn't present.
     const result = await cdpService.evaluate(`
       (() => {
         return new Promise((resolve) => {
-          const input = document.querySelector('input[type="file"][accept*="image"]') ||
-                        document.querySelector('input[type="file"]');
-          if (!input) { resolve({ error: 'No file input found' }); return; }
-
           const base64 = ${JSON.stringify(dataUrl)};
           const arr = base64.split(',');
-          const mime = arr[0].match(/:(.*?);/)[1];
+          const mime = (arr[0].match(/:(.*?);/) || [])[1] || 'image/jpeg';
           const bstr = atob(arr[1]);
           let n = bstr.length;
           const u8arr = new Uint8Array(n);
@@ -515,15 +532,45 @@ class EtsyAutomationService {
 
           const dt = new DataTransfer();
           dt.items.add(file);
+
+          // Try drag-drop on WtUploadArea first
+          const uploadArea = document.querySelector('[data-clg-id="WtUploadArea"], .wt-upload__area');
+          if (uploadArea) {
+            uploadArea.scrollIntoView({ block: 'center' });
+            try {
+              const baseInit = {
+                bubbles: true,
+                cancelable: true,
+                composed: true,
+                dataTransfer: dt
+              };
+              uploadArea.dispatchEvent(new DragEvent('dragenter', baseInit));
+              uploadArea.dispatchEvent(new DragEvent('dragover', baseInit));
+              uploadArea.dispatchEvent(new DragEvent('drop', baseInit));
+              resolve({ success: true, path: 'drop-on-area' });
+              return;
+            } catch (dropErr) {
+              // DragEvent constructor may reject the dataTransfer in some browsers — fall through
+              console.warn('drop-on-area failed:', dropErr && dropErr.message);
+            }
+          }
+
+          // Fallback: legacy change-on-input approach
+          const input = document.querySelector('input[type="file"][accept*="image"]') ||
+                        document.querySelector('input[type="file"]');
+          if (!input) { resolve({ error: 'No file input found' }); return; }
+
           input.files = dt.files;
           input.dispatchEvent(new Event('change', { bubbles: true }));
-          resolve({ success: true });
+          resolve({ success: true, path: 'change-on-input' });
         });
       })()
     `);
 
     if (result?.error) {
       console.warn('Image upload warning:', result.error);
+    } else if (result?.path) {
+      console.log(`Image upload: ${result.path}`);
     }
     await this.interruptibleDelay(1000);
   }

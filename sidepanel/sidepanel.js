@@ -78,6 +78,8 @@ const elements = {
   resultsList: document.getElementById('results-list'),
   newUploadBtn: document.getElementById('new-upload-btn'),
   retryFailedBtn: document.getElementById('retry-failed-btn'),
+  copyErrorsBtn: document.getElementById('copy-errors-btn'),
+  exportResultsBtn: document.getElementById('export-results-btn'),
   toast: document.getElementById('toast'),
   imageDropZone: document.getElementById('image-drop-zone'),
   imagePreviews: document.getElementById('image-previews'),
@@ -341,6 +343,8 @@ function setupEventListeners() {
   elements.cancelBtn.addEventListener('click', cancelUpload);
   elements.newUploadBtn.addEventListener('click', resetToQueue);
   elements.retryFailedBtn.addEventListener('click', retryFailed);
+  if (elements.copyErrorsBtn) elements.copyErrorsBtn.addEventListener('click', copyErrorsToClipboard);
+  if (elements.exportResultsBtn) elements.exportResultsBtn.addEventListener('click', exportResultsCsv);
   elements.imageDropZone.addEventListener('dragover', handleImageDragOver);
   elements.imageDropZone.addEventListener('dragleave', handleImageDragLeave);
   elements.imageDropZone.addEventListener('drop', handleImageDrop);
@@ -1895,6 +1899,8 @@ async function startUpload() {
     price: String(item.price),
     category: item.category || 'Digital Prints',
     listing_state: item.listing_state || listingState,
+    translate_languages: Array.isArray(item.translate_languages) ? item.translate_languages : [],
+    translations: item.translations && typeof item.translations === 'object' ? item.translations : {},
     who_made: item.who_made || 'i_did',
     what_is_it: item.what_is_it || 'finished_product',
     ai_content: item.ai_content || 'original',
@@ -2158,8 +2164,14 @@ function showResults() {
 
   if (failedCount > 0) {
     elements.retryFailedBtn.classList.remove('hidden');
+    if (elements.copyErrorsBtn) elements.copyErrorsBtn.classList.remove('hidden');
   } else {
     elements.retryFailedBtn.classList.add('hidden');
+    if (elements.copyErrorsBtn) elements.copyErrorsBtn.classList.add('hidden');
+  }
+  if (elements.exportResultsBtn) {
+    if (uploadResults.length > 0) elements.exportResultsBtn.classList.remove('hidden');
+    else elements.exportResultsBtn.classList.add('hidden');
   }
 
   renderResultsList();
@@ -2236,32 +2248,234 @@ function retryFailed() {
   showToast(`${failedListings.length} listing(s) queued for retry`, 'success');
 }
 
-function renderResultsList() {
-  const categoryLabels = {
-    verification: 'Verification Required',
-    timeout: 'Timeout',
-    network: 'Network Error',
-    dom: 'Page Changed',
-    unknown: 'Error'
-  };
+function escapeHtmlSidepanel(s) {
+  const div = document.createElement('div');
+  div.textContent = s == null ? '' : String(s);
+  return div.innerHTML;
+}
 
+function extractFilename(pathOrUrl) {
+  if (!pathOrUrl) return '';
+  const s = String(pathOrUrl);
+  if (s.startsWith('data:')) return '(embedded image)';
+  const cleaned = s.split('?')[0].split('#')[0];
+  const parts = cleaned.split(/[/\\]/);
+  return parts[parts.length - 1] || s;
+}
+
+function getListingImageFilenames(listing) {
+  if (!listing) return [];
+  const out = [];
+  for (let i = 1; i <= 5; i++) {
+    const v = listing[`image_${i}`];
+    if (v) out.push(extractFilename(v));
+  }
+  return out;
+}
+
+function humanizeError(rawError, errorCategory) {
+  if (!rawError) {
+    return { message: 'Something went wrong, but no error message was returned.', action: 'Click Retry Failed and watch for a more specific error.' };
+  }
+  const err = String(rawError);
+
+  let m;
+  if ((m = err.match(/Category typeahead returned no results for "([^"]+)"/i)) ||
+      (m = err.match(/Could not select category "([^"]+)"/i)) ||
+      (m = err.match(/Category .*? not found/i))) {
+    const cat = m[1] || 'this category';
+    return {
+      message: `Etsy didn't recognize "${cat}" as a category.`,
+      action: `Etsy renames category leaves often. Try "Digital" instead, or pick a valid leaf from the Categories sheet in your spreadsheet template.`
+    };
+  }
+
+  if (/save confirmation not detected/i.test(err) || /save confirmation/i.test(err)) {
+    return {
+      message: `Couldn't confirm the listing was saved within 30 seconds.`,
+      action: `It may have actually saved — check your Etsy drafts. If it's not there, click Retry Failed.`
+    };
+  }
+
+  if (/verification|captcha|are you a robot|security check/i.test(err)) {
+    return {
+      message: `Etsy showed a security check that wasn't completed in time.`,
+      action: `Open the Etsy tab, complete the captcha, then click Retry Failed.`
+    };
+  }
+
+  if (/CORS|blocked by CORS|Access to fetch/i.test(err) || /Failed to fetch/i.test(err)) {
+    return {
+      message: `Couldn't download an image from its URL — the server blocked the request.`,
+      action: `Save the image to your computer and use a local file path instead, or use a hosting service that allows direct downloads.`
+    };
+  }
+
+  if (/no file input found/i.test(err) || /upload area/i.test(err)) {
+    return {
+      message: `Couldn't find the photo upload area on Etsy's listing form.`,
+      action: `Etsy may have updated their form. Click Retry Failed; if it keeps failing, please report this listing to support.`
+    };
+  }
+
+  if (/network|fetch failed/i.test(err) && !/Failed to fetch/i.test(err)) {
+    return {
+      message: `Network connection issue while talking to Etsy.`,
+      action: `Check your internet connection and click Retry Failed.`
+    };
+  }
+
+  if (/Verification not completed/i.test(err)) {
+    return {
+      message: `Etsy required verification that wasn't completed before timeout.`,
+      action: `Open Etsy, complete any captcha or security prompts, then click Retry Failed.`
+    };
+  }
+
+  if (/redirected to login|sign in/i.test(err)) {
+    return {
+      message: `Etsy logged you out during the upload.`,
+      action: `Sign back into Etsy in this Chrome window, then click Retry Failed.`
+    };
+  }
+
+  if (/Category is required/i.test(err)) {
+    return {
+      message: `Listing has no category set.`,
+      action: `Set the "category" column on this listing to a valid Etsy taxonomy leaf, then retry.`
+    };
+  }
+
+  if (/Translation section not found/i.test(err)) {
+    return {
+      message: `Couldn't find the translations area on Etsy's form.`,
+      action: `Open Account → Languages and click "Enable all 10 languages on my Etsy shop", then retry.`
+    };
+  }
+
+  if (errorCategory === 'verification') {
+    return { message: 'Etsy required verification.', action: 'Complete the captcha in the Etsy tab, then click Retry Failed.' };
+  }
+  if (errorCategory === 'timeout') {
+    return { message: 'A step took too long to complete.', action: 'Retry the failed listings — usually a transient slowdown.' };
+  }
+  if (errorCategory === 'dom') {
+    return { message: 'Etsy page structure changed mid-upload.', action: 'Retry. If it keeps failing, Etsy may have updated their form — please report.' };
+  }
+  if (errorCategory === 'network') {
+    return { message: 'Network connection issue.', action: 'Check your internet and click Retry Failed.' };
+  }
+
+  return { message: err, action: 'Click Retry Failed to try again. If it keeps failing, copy the errors and contact support.' };
+}
+
+function renderResultsList() {
   elements.resultsList.innerHTML = uploadResults.map((item, index) => {
     const statusLabel = item.status === 'error' ? 'failed' : item.status;
-    const categoryLabel = item.errorCategory ? categoryLabels[item.errorCategory] || 'Error' : '';
-    const errorHtml = item.error
-      ? `<details class="error-details">
-           <summary class="error-summary">${categoryLabel}</summary>
-           <div class="error-detail">${item.error}</div>
-         </details>`
-      : '';
+    const isError = item.status === 'error';
+    const listing = item.listing || {};
+    const sku = listing.sku || '';
+    const imageFiles = getListingImageFilenames(listing);
+    const friendly = isError ? humanizeError(item.error, item.errorCategory) : null;
+
+    if (!isError) {
+      return `
+        <div class="result-item ${item.status}" style="animation-delay: ${index * 0.05}s">
+          <span class="title" title="${escapeHtmlSidepanel(item.title)}">${escapeHtmlSidepanel(item.title)}</span>
+          <span class="status ${item.status}">${statusLabel}</span>
+        </div>
+      `;
+    }
+
     return `
-      <div class="result-item" style="animation-delay: ${index * 0.05}s">
-        <span class="title">${item.title}</span>
-        <span class="status ${item.status}">${statusLabel}</span>
-        ${errorHtml}
-      </div>
+      <details class="result-item ${item.status} expandable" style="animation-delay: ${index * 0.05}s">
+        <summary>
+          <span class="title" title="${escapeHtmlSidepanel(item.title)}">${escapeHtmlSidepanel(item.title)}</span>
+          <span class="status ${item.status}">${statusLabel}</span>
+        </summary>
+        <div class="result-expand">
+          <div class="result-expand-row"><span class="result-expand-label">Title:</span> <span class="result-expand-value">${escapeHtmlSidepanel(item.title)}</span></div>
+          ${sku ? `<div class="result-expand-row"><span class="result-expand-label">SKU:</span> <span class="result-expand-value">${escapeHtmlSidepanel(sku)}</span></div>` : ''}
+          ${imageFiles.length > 0 ? `<div class="result-expand-row"><span class="result-expand-label">Images:</span> <span class="result-expand-value">${imageFiles.map(f => escapeHtmlSidepanel(f)).join(', ')}</span></div>` : ''}
+          <div class="result-expand-row result-expand-message"><span class="result-expand-label">What happened:</span> <span class="result-expand-value">${escapeHtmlSidepanel(friendly.message)}</span></div>
+          <div class="result-expand-row result-expand-action"><span class="result-expand-label">What to do:</span> <span class="result-expand-value">${escapeHtmlSidepanel(friendly.action)}</span></div>
+          <details class="result-expand-raw">
+            <summary>Show raw error</summary>
+            <pre>${escapeHtmlSidepanel(item.error || '')}</pre>
+          </details>
+        </div>
+      </details>
     `;
   }).join('');
+}
+
+async function copyErrorsToClipboard() {
+  const failed = uploadResults.filter(r => r.status === 'error');
+  if (failed.length === 0) {
+    showToast('No errors to copy', 'error');
+    return;
+  }
+  const blocks = failed.map((r, i) => {
+    const listing = r.listing || {};
+    const friendly = humanizeError(r.error, r.errorCategory);
+    const images = getListingImageFilenames(listing);
+    const lines = [
+      `${i + 1}. ${r.title || '(no title)'}`,
+      `   SKU: ${listing.sku || '(none)'}`,
+    ];
+    if (images.length > 0) lines.push(`   Images: ${images.join(', ')}`);
+    lines.push(`   What happened: ${friendly.message}`);
+    lines.push(`   What to do: ${friendly.action}`);
+    lines.push(`   Raw error: ${r.error || ''}`);
+    return lines.join('\n');
+  });
+  const text = `BulkListingPro upload errors (${failed.length})\n\n` + blocks.join('\n\n');
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast(`Copied ${failed.length} error${failed.length !== 1 ? 's' : ''} to clipboard`, 'success');
+  } catch (err) {
+    console.warn('Clipboard write failed:', err);
+    showToast('Could not copy to clipboard. Use Export CSV instead.', 'error');
+  }
+}
+
+function exportResultsCsv() {
+  if (uploadResults.length === 0) {
+    showToast('No results to export', 'error');
+    return;
+  }
+  const cols = ['index', 'title', 'sku', 'status', 'category', 'message', 'action', 'raw_error', 'images'];
+  const escapeCsv = (v) => {
+    const s = v == null ? '' : String(v);
+    return `"${s.replace(/"/g, '""')}"`;
+  };
+  const rows = uploadResults.map((r, i) => {
+    const listing = r.listing || {};
+    const friendly = r.status === 'error' ? humanizeError(r.error, r.errorCategory) : { message: '', action: '' };
+    const images = getListingImageFilenames(listing);
+    return [
+      i + 1,
+      r.title || '',
+      listing.sku || '',
+      r.status,
+      r.errorCategory || '',
+      friendly.message,
+      friendly.action,
+      r.error || '',
+      images.join(' | ')
+    ].map(escapeCsv).join(',');
+  });
+  const csv = cols.map(escapeCsv).join(',') + '\n' + rows.join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `bulklistingpro-results-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast(`Exported ${uploadResults.length} result${uploadResults.length !== 1 ? 's' : ''}`, 'success');
 }
 
 function resetToQueue() {
