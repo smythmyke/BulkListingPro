@@ -170,8 +170,8 @@ function renderTranslateBtn(listing) {
   let tip;
   if (!hasTitle) tip = 'Add a title first';
   else if (!hasLangs) tip = 'Check at least one language below';
-  else tip = `Translate to ${listing.translate_languages.map(l => l.toUpperCase()).join(', ')} (1 credit)`;
-  return `<button class="translate-btn${enabled ? '' : ' disabled'}" data-listing-id="${listing.id}" title="${escapeHtml(tip)}" ${enabled ? '' : 'disabled'}>🌐 Translate</button>`;
+  else tip = `Translate to ${listing.translate_languages.map(l => l.toUpperCase()).join(', ')} (1 credit covers all checked languages)`;
+  return `<button class="translate-btn${enabled ? '' : ' disabled'}" data-listing-id="${listing.id}" title="${escapeHtml(tip)}" ${enabled ? '' : 'disabled'}>🌐 Translate · 1 credit</button>`;
 }
 
 function renderTranslationsBlock(listing) {

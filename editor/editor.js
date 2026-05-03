@@ -2545,6 +2545,17 @@ async function decrementLocalCredits(amount) {
   chrome.runtime.sendMessage({ type: 'CHECK_CREDITS' }).catch(() => {});
 }
 
+async function setLocalCreditsAvailable(available, deducted) {
+  const stored = await chrome.storage.local.get(['bulklistingpro_credits']);
+  const credits = stored.bulklistingpro_credits || { available: 0, used: 0 };
+  credits.available = Math.max(0, Math.floor(available));
+  if (typeof deducted === 'number' && deducted > 0) {
+    credits.used = (credits.used || 0) + deducted;
+  }
+  await chrome.storage.local.set({ bulklistingpro_credits: credits });
+  chrome.runtime.sendMessage({ type: 'CHECK_CREDITS' }).catch(() => {});
+}
+
 async function updateBulkCost() {
   const target = getBulkTargetListings();
   const hasFields = els.aiBulkTitles.checked || els.aiBulkDescriptions.checked || els.aiBulkTags.checked;
@@ -2766,29 +2777,20 @@ async function handleTranslateListing(lid, btn) {
   const prefs = await getTranslationPrefs();
   const primary = prefs.primary_language || 'en';
 
-  // Gap-fill: if tags are empty, generate them first (no extra credit)
-  if (!listing.tags || listing.tags.length === 0) {
-    btn.classList.add('loading');
-    btn.textContent = 'Filling tags...';
-    try {
-      const tagResult = await generateForListing(listing, ['tags']);
-      if (tagResult && Array.isArray(tagResult.tags) && tagResult.tags.length > 0) {
-        pushUndo('AI gap-fill tags');
-        listing.tags = tagResult.tags;
-      }
-    } catch (err) {
-      console.warn('Tag gap-fill failed (continuing):', err);
-    }
-  }
-
   btn.classList.add('loading');
   btn.textContent = 'Translating...';
 
   try {
     const result = await translateListing(listing, targets, primary);
     btn.classList.remove('loading');
-    btn.textContent = '🌐 Translate';
-    await decrementLocalCredits(1);
+    btn.textContent = '🌐 Translate · 1 credit';
+
+    // Use authoritative creditsRemaining from backend response (truth) instead of naive decrement
+    if (typeof result.creditsRemaining === 'number') {
+      await setLocalCreditsAvailable(result.creditsRemaining, result.creditsUsed || 1);
+    } else {
+      await decrementLocalCredits(result.creditsUsed || 1);
+    }
 
     if (result.translations && typeof result.translations === 'object') {
       pushUndo('translate listing');
@@ -2808,13 +2810,13 @@ async function handleTranslateListing(lid, btn) {
     const langs = Object.keys(result.translations || {}).map(l => l.toUpperCase()).join(', ');
     const langCount = Object.keys(result.translations || {}).length;
     if (langCount > 0) {
-      showToast(`✓ Translated to ${langs} — see Advanced Options → Translations`, 'success', 4000);
+      showToast(`✓ Translated to ${langs} (1 credit) — see Translations below`, 'success', 4000);
     } else {
       showToast('Translated 0 languages', 'success', 4000);
     }
   } catch (err) {
     btn.classList.remove('loading');
-    btn.textContent = '🌐 Translate';
+    btn.textContent = '🌐 Translate · 1 credit';
     handleAiError(err);
   }
 }
@@ -3089,7 +3091,13 @@ async function startBulkTranslate() {
     if (r.success) expandTranslationsForCard(r.listingId);
   }
 
-  if (applied > 0) await decrementLocalCredits(applied);
+  // Use authoritative creditsRemaining from the last successful response (most accurate)
+  const lastSuccess = results.filter(r => r.success).pop();
+  if (lastSuccess && typeof lastSuccess.result?.creditsRemaining === 'number') {
+    await setLocalCreditsAvailable(lastSuccess.result.creditsRemaining, applied);
+  } else if (applied > 0) {
+    await decrementLocalCredits(applied);
+  }
 
   const langStr = langs.map(l => l.toUpperCase()).join(', ');
   const creditsFailed = results.some(r => !r.success && r.error && r.error.error === 'insufficient_credits');
