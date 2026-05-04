@@ -65,7 +65,9 @@
     "title": "BulkListingPro vs Easy Listing Uploader: which fits your workflow?",
     "description": "Two Etsy bulk tools that look similar but take different approaches under the hood.",
     "archetype": "Comparison",
-    "read_time": "8 min read"
+    "read_time": "8 min read",
+    "published": true,
+    "published_at": "2026-05-04"
   },
   {
     "slug": "i-relisted-etsy-products-by-hand-for-6-months",
