@@ -75,7 +75,9 @@
     "title": "I relisted Etsy products by hand for 6 months. Here's what I'd do differently.",
     "description": "Half a year of Etsy's new-listing form. What I wasted time on and the one decision I should have made sooner.",
     "archetype": "Narrative",
-    "read_time": "6 min read"
+    "read_time": "6 min read",
+    "published": true,
+    "published_at": "2026-05-06"
   },
   {
     "slug": "bulklistingpro-vs-evlista",
