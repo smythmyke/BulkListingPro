@@ -85,7 +85,9 @@
     "title": "BulkListingPro vs Evlista: creation tool vs bulk editor",
     "description": "Different problems, different tools. Here's when to reach for each.",
     "archetype": "Comparison",
-    "read_time": "7 min read"
+    "read_time": "7 min read",
+    "published": true,
+    "published_at": "2026-05-08"
   },
   {
     "slug": "how-to-upload-100-digital-products-without-burning-out",
