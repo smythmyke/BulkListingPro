@@ -4,25 +4,29 @@ import { findSimilarTags } from './tag-manager.js';
 export function validateListing(listing) {
   const errors = [];
   const warnings = [];
+  const editMode = !!listing._edit_mode;
 
-  if (!listing.title || !listing.title.trim()) {
-    errors.push('Title is required');
+  const hasTitle = listing.title && listing.title.trim();
+  if (!hasTitle) {
+    if (!editMode) errors.push('Title is required');
   } else if (listing.title.length > 140) {
     errors.push('Title exceeds 140 characters');
   } else if (listing.title.length > 120) {
     warnings.push(`Title is ${listing.title.length}/140 characters`);
   }
 
-  if (!listing.description || !listing.description.trim()) {
-    errors.push('Description is required');
+  const hasDescription = listing.description && listing.description.trim();
+  if (!hasDescription) {
+    if (!editMode) errors.push('Description is required');
   } else if (listing.description.length > 4800) {
     errors.push(`Description exceeds 4800 characters (${listing.description.length})`);
   } else if (listing.description.length > 4200) {
     warnings.push(`Description is ${listing.description.length}/4800 characters`);
   }
 
-  if (!listing.price && listing.price !== 0) {
-    errors.push('Price is required');
+  const hasPrice = listing.price || listing.price === 0;
+  if (!hasPrice) {
+    if (!editMode) errors.push('Price is required');
   } else {
     const price = parseFloat(listing.price);
     if (isNaN(price) || price < 0.20) {
@@ -30,7 +34,8 @@ export function validateListing(listing) {
     }
   }
 
-  if (!listing.category || !listing.category.trim()) {
+  const hasCategory = listing.category && listing.category.trim();
+  if (!hasCategory && !editMode) {
     errors.push('Category is required');
   }
 

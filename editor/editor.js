@@ -2438,6 +2438,7 @@ function mergeExternalListings(storedListings) {
       }
       if (stored._storefront_currency && stored._storefront_currency !== local._storefront_currency) { local._storefront_currency = stored._storefront_currency; changed = true; }
       if (stored._storefront_category && stored._storefront_category !== local._storefront_category) { local._storefront_category = stored._storefront_category; changed = true; }
+      if (stored._etsy_category_breadcrumb && stored._etsy_category_breadcrumb !== local._etsy_category_breadcrumb) { local._etsy_category_breadcrumb = stored._etsy_category_breadcrumb; changed = true; }
       if (stored._backfill_source && stored._backfill_source !== local._backfill_source) { local._backfill_source = stored._backfill_source; changed = true; }
       if (stored._backfill_failed !== local._backfill_failed) { local._backfill_failed = stored._backfill_failed; changed = true; }
       if (stored._backfill_error !== local._backfill_error) { local._backfill_error = stored._backfill_error; changed = true; }

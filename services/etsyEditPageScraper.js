@@ -82,13 +82,24 @@ function editPageFetchAndParse(listingId) {
       const tags = Array.isArray(ff.tags) ? ff.tags.slice() : [];
       const materials = Array.isArray(ff.materials) ? ff.materials.slice() : [];
 
-      const formImgs = Array.isArray(ff.formattedListingImages) ? ff.formattedListingImages : [];
+      const formImgs = Array.isArray(listing.formattedListingImages) ? listing.formattedListingImages
+                     : Array.isArray(ff.formattedListingImages) ? ff.formattedListingImages
+                     : [];
       const images = [];
       const altTexts = [];
       for (let i = 0; i < Math.min(formImgs.length, 5); i++) {
         const img = formImgs[i] || {};
         if (img.url) images.push(img.url);
         altTexts.push(img.altText || '');
+      }
+
+      let categoryBreadcrumb = '';
+      const fullPathMatch = html.match(/"fullPathNames"\s*:\s*(\[[^\]]+\])/);
+      if (fullPathMatch) {
+        try {
+          const arr = JSON.parse(fullPathMatch[1]);
+          if (Array.isArray(arr)) categoryBreadcrumb = arr.join(' › ');
+        } catch (e) {}
       }
 
       const data = {
@@ -112,7 +123,8 @@ function editPageFetchAndParse(listingId) {
         shouldAutoRenew: typeof ff.shouldAutoRenew === 'boolean' ? ff.shouldAutoRenew : null,
         isPersonalizable: typeof ff.isPersonalizable === 'boolean' ? ff.isPersonalizable : null,
         state: typeof listing.state === 'number' ? listing.state : null,
-        listingType: listing.type || ''
+        listingType: listing.type || '',
+        categoryBreadcrumb
       };
 
       return { success: true, data, status, finalUrl };

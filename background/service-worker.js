@@ -466,6 +466,7 @@ async function applyBackfillResultsToStorage(results) {
     }
     if (typeof d.state === 'number' && target._etsy_state == null) { target._etsy_state = d.state; changed = true; }
     if (d.listingType && !target.listing_type) { target.listing_type = d.listingType; changed = true; }
+    if (d.categoryBreadcrumb && !target._etsy_category_breadcrumb) { target._etsy_category_breadcrumb = d.categoryBreadcrumb; changed = true; }
 
     // Images — upgrade from index thumb if we have better ones
     if (Array.isArray(d.images) && d.images.length > 0) {

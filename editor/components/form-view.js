@@ -358,10 +358,11 @@ export function renderListingCard(listing, index, collapsed = false) {
             <input type="number" data-field="price" data-listing-id="${listing.id}" value="${listing.price}" step="0.01" min="0.20" placeholder="0.00" class="${!listing.price && (listing.title || listing.description) ? 'field-error' : ''}">
           </div>
           <div class="form-group-half">
-            <label>Category <span class="required">*</span></label>
+            <label>Category${listing._edit_mode ? '' : ' <span class="required">*</span>'}</label>
             <select data-field="category" data-listing-id="${listing.id}">
               ${categoryOptions(listing.category)}
             </select>
+            ${listing._edit_mode ? `<div class="edit-mode-field-hint">Category preserved from Etsy${listing._etsy_category_breadcrumb ? ` — currently <strong>${escapeHtml(listing._etsy_category_breadcrumb)}</strong>` : ''}. Set a value here to override.</div>` : ''}
           </div>
         </div>
         <div class="form-group">
