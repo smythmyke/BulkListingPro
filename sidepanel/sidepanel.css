@@ -3515,3 +3515,241 @@ body {
   color: #555;
   line-height: 1.45;
 }
+
+/* ─────────────────────────────────────────────────────────────────
+   Edit tab
+   ───────────────────────────────────────────────────────────────── */
+
+.edit-state.hidden { display: none; }
+
+.edit-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 24px 12px 8px;
+}
+
+.edit-empty-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #fff4eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  margin-bottom: 16px;
+}
+
+.edit-empty h2,
+.edit-empty h3 {
+  font-size: 17px;
+  margin-bottom: 8px;
+  color: #222;
+  font-weight: 600;
+}
+
+.edit-empty-compact {
+  padding: 8px 12px 0;
+}
+.edit-empty-compact h3 {
+  font-size: 14px;
+  color: #555;
+}
+.edit-empty-compact p {
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+
+.edit-empty-lead {
+  font-size: 13px;
+  color: #666;
+  max-width: 280px;
+  margin-bottom: 18px;
+  line-height: 1.5;
+}
+
+.edit-empty-help {
+  font-size: 11px;
+  color: #999;
+  max-width: 300px;
+  margin-top: 14px;
+  line-height: 1.5;
+}
+
+.edit-empty-help strong { color: #555; }
+
+.edit-resume-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff4eb;
+  border: 1px solid #ffd0a8;
+  border-left: 4px solid #f56400;
+  border-radius: 6px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+.edit-resume-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.edit-resume-body {
+  flex: 1;
+  min-width: 0;
+}
+.edit-resume-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #222;
+  line-height: 1.3;
+}
+.edit-resume-sub {
+  font-size: 11px;
+  color: #7a5400;
+  margin-top: 2px;
+}
+
+.edit-picker-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.edit-picker-head h2 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #222;
+}
+.edit-picker-head-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 4px 6px;
+  font-family: inherit;
+}
+.btn-link:hover { color: #222; }
+
+.edit-picker-status {
+  font-size: 12px;
+  color: #666;
+  padding: 12px;
+  text-align: center;
+}
+
+.edit-picker-error {
+  background: #fde6e6;
+  border: 1px solid #f5b7b1;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: #7a1a14;
+  line-height: 1.4;
+  margin-bottom: 12px;
+}
+.edit-picker-error.hidden { display: none; }
+
+.edit-picker-results.hidden { display: none; }
+
+.edit-picker-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: #666;
+  padding: 0 2px;
+  margin-bottom: 8px;
+}
+.edit-picker-actions a {
+  color: #f56400;
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: 500;
+  margin-left: 8px;
+}
+.edit-picker-actions a:hover { text-decoration: underline; }
+
+.edit-picker-list {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.edit-picker-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+}
+.edit-picker-row:last-child { border-bottom: none; }
+.edit-picker-row:hover { background: #fafafa; }
+.edit-picker-row input[type="checkbox"] {
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.edit-picker-row img {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: #ddd;
+}
+.edit-picker-row .edit-picker-row-meta {
+  flex: 1;
+  min-width: 0;
+}
+.edit-picker-row .edit-picker-row-title {
+  font-size: 12px;
+  color: #222;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.edit-picker-row .edit-picker-row-badges {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+}
+.edit-picker-row-badge {
+  font-size: 9px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.edit-picker-row-badge.digital { background: #eaf3ff; color: #2563ad; }
+.edit-picker-row-badge.physical { background: #f0eaff; color: #5a3aa0; }
+
+.edit-picker-footer {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding-top: 12px;
+  margin-top: 12px;
+  border-top: 1px solid #e0e0e0;
+}
+.edit-picker-selected {
+  flex: 1;
+  font-size: 12px;
+  color: #555;
+  font-weight: 500;
+  text-align: right;
+}

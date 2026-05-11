@@ -312,6 +312,8 @@ export function renderListingCard(listing, index, collapsed = false) {
   const titleCountClass = getCharCountClass(titleLen, 140, 120);
 
   const cardBorderClass = errors.length > 0 ? 'has-errors' : (warnings.length > 0 ? 'has-warnings' : (valid && listing.title ? 'is-valid' : ''));
+  const editModeClass = listing._edit_mode ? ' is-edit-mode' : '';
+  const editModeBadge = listing._edit_mode ? '<span class="edit-mode-badge">Edit</span>' : '';
 
   const tagsCount = (listing.tags || []).length;
 
@@ -326,13 +328,14 @@ export function renderListingCard(listing, index, collapsed = false) {
   const collapsedClass = collapsed ? ' collapsed' : '';
 
   return `
-    <div class="listing-card ${cardBorderClass}${collapsedClass}" data-listing-id="${listing.id}" data-index="${index}" draggable="true">
+    <div class="listing-card ${cardBorderClass}${editModeClass}${collapsedClass}" data-listing-id="${listing.id}" data-index="${index}" draggable="true">
       <div class="card-header" data-action="toggle" data-listing-id="${listing.id}">
         <span class="drag-handle" title="Drag to reorder">&#9776;</span>
         <input type="checkbox" class="card-select" data-listing-id="${listing.id}" ${listing._selected ? 'checked' : ''}>
         <span class="card-chevron">${collapsed ? '&#9654;' : '&#9660;'}</span>
         <span class="card-number">#${index + 1}</span>
         <span class="card-title-preview ${titleClass}">${titlePreview}</span>
+        ${editModeBadge}
         ${renderSourceBadge(listing)}
         <span class="validation-badge ${badgeClass}"></span>
         ${renderEvalBtn(listing)}
@@ -385,6 +388,7 @@ export function renderListingCard(listing, index, collapsed = false) {
             <input type="text" class="tag-input-field" data-field="tag_input" data-listing-id="${listing.id}" placeholder="${tagsCount >= 13 ? 'Max tags reached' : 'Type and press Enter'}" ${tagsCount >= 13 ? 'disabled' : ''}>
           </div>
           <div class="tags-counter ${tagsCount >= 13 ? 'full' : ''}">${tagsCount}/13 tags ${renderAiBtn(listing, 'tags')}${renderScoreChip(listing, 'tags')} <button class="tag-library-btn" data-listing-id="${listing.id}">Library</button></div>
+          ${listing._edit_mode ? '<div class="edit-mode-field-hint">Etsy\'s current tags will be preserved unless you edit this field.</div>' : ''}
           <div class="tag-suggestions" data-suggestions-for="${listing.id}"></div>
         </div>
         <details class="advanced-options">

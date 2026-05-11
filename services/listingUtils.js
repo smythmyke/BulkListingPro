@@ -5,7 +5,8 @@ export const STORAGE_KEYS = {
   RESEARCH_CLIPBOARD: 'bulklistingpro_research_clipboard',
   TAG_LIBRARY: 'bulklistingpro_tag_library',
   EDITOR_LISTINGS: 'bulklistingpro_editor_listings',
-  EDITOR_TAB_ID: 'bulklistingpro_editor_tab_id'
+  EDITOR_TAB_ID: 'bulklistingpro_editor_tab_id',
+  EDITOR_LAST_VIEWED_AT: 'bulklistingpro_editor_last_viewed_at'
 };
 
 export const CATEGORY_ATTRIBUTES = {

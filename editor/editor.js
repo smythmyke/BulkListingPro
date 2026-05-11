@@ -32,6 +32,7 @@ const els = {
   listingCards: document.getElementById('listing-cards'),
   gridContainer: document.getElementById('grid-container'),
   listingCount: document.getElementById('listing-count'),
+  hiddenCountPill: document.getElementById('hidden-count-pill'),
   addListingBtn: document.getElementById('add-listing-btn'),
   addListingBottomBtn: document.getElementById('add-listing-bottom-btn'),
   importBtn: document.getElementById('import-btn'),
@@ -131,7 +132,23 @@ async function init() {
   setupEventListeners();
   setupTabTracking();
   setupStorageListener();
+  setupViewedTracking();
   if (await shouldAutoStart('editor')) showTourIntro('editor');
+}
+
+function setupViewedTracking() {
+  writeEditorViewedTimestamp();
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') writeEditorViewedTimestamp();
+  });
+}
+
+function writeEditorViewedTimestamp() {
+  try {
+    chrome.storage.local.set({ [STORAGE_KEYS.EDITOR_LAST_VIEWED_AT]: Date.now() });
+  } catch (err) {
+    console.warn('Failed to write editor last-viewed timestamp:', err);
+  }
 }
 
 function setupTabTracking() {
@@ -151,6 +168,7 @@ async function loadSavedState() {
     if (saved && Array.isArray(saved) && saved.length > 0) {
       listings = saved;
       lastSaveTime = Date.now();
+      applyDefaultExpansion();
     }
   } catch (err) {
     console.warn('Failed to load editor state:', err);
@@ -182,8 +200,27 @@ function render() {
 
 function renderFormView() {
   const filtered = getFilteredListings();
-  renderAllCards(filtered, els.listingCards, expandedIds.size > 0 ? expandedIds : null);
+  renderAllCards(filtered, els.listingCards, expandedIds);
   updateTagSuggestions();
+}
+
+const DEFAULT_EXPANDED_COUNT = 10;
+function applyDefaultExpansion() {
+  if (listings.length <= DEFAULT_EXPANDED_COUNT) {
+    expandedIds = new Set(listings.map(l => l.id));
+  } else {
+    expandedIds = new Set(listings.slice(0, DEFAULT_EXPANDED_COUNT).map(l => l.id));
+  }
+}
+
+function expandAllCards() {
+  expandedIds = new Set(listings.map(l => l.id));
+  render();
+}
+
+function collapseAllCards() {
+  expandedIds = new Set();
+  render();
 }
 
 function renderGridView() {
@@ -197,6 +234,12 @@ function getFilteredListings() {
   const sortVal = els.sortBy.value;
 
   let filtered = [...listings];
+
+  if (statusFilter === 'hidden') {
+    filtered = filtered.filter(l => l._hidden);
+  } else {
+    filtered = filtered.filter(l => !l._hidden);
+  }
 
   if (search) {
     filtered = filtered.filter(l =>
@@ -254,6 +297,18 @@ function getValidationScore(listing) {
 function updateCounts() {
   const count = listings.length;
   els.listingCount.textContent = `${count} listing${count !== 1 ? 's' : ''}`;
+  updateHiddenPill();
+}
+
+function updateHiddenPill() {
+  if (!els.hiddenCountPill) return;
+  const hiddenCount = listings.filter(l => l._hidden).length;
+  if (hiddenCount > 0) {
+    els.hiddenCountPill.textContent = `${hiddenCount} hidden`;
+    els.hiddenCountPill.style.display = '';
+  } else {
+    els.hiddenCountPill.style.display = 'none';
+  }
 }
 
 function updateFooterVisibility() {
@@ -351,6 +406,12 @@ function setupEventListeners() {
   els.undoBtn.addEventListener('click', undo);
   els.redoBtn.addEventListener('click', redo);
   els.validationBadge.addEventListener('click', runBatchValidation);
+  if (els.hiddenCountPill) {
+    els.hiddenCountPill.addEventListener('click', () => {
+      els.filterStatus.value = 'hidden';
+      els.filterStatus.dispatchEvent(new Event('change'));
+    });
+  }
   els.reportClose.addEventListener('click', closeValidationReport);
   els.validationReportBackdrop.addEventListener('click', closeValidationReport);
   els.reportList.addEventListener('click', (e) => {
@@ -652,8 +713,13 @@ function applyFilters() {
 function handleMenuAction(action) {
   if (action === 'duplicate-selected') duplicateSelected();
   else if (action === 'delete-selected') deleteSelected();
+  else if (action === 'hide-selected') hideSelected();
+  else if (action === 'hide-non-imported') hideNonImported();
+  else if (action === 'unhide-all') unhideAll();
   else if (action === 'select-all') selectAll(true);
   else if (action === 'select-none') selectAll(false);
+  else if (action === 'expand-all') expandAllCards();
+  else if (action === 'collapse-all') collapseAllCards();
   else if (action === 'export-xlsx') exportXlsx();
   else if (action === 'export-csv') exportCsv();
   else if (action === 'validate-all') runBatchValidation();
@@ -720,6 +786,46 @@ async function deleteSelected() {
   render();
   scheduleSave();
   showToast(`Deleted ${selected.length} listing(s)`, 'success');
+}
+
+function hideSelected() {
+  const selected = listings.filter(l => l._selected);
+  if (selected.length === 0) {
+    showToast('No listings selected', 'error');
+    return;
+  }
+  pushUndo('hide selected');
+  selected.forEach(l => { l._hidden = true; l._selected = false; });
+  render();
+  scheduleSave();
+  showToast(`Hid ${selected.length} listing(s)`, 'success');
+}
+
+function hideNonImported() {
+  const targets = listings.filter(l => !l._edit_mode && !l._hidden);
+  if (targets.length === 0) {
+    showToast('Nothing to hide — all listings are imports', 'info');
+    return;
+  }
+  pushUndo('hide non-imported');
+  targets.forEach(l => { l._hidden = true; l._selected = false; });
+  render();
+  scheduleSave();
+  showToast(`Hid ${targets.length} non-imported listing(s)`, 'success');
+}
+
+function unhideAll() {
+  const hidden = listings.filter(l => l._hidden);
+  if (hidden.length === 0) {
+    showToast('No hidden listings', 'info');
+    return;
+  }
+  pushUndo('unhide all');
+  hidden.forEach(l => { l._hidden = false; });
+  if (els.filterStatus.value === 'hidden') els.filterStatus.value = '';
+  render();
+  scheduleSave();
+  showToast(`Restored ${hidden.length} listing(s)`, 'success');
 }
 
 function exportXlsx() {
@@ -1258,7 +1364,7 @@ function rerenderCard(id) {
     }
   });
 
-  const collapsed = !expandedIds.has(id) && expandedIds.size > 0;
+  const collapsed = !expandedIds.has(id);
   const temp = document.createElement('div');
   temp.innerHTML = renderListingCard(listings[index], index, collapsed);
   const newCard = temp.firstElementChild;
@@ -1622,8 +1728,8 @@ async function sendToQueue() {
     if (updated.length > 0) listings = updated;
   }
 
-  const selected = listings.filter(l => l._selected);
-  const toSend = selected.length > 0 ? selected : listings;
+  const selected = listings.filter(l => l._selected && !l._hidden);
+  const toSend = selected.length > 0 ? selected : listings.filter(l => !l._hidden);
 
   const invalid = toSend.filter(l => !validateListing(l).valid);
   if (invalid.length > 0) {
@@ -1771,7 +1877,8 @@ async function importFile(file) {
       if (attached > 0) allWarnings.push(`Loaded ${attached} translation row(s) from Translations sheet`);
     }
 
-    listings = [...listings, ...imported];
+    listings = [...imported, ...listings];
+    applyDefaultExpansion();
     render();
     scheduleSave();
 
@@ -2289,11 +2396,72 @@ function removeBatchTag() {
 }
 
 function mergeExternalListings(storedListings) {
+  console.log('[edit-import] editor mergeExternalListings fired:', { incoming: Array.isArray(storedListings) ? storedListings.length : 'not-array', currentInMemory: listings.length });
   if (!Array.isArray(storedListings)) return;
   const currentIds = new Set(listings.map(l => l.id));
   const newListings = storedListings.filter(l => !currentIds.has(l.id));
-  if (newListings.length === 0) return;
-  listings.push(...newListings);
+  console.log('[edit-import] editor merge filtered:', { newCount: newListings.length, sampleImage1: newListings[0]?.image_1, sampleEditMode: newListings[0]?._edit_mode });
+  if (newListings.length === 0) {
+    // Check whether storage update was a refresh of existing fields (same ids, modified content).
+    let refreshedFields = 0;
+    let enrichedListings = 0;
+    for (const stored of storedListings) {
+      const local = listings.find(l => l.id === stored.id);
+      if (!local) continue;
+      let changed = false;
+      if (stored.image_1 && stored.image_1 !== local.image_1) { local.image_1 = stored.image_1; changed = true; }
+      if (stored.image_2 && stored.image_2 !== local.image_2) { local.image_2 = stored.image_2; changed = true; }
+      if (stored.image_3 && stored.image_3 !== local.image_3) { local.image_3 = stored.image_3; changed = true; }
+      if (stored.image_4 && stored.image_4 !== local.image_4) { local.image_4 = stored.image_4; changed = true; }
+      if (stored.image_5 && stored.image_5 !== local.image_5) { local.image_5 = stored.image_5; changed = true; }
+      if (stored.thumbnail && stored.thumbnail !== local.thumbnail) { local.thumbnail = stored.thumbnail; changed = true; }
+      if (stored._image_source && stored._image_source !== local._image_source) { local._image_source = stored._image_source; changed = true; }
+      if (stored.edit_url && stored.edit_url !== local.edit_url) { local.edit_url = stored.edit_url; changed = true; }
+      if (stored.description && stored.description !== local.description && !local.description) { local.description = stored.description; changed = true; }
+      if (stored.price && stored.price !== local.price && !local.price) { local.price = stored.price; changed = true; }
+      if (stored.quantity && stored.quantity !== local.quantity && !local.quantity) { local.quantity = stored.quantity; changed = true; }
+      if (stored.sku && stored.sku !== local.sku && !local.sku) { local.sku = stored.sku; changed = true; }
+      if (stored.who_made && stored.who_made !== local.who_made && !local.who_made) { local.who_made = stored.who_made; changed = true; }
+      if (stored.when_made && stored.when_made !== local.when_made && !local.when_made) { local.when_made = stored.when_made; changed = true; }
+      if (typeof stored.is_supply === 'boolean' && local.is_supply == null) { local.is_supply = stored.is_supply; changed = true; }
+      if (stored.shop_section_id && stored.shop_section_id !== local.shop_section_id && !local.shop_section_id) { local.shop_section_id = stored.shop_section_id; changed = true; }
+      if (stored.renewal && stored.renewal !== local.renewal && !local.renewal) { local.renewal = stored.renewal; changed = true; }
+      if (typeof stored.personalization === 'boolean' && local.personalization == null) { local.personalization = stored.personalization; changed = true; }
+      if (stored.listing_type && stored.listing_type !== local.listing_type && !local.listing_type) { local.listing_type = stored.listing_type; changed = true; }
+      if (Array.isArray(stored.tags) && stored.tags.length > 0 && (!Array.isArray(local.tags) || local.tags.length === 0)) {
+        local.tags = stored.tags.slice();
+        changed = true;
+      }
+      if (Array.isArray(stored.materials) && stored.materials.length > 0 && (!Array.isArray(local.materials) || local.materials.length === 0)) {
+        local.materials = stored.materials.slice();
+        changed = true;
+      }
+      if (stored._storefront_currency && stored._storefront_currency !== local._storefront_currency) { local._storefront_currency = stored._storefront_currency; changed = true; }
+      if (stored._storefront_category && stored._storefront_category !== local._storefront_category) { local._storefront_category = stored._storefront_category; changed = true; }
+      if (stored._backfill_source && stored._backfill_source !== local._backfill_source) { local._backfill_source = stored._backfill_source; changed = true; }
+      if (stored._backfill_failed !== local._backfill_failed) { local._backfill_failed = stored._backfill_failed; changed = true; }
+      if (stored._backfill_error !== local._backfill_error) { local._backfill_error = stored._backfill_error; changed = true; }
+      if (stored._storefront_fetched_at && stored._storefront_fetched_at !== local._storefront_fetched_at) {
+        local._storefront_fetched_at = stored._storefront_fetched_at;
+        enrichedListings++;
+        changed = true;
+      }
+      if (changed) refreshedFields++;
+    }
+    if (refreshedFields > 0) {
+      console.log('[edit-import] editor refreshed fields on existing listings:', refreshedFields, 'enriched:', enrichedListings);
+      render();
+      scheduleSave();
+      if (enrichedListings > 0) {
+        showToast(`Loaded details for ${enrichedListings} listing${enrichedListings === 1 ? '' : 's'}`, 'success');
+      } else {
+        showToast(`Refreshed ${refreshedFields} listing${refreshedFields === 1 ? '' : 's'}`, 'success');
+      }
+    }
+    return;
+  }
+  listings.unshift(...newListings);
+  applyDefaultExpansion();
   render();
   scheduleSave();
   showToast(`Captured listing${newListings.length > 1 ? 's' : ''} added`, 'success');
@@ -3195,6 +3363,7 @@ function showImportFromUrlModal() {
     status.textContent = `Importing 0/${urls.length}...`;
 
     let imported = 0;
+    const importedListings = [];
     pushUndo('import from URL');
 
     for (let i = 0; i < urls.length; i++) {
@@ -3229,7 +3398,7 @@ function showImportFromUrlModal() {
       listing.description = desc;
 
       if (result.source) listing._import_source = result.source;
-      listings.push(listing);
+      importedListings.push(listing);
       imported++;
     }
 
@@ -3239,8 +3408,8 @@ function showImportFromUrlModal() {
     status.style.display = 'none';
 
     if (imported > 0) {
-      const last = listings[listings.length - 1];
-      expandedIds = new Set([last.id]);
+      listings = [...importedListings, ...listings];
+      applyDefaultExpansion();
       render();
       scheduleSave();
       modal.style.display = 'none';

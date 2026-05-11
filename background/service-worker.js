@@ -3,6 +3,9 @@ import { creditsService } from '../services/credits.js';
 import { nativeHostService } from '../services/nativeHost.js';
 import { cdpService } from '../services/cdp.js';
 import { etsyAutomationService, AbortError } from '../services/etsyAutomation.js';
+import { etsyShopScraperService } from '../services/etsyShopScraper.js';
+import { etsyStorefrontScraperService } from '../services/etsyStorefrontScraper.js';
+import { etsyEditPageScraperService } from '../services/etsyEditPageScraper.js';
 
 console.log('BulkListingPro service worker loaded');
 
@@ -120,6 +123,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     case 'CHECK_DEBUGGER':
       handleCheckDebugger(sendResponse);
+      return true;
+
+    case 'SCRAPE_LISTINGS':
+      handleScrapeListings(message.payload, sendResponse);
+      return true;
+
+    case 'BACKFILL_LISTINGS':
+      handleBackfillListings(message.payload, sendResponse);
       return true;
 
     default:
@@ -316,6 +327,177 @@ async function handleNativeReadFiles(payload, sendResponse) {
 
 async function handleCheckDebugger(sendResponse) {
   sendResponse({ success: true, available: true });
+}
+
+async function handleScrapeListings(payload, sendResponse) {
+  try {
+    const tabId = payload?.tabId;
+    if (!tabId) {
+      sendResponse({ success: false, error: 'No tab ID provided' });
+      return;
+    }
+    const listings = await etsyShopScraperService.scrapeCurrentPage(tabId);
+    sendResponse({ success: true, listings });
+  } catch (err) {
+    sendResponse({ success: false, error: err.message || 'Scrape failed' });
+  }
+}
+
+const EDITOR_LISTINGS_KEY = 'bulklistingpro_editor_listings';
+const BACKFILL_CONCURRENCY = 3;
+const BACKFILL_INTER_BATCH_DELAY_MS = 250;
+
+async function handleBackfillListings(payload, sendResponse) {
+  sendResponse({ success: true, started: true });
+
+  const tabId = payload?.tabId;
+  const etsyIds = Array.isArray(payload?.etsyListingIds) ? payload.etsyListingIds : [];
+  if (!tabId || etsyIds.length === 0) {
+    console.warn('[edit-import] backfill skipped: missing tabId or empty ids');
+    return;
+  }
+  console.log('[edit-import] backfill start', { tabId, count: etsyIds.length });
+
+  let succeeded = 0;
+  let failed = 0;
+  let blocked = false;
+  let editPageWins = 0;
+  let storefrontFallbacks = 0;
+
+  for (let i = 0; i < etsyIds.length; i += BACKFILL_CONCURRENCY) {
+    const batch = etsyIds.slice(i, i + BACKFILL_CONCURRENCY);
+    const results = await Promise.all(batch.map(async (etsyId) => {
+      try {
+        const editR = await etsyEditPageScraperService.scrapeListing(tabId, etsyId);
+        if (editR.success) {
+          return { etsyId, source: 'edit_page', ...editR };
+        }
+        console.warn('[edit-import] edit-page failed, trying storefront', { etsyId, error: editR.error, status: editR.status });
+        const sfR = await etsyStorefrontScraperService.scrapeListing(tabId, etsyId);
+        if (sfR.success) {
+          return { etsyId, source: 'storefront', ...sfR, editPageError: editR.error };
+        }
+        return { etsyId, source: null, success: false, error: 'both sources failed', editPageError: editR.error, storefrontError: sfR.error, blocked: editR.blocked || sfR.blocked };
+      } catch (err) {
+        return { etsyId, source: null, success: false, error: err?.message || String(err) };
+      }
+    }));
+
+    for (const r of results) {
+      if (r.success) {
+        succeeded++;
+        if (r.source === 'edit_page') editPageWins++;
+        else if (r.source === 'storefront') storefrontFallbacks++;
+      } else {
+        failed++;
+        if (r.blocked) blocked = true;
+        console.warn('[edit-import] backfill listing failed', { etsyId: r.etsyId, editPageError: r.editPageError, storefrontError: r.storefrontError });
+      }
+    }
+
+    await applyBackfillResultsToStorage(results);
+
+    if (blocked) {
+      console.warn('[edit-import] backfill halted due to DataDome block');
+      break;
+    }
+    if (i + BACKFILL_CONCURRENCY < etsyIds.length) {
+      await new Promise(res => setTimeout(res, BACKFILL_INTER_BATCH_DELAY_MS));
+    }
+  }
+
+  console.log('[edit-import] backfill done', { succeeded, failed, blocked, editPageWins, storefrontFallbacks });
+}
+
+async function applyBackfillResultsToStorage(results) {
+  const data = await chrome.storage.local.get(EDITOR_LISTINGS_KEY);
+  const listings = Array.isArray(data[EDITOR_LISTINGS_KEY]) ? data[EDITOR_LISTINGS_KEY] : [];
+  let changed = false;
+
+  for (const r of results) {
+    if (!r.success || !r.data) {
+      // Even failures get marked so the user can retry later
+      const failTarget = listings.find(l => l && l.etsy_listing_id === r.etsyId);
+      if (failTarget && !failTarget._backfill_failed) {
+        failTarget._backfill_failed = true;
+        failTarget._backfill_error = (r.editPageError || r.error || 'unknown').slice(0, 200);
+        changed = true;
+      }
+      continue;
+    }
+    const target = listings.find(l => l && l.etsy_listing_id === r.etsyId);
+    if (!target) continue;
+    const d = r.data;
+    const source = r.source || 'unknown';
+
+    // Common to both sources
+    if (d.description && !target.description) { target.description = d.description; changed = true; }
+    if (d.price && !target.price) { target.price = d.price; changed = true; }
+    if (d.quantity && !target.quantity) {
+      target.quantity = typeof d.quantity === 'number' ? String(d.quantity) : d.quantity;
+      changed = true;
+    }
+
+    // Storefront-only fields
+    if (d.currency && !target._storefront_currency) { target._storefront_currency = d.currency; changed = true; }
+    if (d.category && !target._storefront_category) { target._storefront_category = d.category; changed = true; }
+
+    // Edit-page-only fields
+    if (Array.isArray(d.tags) && d.tags.length > 0 && (!Array.isArray(target.tags) || target.tags.length === 0)) {
+      target.tags = d.tags.slice(0, 13);
+      changed = true;
+    }
+    if (Array.isArray(d.materials) && d.materials.length > 0 && (!Array.isArray(target.materials) || target.materials.length === 0)) {
+      target.materials = d.materials.slice(0, 13);
+      changed = true;
+    }
+    if (d.sku && !target.sku) { target.sku = d.sku; changed = true; }
+    if (d.whoMade && !target.who_made) { target.who_made = d.whoMade; changed = true; }
+    if (d.whenMade && !target.when_made) { target.when_made = d.whenMade; changed = true; }
+    if (typeof d.isSupply === 'boolean' && target.is_supply == null) { target.is_supply = d.isSupply; changed = true; }
+    if (d.shopSectionId != null && !target.shop_section_id) { target.shop_section_id = String(d.shopSectionId); changed = true; }
+    if (typeof d.shouldAutoRenew === 'boolean' && !target.renewal) {
+      target.renewal = d.shouldAutoRenew ? 'automatic' : 'manual';
+      changed = true;
+    }
+    if (typeof d.isPersonalizable === 'boolean' && target.personalization == null) {
+      target.personalization = d.isPersonalizable;
+      changed = true;
+    }
+    if (typeof d.state === 'number' && target._etsy_state == null) { target._etsy_state = d.state; changed = true; }
+    if (d.listingType && !target.listing_type) { target.listing_type = d.listingType; changed = true; }
+
+    // Images — upgrade from index thumb if we have better ones
+    if (Array.isArray(d.images) && d.images.length > 0) {
+      const isIndexThumb = target._image_source === 'etsy_index';
+      const isStorefront = target._image_source === 'etsy_storefront';
+      const upgradable = (slotVal) => !slotVal || isIndexThumb || (isStorefront && source === 'edit_page');
+      for (let i = 0; i < Math.min(d.images.length, 5); i++) {
+        const slot = 'image_' + (i + 1);
+        if (upgradable(target[slot])) {
+          target[slot] = d.images[i];
+          changed = true;
+        }
+      }
+      target._image_source = source === 'edit_page' ? 'etsy_edit_page' : 'etsy_storefront';
+    }
+
+    if (Array.isArray(d.altTexts)) {
+      for (let i = 0; i < Math.min(d.altTexts.length, 5); i++) {
+        const k = '_alt_' + (i + 1);
+        if (d.altTexts[i] && !target[k]) { target[k] = d.altTexts[i]; changed = true; }
+      }
+    }
+
+    target._backfill_source = source;
+    target._backfill_failed = false;
+    target._backfill_error = null;
+    target._storefront_fetched_at = new Date().toISOString();
+  }
+
+  if (changed) {
+    await chrome.storage.local.set({ [EDITOR_LISTINGS_KEY]: listings });
+  }
 }
 
 async function handleDirectUpload(payload, sendResponse) {

@@ -169,6 +169,20 @@ body.grid-active .editor-footer {
   font-weight: 600;
 }
 
+.hidden-count-pill {
+  background: #6b7280;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 8px;
+}
+.hidden-count-pill:hover {
+  background: #4b5563;
+}
+
 .toolbar-right {
   display: flex;
   gap: 8px;
@@ -284,6 +298,36 @@ body.grid-active .editor-footer {
 
 .listing-card.is-valid {
   border-left: 4px solid #28a745;
+}
+
+.listing-card.is-edit-mode {
+  border: 2px solid #16a34a;
+  background: #f0fdf4;
+}
+.listing-card.is-edit-mode:hover {
+  box-shadow: 0 4px 12px rgba(22,163,74,0.18);
+}
+.edit-mode-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: #16a34a;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.edit-mode-field-hint {
+  margin-top: 6px;
+  padding: 6px 10px;
+  background: #f0fdf4;
+  border-left: 3px solid #16a34a;
+  border-radius: 4px;
+  font-size: 11px;
+  color: #166534;
+  line-height: 1.4;
 }
 
 .card-header {

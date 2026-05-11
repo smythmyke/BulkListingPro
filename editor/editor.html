@@ -15,6 +15,7 @@
       <div class="toolbar-left">
         <h1 class="toolbar-title">BulkListingPro Editor</h1>
         <span class="listing-count" id="listing-count">0 listings</span>
+        <span class="hidden-count-pill" id="hidden-count-pill" style="display:none;" title="Click to view hidden listings">0 hidden</span>
         <span class="validation-summary-badge" id="validation-badge" style="display:none;" title="Click to view report"></span>
       </div>
       <div class="toolbar-center">
@@ -30,9 +31,14 @@
           <div class="toolbar-dropdown-menu" id="more-actions-menu">
             <button data-action="duplicate-selected">Duplicate Selected</button>
             <button data-action="delete-selected">Delete Selected</button>
+            <button data-action="hide-selected">Hide Selected</button>
+            <button data-action="hide-non-imported">Hide Non-Imported</button>
+            <button data-action="unhide-all">Unhide All</button>
             <hr>
             <button data-action="select-all">Select All</button>
             <button data-action="select-none">Deselect All</button>
+            <button data-action="expand-all">Expand All</button>
+            <button data-action="collapse-all">Collapse All</button>
             <hr>
             <button data-action="validate-all">Validate All</button>
             <button data-action="autoformat-all">Autoformat All</button>
@@ -75,6 +81,7 @@
         <option value="errors">Has Errors</option>
         <option value="warnings">Has Warnings</option>
         <option value="empty">Empty</option>
+        <option value="hidden">Hidden</option>
       </select>
       <select id="sort-by" class="filter-select">
         <option value="">Sort by...</option>

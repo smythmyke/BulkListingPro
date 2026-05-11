@@ -151,7 +151,26 @@ const elements = {
   langEnableStatus: document.getElementById('lang-enable-status'),
   langDisclosureModal: document.getElementById('lang-disclosure-modal'),
   langDisclosureCancel: document.getElementById('lang-disclosure-cancel'),
-  langDisclosureEnable: document.getElementById('lang-disclosure-enable')
+  langDisclosureEnable: document.getElementById('lang-disclosure-enable'),
+  editStateEmpty: document.getElementById('edit-state-empty'),
+  editStateResume: document.getElementById('edit-state-resume'),
+  editStatePicker: document.getElementById('edit-state-picker'),
+  editImportBtn: document.getElementById('edit-import-btn'),
+  editImportMoreBtn: document.getElementById('edit-import-more-btn'),
+  editResumeContinueBtn: document.getElementById('edit-resume-continue-btn'),
+  editResumeCount: document.getElementById('edit-resume-count'),
+  editResumeSub: document.getElementById('edit-resume-sub'),
+  editPickerCancelBtn: document.getElementById('edit-picker-cancel-btn'),
+  editPickerStatus: document.getElementById('edit-picker-status'),
+  editPickerError: document.getElementById('edit-picker-error'),
+  editPickerResults: document.getElementById('edit-picker-results'),
+  editPickerCount: document.getElementById('edit-picker-count'),
+  editPickerSelectAll: document.getElementById('edit-picker-select-all'),
+  editPickerSelectNone: document.getElementById('edit-picker-select-none'),
+  editPickerList: document.getElementById('edit-picker-list'),
+  editPickerRescanBtn: document.getElementById('edit-picker-rescan-btn'),
+  editPickerSelectedCount: document.getElementById('edit-picker-selected-count'),
+  editPickerImportBtn: document.getElementById('edit-picker-import-btn')
 };
 
 const TRANSLATIONS_STORAGE_KEY = 'bulklistingpro_translations';
@@ -355,6 +374,7 @@ function setupEventListeners() {
   elements.digitalFileRemove.addEventListener('click', clearDigitalFile);
   elements.selectAllCheckbox.addEventListener('change', toggleSelectAll);
   elements.tabBtns.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
+  setupEditTab();
   elements.clipboardClearBtn.addEventListener('click', clearResearchClipboard);
   elements.captureListingBtn.addEventListener('click', captureListingData);
   elements.captureEbayBtn.addEventListener('click', captureEbayListingData);
@@ -2148,6 +2168,9 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
       showToast(`${added} listing(s) received from editor`, 'success');
     }
   }
+  if (areaName === 'local' && (changes[STORAGE_KEYS.EDITOR_LISTINGS] || changes[STORAGE_KEYS.EDITOR_LAST_VIEWED_AT])) {
+    refreshEditTabState();
+  }
 });
 
 function showResults() {
@@ -2641,6 +2664,8 @@ function switchTab(tabName) {
     calculateProfit();
   } else if (tabName === 'account') {
     updateAccountTab();
+  } else if (tabName === 'edit') {
+    refreshEditTabState();
   }
 }
 
@@ -3619,6 +3644,441 @@ async function loadResearchClipboard() {
 function truncateText(text, maxLength) {
   if (!text) return '';
   return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+}
+
+// ─── Edit tab ────────────────────────────────────────────────────────────────
+
+let editPickerListings = [];
+let editPickerTabId = null;
+
+function setupEditTab() {
+  if (elements.editImportBtn) elements.editImportBtn.addEventListener('click', startEditImport);
+  if (elements.editImportMoreBtn) elements.editImportMoreBtn.addEventListener('click', startEditImport);
+  if (elements.editResumeContinueBtn) elements.editResumeContinueBtn.addEventListener('click', openEditor);
+  if (elements.editPickerCancelBtn) elements.editPickerCancelBtn.addEventListener('click', cancelEditPicker);
+  if (elements.editPickerRescanBtn) elements.editPickerRescanBtn.addEventListener('click', startEditImport);
+  if (elements.editPickerSelectAll) elements.editPickerSelectAll.addEventListener('click', () => setAllPickerChecks(true));
+  if (elements.editPickerSelectNone) elements.editPickerSelectNone.addEventListener('click', () => setAllPickerChecks(false));
+  if (elements.editPickerImportBtn) elements.editPickerImportBtn.addEventListener('click', importSelectedListings);
+}
+
+function showEditState(name) {
+  if (elements.editStateEmpty) elements.editStateEmpty.classList.toggle('hidden', name !== 'empty');
+  if (elements.editStateResume) elements.editStateResume.classList.toggle('hidden', name !== 'resume');
+  if (elements.editStatePicker) elements.editStatePicker.classList.toggle('hidden', name !== 'picker');
+}
+
+async function refreshEditTabState() {
+  try {
+    const data = await chrome.storage.local.get([
+      STORAGE_KEYS.EDITOR_LISTINGS,
+      STORAGE_KEYS.EDITOR_LAST_VIEWED_AT
+    ]);
+    const stored = Array.isArray(data[STORAGE_KEYS.EDITOR_LISTINGS]) ? data[STORAGE_KEYS.EDITOR_LISTINGS] : [];
+    const lastViewedAt = data[STORAGE_KEYS.EDITOR_LAST_VIEWED_AT] || 0;
+    const unseen = stored.filter(l => {
+      if (!l || !l._edit_mode || l._hidden) return false;
+      const importedAt = l._imported_at ? new Date(l._imported_at).getTime() : 0;
+      return importedAt > lastViewedAt;
+    });
+    if (unseen.length > 0) {
+      if (elements.editResumeCount) elements.editResumeCount.textContent = String(unseen.length);
+      if (elements.editResumeSub) elements.editResumeSub.textContent = 'new — open editor to review';
+      showEditState('resume');
+    } else {
+      showEditState('empty');
+    }
+  } catch (err) {
+    console.warn('refreshEditTabState failed:', err);
+    showEditState('empty');
+  }
+}
+
+const LISTINGS_INDEX_URL = 'https://www.etsy.com/your/shops/me/tools/listings/view:table';
+const LISTINGS_INDEX_PATTERN = /etsy\.com\/your\/shops\/me\/tools\/listings/;
+const QUICKEDIT_FLAG_PATTERN = /[,/]quickedit:true(?=[,/?#]|$)/;
+
+async function ensureNotInQuickEditMode(tab, onProgress) {
+  if (!tab?.url || !QUICKEDIT_FLAG_PATTERN.test(tab.url)) return tab;
+  console.log('[edit-import] quickedit mode detected on tab, stripping:', tab.url);
+  if (onProgress) onProgress('Resetting Etsy view…');
+  const strippedUrl = tab.url.replace(new RegExp(QUICKEDIT_FLAG_PATTERN.source, 'g'), '');
+  await new Promise((resolve) => {
+    const timeout = setTimeout(() => {
+      chrome.tabs.onUpdated.removeListener(listener);
+      resolve();
+    }, 15000);
+    function listener(tabId, info) {
+      if (tabId === tab.id && info.status === 'complete') {
+        clearTimeout(timeout);
+        chrome.tabs.onUpdated.removeListener(listener);
+        resolve();
+      }
+    }
+    chrome.tabs.onUpdated.addListener(listener);
+    chrome.tabs.update(tab.id, { url: strippedUrl });
+  });
+  const refreshedTab = await chrome.tabs.get(tab.id);
+  console.log('[edit-import] post-strip URL:', refreshedTab.url);
+  if (QUICKEDIT_FLAG_PATTERN.test(refreshedTab.url || '')) {
+    const err = new Error('QUICKEDIT_STICKY');
+    err.code = 'QUICKEDIT_STICKY';
+    throw err;
+  }
+  return refreshedTab;
+}
+
+async function findOrOpenListingsIndexTab(onProgress) {
+  const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (activeTab?.url && LISTINGS_INDEX_PATTERN.test(activeTab.url)) {
+    return activeTab;
+  }
+
+  const existing = await chrome.tabs.query({ url: '*://*.etsy.com/your/shops/me/tools/listings*' });
+  if (existing.length > 0) {
+    if (onProgress) onProgress('Switching to your Etsy listings tab…');
+    await chrome.tabs.update(existing[0].id, { active: true });
+    if (existing[0].windowId) {
+      try { await chrome.windows.update(existing[0].windowId, { focused: true }); } catch (e) {}
+    }
+    return existing[0];
+  }
+
+  if (onProgress) onProgress('Opening Etsy listings page…');
+  const newTab = await chrome.tabs.create({ url: LISTINGS_INDEX_URL });
+  await new Promise((resolve) => {
+    const timeout = setTimeout(() => {
+      chrome.tabs.onUpdated.removeListener(listener);
+      resolve();
+    }, 30000);
+    function listener(tabId, info) {
+      if (tabId === newTab.id && info.status === 'complete') {
+        clearTimeout(timeout);
+        chrome.tabs.onUpdated.removeListener(listener);
+        resolve();
+      }
+    }
+    chrome.tabs.onUpdated.addListener(listener);
+  });
+  return newTab;
+}
+
+async function startEditImport() {
+  console.log('[edit-import] startEditImport invoked');
+  showEditState('picker');
+  showPickerStatus('Finding your Etsy listings page…');
+  hidePickerError();
+  hidePickerResults();
+  setPickerBusy(true);
+
+  let tab;
+  try {
+    tab = await findOrOpenListingsIndexTab((msg) => showPickerStatus(msg));
+  } catch (err) {
+    console.warn('[edit-import] findOrOpenListingsIndexTab error', err);
+    showPickerError(
+      `Couldn't open the Etsy listings page automatically. ` +
+      `<a href="${LISTINGS_INDEX_URL}" target="_blank">Open it manually</a>, ` +
+      `then click Re-scan.`
+    );
+    setPickerBusy(false);
+    return;
+  }
+
+  if (!tab) {
+    showPickerError(
+      `Couldn't find or open an Etsy listings tab. ` +
+      `<a href="${LISTINGS_INDEX_URL}" target="_blank">Open it manually</a>, ` +
+      `then click Re-scan.`
+    );
+    setPickerBusy(false);
+    return;
+  }
+
+  console.log('[edit-import] tab resolved', { tabId: tab.id, url: tab.url });
+
+  try {
+    tab = await ensureNotInQuickEditMode(tab, (msg) => showPickerStatus(msg));
+  } catch (err) {
+    if (err?.code === 'QUICKEDIT_STICKY') {
+      console.warn('[edit-import] quickedit mode stuck on Etsy');
+      showPickerError(
+        `Etsy is stuck in Quick Edit mode. Click <strong>"Exit quick edit"</strong> on the listings page, then click Re-scan.`
+      );
+      setPickerBusy(false);
+      return;
+    }
+    console.warn('[edit-import] ensureNotInQuickEditMode error', err);
+    showPickerError(escapeHtml(err?.message || 'Failed to reset the Etsy view.'));
+    setPickerBusy(false);
+    return;
+  }
+
+  showPickerStatus('Waiting for listings to load…');
+
+  try {
+    const response = await chrome.runtime.sendMessage({
+      type: 'SCRAPE_LISTINGS',
+      payload: { tabId: tab.id }
+    });
+
+    console.log('[edit-import] SCRAPE_LISTINGS response', {
+      success: response?.success,
+      count: Array.isArray(response?.listings) ? response.listings.length : null,
+      error: response?.error
+    });
+
+    if (!response?.success) {
+      showPickerError(escapeHtml(response?.error || 'Failed to read the listings page.'));
+      return;
+    }
+
+    const listings = Array.isArray(response.listings) ? response.listings : [];
+    if (listings.length === 0) {
+      let postScrapeUrl = tab.url;
+      try {
+        const refreshed = await chrome.tabs.get(tab.id);
+        postScrapeUrl = refreshed?.url || tab.url;
+      } catch (e) {}
+      if (QUICKEDIT_FLAG_PATTERN.test(postScrapeUrl || '')) {
+        showPickerError(
+          `Etsy returned to Quick Edit mode. Click <strong>"Exit quick edit"</strong> on the listings page, then click Re-scan.`
+        );
+      } else {
+        showPickerError('No listings found on that page. Make sure listing rows are loaded, then click Re-scan.');
+      }
+      return;
+    }
+
+    editPickerListings = listings;
+    editPickerTabId = tab.id;
+    renderEditPicker(listings);
+  } catch (err) {
+    console.warn('[edit-import] SCRAPE_LISTINGS threw', err);
+    showPickerError(escapeHtml(err?.message || 'Could not read the listings page.'));
+  } finally {
+    setPickerBusy(false);
+  }
+}
+
+function setPickerBusy(isBusy) {
+  if (elements.editPickerRescanBtn) {
+    elements.editPickerRescanBtn.disabled = isBusy;
+  }
+}
+
+function showPickerStatus(text) {
+  if (!elements.editPickerStatus) return;
+  elements.editPickerStatus.textContent = text;
+  elements.editPickerStatus.classList.remove('hidden');
+}
+
+function hidePickerStatus() {
+  if (elements.editPickerStatus) elements.editPickerStatus.classList.add('hidden');
+}
+
+function showPickerError(html) {
+  if (!elements.editPickerError) return;
+  elements.editPickerError.innerHTML = html;
+  elements.editPickerError.classList.remove('hidden');
+  hidePickerStatus();
+}
+
+function hidePickerError() {
+  if (elements.editPickerError) elements.editPickerError.classList.add('hidden');
+}
+
+function hidePickerResults() {
+  if (elements.editPickerResults) elements.editPickerResults.classList.add('hidden');
+}
+
+function renderEditPicker(listings) {
+  hidePickerStatus();
+  hidePickerError();
+
+  if (elements.editPickerCount) {
+    elements.editPickerCount.textContent = `${listings.length} listing${listings.length === 1 ? '' : 's'} on this page`;
+  }
+
+  if (elements.editPickerList) {
+    elements.editPickerList.innerHTML = listings.map((l, idx) => {
+      const typeClass = (l.type || '').toLowerCase() === 'digital' ? 'digital'
+        : (l.type || '').toLowerCase() === 'physical' ? 'physical' : '';
+      const typeBadge = l.type
+        ? `<span class="edit-picker-row-badge ${typeClass}">${escapeHtml(l.type)}</span>`
+        : '';
+      const thumb = l.thumbnail
+        ? `<img src="${escapeHtml(l.thumbnail)}" alt="">`
+        : `<img alt="">`;
+      return `
+        <label class="edit-picker-row">
+          <input type="checkbox" data-edit-pick="${idx}">
+          ${thumb}
+          <div class="edit-picker-row-meta">
+            <div class="edit-picker-row-title">${escapeHtml(l.title || '(untitled)')}</div>
+            <div class="edit-picker-row-badges">${typeBadge}</div>
+          </div>
+        </label>
+      `;
+    }).join('');
+
+    elements.editPickerList.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+      cb.addEventListener('change', updatePickerSelectedCount);
+    });
+  }
+
+  if (elements.editPickerResults) elements.editPickerResults.classList.remove('hidden');
+  updatePickerSelectedCount();
+}
+
+function setAllPickerChecks(checked) {
+  if (!elements.editPickerList) return;
+  elements.editPickerList.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+    cb.checked = checked;
+  });
+  updatePickerSelectedCount();
+}
+
+function updatePickerSelectedCount() {
+  if (!elements.editPickerList) return;
+  const checked = elements.editPickerList.querySelectorAll('input[type="checkbox"]:checked').length;
+  if (elements.editPickerSelectedCount) {
+    elements.editPickerSelectedCount.textContent = `${checked} selected`;
+  }
+  if (elements.editPickerImportBtn) {
+    elements.editPickerImportBtn.disabled = checked === 0;
+    elements.editPickerImportBtn.textContent = checked === 0 ? 'Import' : `Import ${checked} →`;
+  }
+}
+
+async function importSelectedListings() {
+  console.log('[edit-import] importSelectedListings clicked');
+  if (!elements.editPickerList) {
+    console.warn('[edit-import] aborted: no picker list element');
+    return;
+  }
+  const checked = [...elements.editPickerList.querySelectorAll('input[type="checkbox"]:checked')];
+  console.log('[edit-import] checked count:', checked.length);
+  if (checked.length === 0) {
+    console.warn('[edit-import] aborted: no checkboxes selected');
+    return;
+  }
+
+  const picked = checked.map(cb => editPickerListings[parseInt(cb.dataset.editPick, 10)]).filter(Boolean);
+  console.log('[edit-import] picked from scrape buffer:', { count: picked.length, sample: picked[0] });
+
+  try {
+    const data = await chrome.storage.local.get(STORAGE_KEYS.EDITOR_LISTINGS);
+    const existing = Array.isArray(data[STORAGE_KEYS.EDITOR_LISTINGS]) ? data[STORAGE_KEYS.EDITOR_LISTINGS] : [];
+    const existingIds = new Set(existing.map(l => l.id));
+    const existingEtsyIds = new Set(existing.map(l => l.etsy_listing_id).filter(Boolean));
+    console.log('[edit-import] existing storage:', { totalCount: existing.length, etsyIdsCount: existingEtsyIds.size });
+
+    const additions = [];
+    const refreshed = [];
+    let skipped = 0;
+    for (const p of picked) {
+      const displayImage = upgradeEtsyThumbUrl(p.thumbnail);
+      console.log('[edit-import] processing pick:', { etsyId: p.id, thumb: p.thumbnail, upgraded: displayImage, alreadyImported: existingEtsyIds.has(p.id) });
+
+      if (existingEtsyIds.has(p.id)) {
+        // Refresh the existing record's display fields so re-imports pick up image_1, etc.
+        const target = existing.find(l => l.etsy_listing_id === p.id);
+        if (target) {
+          target.title = target.title || p.title || '';
+          target.edit_url = p.editUrl || target.edit_url || '';
+          target.thumbnail = p.thumbnail || target.thumbnail || '';
+          target.listing_type = p.type || target.listing_type || '';
+          if (!target.image_1 && displayImage) target.image_1 = displayImage;
+          if (!target._image_source && displayImage) target._image_source = 'etsy_index';
+          target._edit_mode = true;
+          refreshed.push(target.id);
+        } else {
+          skipped++;
+        }
+        continue;
+      }
+
+      const newId = generateEditListingId(existingIds);
+      existingIds.add(newId);
+      additions.push({
+        id: newId,
+        title: p.title || '',
+        etsy_listing_id: p.id,
+        edit_url: p.editUrl || '',
+        thumbnail: p.thumbnail || '',
+        listing_type: p.type || '',
+        image_1: displayImage || '',
+        _edit_mode: true,
+        _image_source: 'etsy_index',
+        _imported_at: new Date().toISOString(),
+        translate_languages: [],
+        translations: {}
+      });
+    }
+
+    console.log('[edit-import] decision summary:', { added: additions.length, refreshed: refreshed.length, skipped });
+
+    if (additions.length === 0 && refreshed.length === 0) {
+      showToast('Already imported — nothing new to add', 'info');
+      return;
+    }
+
+    const merged = additions.concat(existing);
+    console.log('[edit-import] writing to storage:', { newTotal: merged.length, sampleImage1: merged[0]?.image_1 });
+    await chrome.storage.local.set({ [STORAGE_KEYS.EDITOR_LISTINGS]: merged });
+    console.log('[edit-import] storage write complete');
+
+    const backfillEtsyIds = [
+      ...additions.map(a => a.etsy_listing_id),
+      ...picked.filter(p => existingEtsyIds.has(p.id)).map(p => p.id)
+    ].filter(Boolean);
+    if (backfillEtsyIds.length > 0 && editPickerTabId) {
+      console.log('[edit-import] dispatching backfill', { count: backfillEtsyIds.length, tabId: editPickerTabId });
+      chrome.runtime.sendMessage({
+        type: 'BACKFILL_LISTINGS',
+        payload: { tabId: editPickerTabId, etsyListingIds: backfillEtsyIds }
+      }).catch(err => console.warn('[edit-import] backfill dispatch failed', err));
+    }
+
+    let msg;
+    if (additions.length > 0 && refreshed.length > 0) {
+      msg = `Imported ${additions.length}, refreshed ${refreshed.length}`;
+    } else if (additions.length > 0) {
+      msg = `Imported ${additions.length} listing${additions.length === 1 ? '' : 's'}`;
+    } else {
+      msg = `Refreshed ${refreshed.length} listing${refreshed.length === 1 ? '' : 's'}`;
+    }
+    if (skipped > 0) msg += ` (skipped ${skipped})`;
+    showToast(msg, 'success');
+
+    await openEditor();
+    await refreshEditTabState();
+  } catch (err) {
+    console.error('[edit-import] importSelectedListings failed:', err);
+    showToast('Failed to import — see console', 'error');
+  }
+}
+
+function generateEditListingId(existingIds) {
+  let candidate;
+  do {
+    candidate = 'edit_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+  } while (existingIds.has(candidate));
+  return candidate;
+}
+
+function upgradeEtsyThumbUrl(thumb) {
+  if (!thumb || typeof thumb !== 'string') return thumb;
+  return thumb.replace(/il_75x75\./, 'il_570xN.');
+}
+
+function cancelEditPicker() {
+  editPickerListings = [];
+  if (elements.editPickerList) elements.editPickerList.innerHTML = '';
+  hidePickerError();
+  hidePickerResults();
+  refreshEditTabState();
 }
 
 async function openEditor() {

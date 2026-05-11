@@ -120,6 +120,7 @@
       <!-- Tab Navigation -->
       <div class="tab-nav">
         <button class="tab-btn active" data-tab="upload">Upload</button>
+        <button class="tab-btn" data-tab="edit">Edit</button>
         <button class="tab-btn" data-tab="research">Research</button>
         <button class="tab-btn" data-tab="account">Account</button>
       </div>
@@ -477,6 +478,75 @@
         </div>
       </div>
       </div><!-- End tab-upload -->
+
+      <!-- Tab: Edit -->
+      <div id="tab-edit" class="tab-content">
+
+        <!-- State 1a: Empty (no pending edit work) -->
+        <div id="edit-state-empty" class="edit-state">
+          <div class="edit-empty">
+            <div class="edit-empty-icon">✏️</div>
+            <h2>Edit existing listings</h2>
+            <p class="edit-empty-lead">
+              Update listings already on your Etsy shop — add translations, fix tags, change prices, refresh content.
+            </p>
+            <button id="edit-import-btn" class="btn btn-primary">+ Import from Etsy</button>
+            <p class="edit-empty-help">
+              Open your Etsy <strong>Shop Manager → Listings</strong> page in another tab first, filter to the listings you want, then click here to import what's on screen.
+            </p>
+          </div>
+        </div>
+
+        <!-- State 1b: Resume banner (pending edit work in editor) -->
+        <div id="edit-state-resume" class="edit-state hidden">
+          <div class="edit-resume-banner">
+            <div class="edit-resume-icon">⏸</div>
+            <div class="edit-resume-body">
+              <div class="edit-resume-title"><span id="edit-resume-count">0</span> listings waiting in editor</div>
+              <div class="edit-resume-sub" id="edit-resume-sub">imported and ready to edit</div>
+            </div>
+            <button id="edit-resume-continue-btn" class="btn btn-primary btn-small">Continue →</button>
+          </div>
+          <div class="edit-empty edit-empty-compact">
+            <h3>Or import more</h3>
+            <p>Add additional listings from your Etsy shop to the same editing session.</p>
+            <button id="edit-import-more-btn" class="btn btn-secondary">+ Import from Etsy</button>
+          </div>
+        </div>
+
+        <!-- State 2: Picker (after clicking Import) -->
+        <div id="edit-state-picker" class="edit-state hidden">
+          <div class="edit-picker-head">
+            <h2>Pick listings to import</h2>
+            <span class="edit-picker-head-actions">
+              <button id="edit-picker-rescan-btn" class="btn btn-secondary btn-small">↻ Re-scan</button>
+              <button id="edit-picker-cancel-btn" class="btn-link">Cancel</button>
+            </span>
+          </div>
+
+          <div id="edit-picker-status" class="edit-picker-status">Reading your Etsy listings page…</div>
+
+          <div id="edit-picker-error" class="edit-picker-error hidden"></div>
+
+          <div id="edit-picker-results" class="edit-picker-results hidden">
+            <div class="edit-picker-meta">
+              <span id="edit-picker-count">0 listings on this page</span>
+              <span class="edit-picker-actions">
+                <a id="edit-picker-select-all">Select all</a>
+                <a id="edit-picker-select-none">None</a>
+              </span>
+            </div>
+
+            <div id="edit-picker-list" class="edit-picker-list"></div>
+
+            <div class="edit-picker-footer">
+              <span class="edit-picker-selected" id="edit-picker-selected-count">0 selected</span>
+              <button id="edit-picker-import-btn" class="btn btn-primary btn-small" disabled>Import</button>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- End tab-edit -->
 
       <!-- Tab: Research -->
       <div id="tab-research" class="tab-content">
