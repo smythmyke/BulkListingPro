@@ -115,7 +115,9 @@
     "title": "The hidden time cost of being an Etsy digital product seller",
     "description": "Where the hours actually go, and which categories are worth reclaiming.",
     "archetype": "Narrative",
-    "read_time": "7 min read"
+    "read_time": "7 min read",
+    "published": true,
+    "published_at": "2026-05-15"
   },
   {
     "slug": "bulklistingpro-vs-list-perfectly",
