@@ -125,7 +125,9 @@
     "title": "BulkListingPro vs List Perfectly: cross-lister vs bulk creator",
     "description": "Two tools that show up in the same Google searches but solve completely different problems.",
     "archetype": "Comparison",
-    "read_time": "8 min read"
+    "read_time": "8 min read",
+    "published": true,
+    "published_at": "2026-05-18"
   },
   {
     "slug": "etsy-13-tag-strategy-2026",
