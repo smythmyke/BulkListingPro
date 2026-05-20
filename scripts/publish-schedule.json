@@ -135,7 +135,9 @@
     "title": "Etsy's 13-tag strategy that still works in 2026",
     "description": "A practical framework for using all 13 tags without wasting any. The search/browse split and long-tail ladder.",
     "archetype": "Ecosystem",
-    "read_time": "9 min read"
+    "read_time": "9 min read",
+    "published": true,
+    "published_at": "2026-05-20"
   },
   {
     "slug": "bulklistingpro-vs-crosslist",
