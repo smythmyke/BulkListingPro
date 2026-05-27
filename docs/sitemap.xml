@@ -144,4 +144,10 @@
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
+  <url>
+    <loc>https://smythmyke.github.io/BulkListingPro/blog/i-tried-vendoo-crosslist-5-others-before-building-my-own.html</loc>
+    <lastmod>2026-05-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
 </urlset>

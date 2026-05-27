@@ -165,7 +165,9 @@
     "title": "I tried Vendoo, Crosslist, and 5 others before building my own",
     "description": "Seven Etsy listing tools tested, none of them quite right. What I learned from each.",
     "archetype": "Narrative",
-    "read_time": "8 min read"
+    "read_time": "8 min read",
+    "published": true,
+    "published_at": "2026-05-27"
   },
   {
     "slug": "how-much-etsy-takes-from-10-dollar-digital-download",
