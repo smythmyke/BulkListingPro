@@ -175,7 +175,9 @@
     "title": "How much Etsy really takes from a $10 digital download",
     "description": "The exact math on one of Etsy's most common sale prices, with and without Offsite Ads.",
     "archetype": "Data",
-    "read_time": "6 min read"
+    "read_time": "6 min read",
+    "published": true,
+    "published_at": "2026-05-29"
   },
   {
     "slug": "how-to-list-same-product-across-multiple-etsy-shops",
