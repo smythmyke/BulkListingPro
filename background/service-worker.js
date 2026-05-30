@@ -12,6 +12,7 @@ console.log('BulkListingPro service worker loaded');
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
 
 const CREDITS_PER_LISTING = 2;
+const CREDITS_PER_EDIT = 1;
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log('SW received message:', message.type);
@@ -99,6 +100,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     case 'DIRECT_UPLOAD':
       handleDirectUpload(message.payload, sendResponse);
+      return true;
+
+    case 'DIRECT_EDIT':
+      handleDirectEdit(message.payload, sendResponse);
       return true;
 
     case 'DIRECT_PAUSE':
@@ -343,7 +348,7 @@ async function handleScrapeListings(payload, sendResponse) {
   }
 }
 
-const EDITOR_LISTINGS_KEY = 'bulklistingpro_editor_listings';
+const EDIT_LISTINGS_KEY = 'bulklistingpro_edit_listings';
 const BACKFILL_CONCURRENCY = 3;
 const BACKFILL_INTER_BATCH_DELAY_MS = 250;
 
@@ -410,8 +415,8 @@ async function handleBackfillListings(payload, sendResponse) {
 }
 
 async function applyBackfillResultsToStorage(results) {
-  const data = await chrome.storage.local.get(EDITOR_LISTINGS_KEY);
-  const listings = Array.isArray(data[EDITOR_LISTINGS_KEY]) ? data[EDITOR_LISTINGS_KEY] : [];
+  const data = await chrome.storage.local.get(EDIT_LISTINGS_KEY);
+  const listings = Array.isArray(data[EDIT_LISTINGS_KEY]) ? data[EDIT_LISTINGS_KEY] : [];
   let changed = false;
 
   for (const r of results) {
@@ -497,7 +502,7 @@ async function applyBackfillResultsToStorage(results) {
   }
 
   if (changed) {
-    await chrome.storage.local.set({ [EDITOR_LISTINGS_KEY]: listings });
+    await chrome.storage.local.set({ [EDIT_LISTINGS_KEY]: listings });
   }
 }
 
@@ -506,6 +511,12 @@ async function handleDirectUpload(payload, sendResponse) {
 
   if (!listings || !Array.isArray(listings) || listings.length === 0) {
     sendResponse({ success: false, error: 'No listings provided' });
+    return;
+  }
+
+  const editModeCount = listings.filter(l => l && l._edit_mode).length;
+  if (editModeCount > 0) {
+    sendResponse({ success: false, error: `Refusing to upload ${editModeCount} edit-mode listing(s) — would create duplicates on Etsy. Push-edits flow not yet implemented.` });
     return;
   }
 
@@ -742,6 +753,162 @@ async function handleDirectUpload(payload, sendResponse) {
             if (abortErr instanceof AbortError && abortErr.reason === 'cancel') {
               break;
             }
+          }
+        }
+      }
+    }
+
+    await cdpService.detach();
+    sendResponse({ success: true, results });
+  } catch (error) {
+    await cdpService.detach();
+    sendResponse({ success: false, error: error.message, results });
+  }
+}
+
+async function handleDirectEdit(payload, sendResponse) {
+  const { listings, tabId } = payload;
+
+  if (!listings || !Array.isArray(listings) || listings.length === 0) {
+    sendResponse({ success: false, error: 'No listings provided' });
+    return;
+  }
+
+  const nonEdit = listings.filter(l => !l || !l._edit_mode);
+  if (nonEdit.length > 0) {
+    sendResponse({ success: false, error: 'DIRECT_EDIT requires edit-mode listings only' });
+    return;
+  }
+
+  etsyAutomationService.reset();
+
+  const results = {
+    total: listings.length,
+    success: 0,
+    failed: 0,
+    skipped: 0,
+    details: []
+  };
+
+  try {
+    await cdpService.attach(tabId);
+
+    cdpService.onDetach((reason) => {
+      chrome.runtime.sendMessage({
+        type: 'EDIT_PROGRESS',
+        status: 'debugger_detached',
+        reason
+      }).catch(() => {});
+    });
+
+    etsyAutomationService.onVerification((type) => {
+      chrome.runtime.sendMessage({
+        type: 'EDIT_PROGRESS',
+        status: 'verification_required',
+        verificationType: type
+      }).catch(() => {});
+    });
+
+    etsyAutomationService.onProgress((p) => {
+      chrome.runtime.sendMessage({ type: 'EDIT_PROGRESS', ...p }).catch(() => {});
+    });
+
+    for (let i = 0; i < listings.length; i++) {
+      const listing = listings[i];
+
+      chrome.runtime.sendMessage({
+        type: 'EDIT_PROGRESS',
+        index: i,
+        total: listings.length,
+        title: listing.title,
+        status: 'started'
+      }).catch(() => {});
+
+      try {
+        const result = await etsyAutomationService.editListing(listing);
+
+        if (result.success) {
+          results.success++;
+          results.details.push({ index: i, title: listing.title, status: 'success', etsy_listing_id: listing.etsy_listing_id });
+
+          const creditResult = await creditsService.useCredits(CREDITS_PER_EDIT, 'etsy_listing_edit');
+
+          if (!creditResult.success) {
+            for (let j = i + 1; j < listings.length; j++) {
+              results.failed++;
+              results.details.push({ index: j, title: listings[j].title, status: 'failed', error: 'Insufficient credits' });
+            }
+            chrome.runtime.sendMessage({
+              type: 'EDIT_PROGRESS',
+              status: 'out_of_credits',
+              creditsRemaining: creditResult.creditsRemaining || 0
+            }).catch(() => {});
+            break;
+          }
+
+          chrome.runtime.sendMessage({
+            type: 'EDIT_PROGRESS',
+            index: i,
+            total: listings.length,
+            title: listing.title,
+            status: 'complete',
+            creditsRemaining: creditResult.creditsRemaining
+          }).catch(() => {});
+        } else {
+          results.failed++;
+          results.details.push({ index: i, title: listing.title, status: 'failed', error: result.error, errorCategory: result.errorCategory });
+
+          chrome.runtime.sendMessage({
+            type: 'EDIT_PROGRESS',
+            index: i,
+            total: listings.length,
+            title: listing.title,
+            status: 'error',
+            error: result.error,
+            errorCategory: result.errorCategory
+          }).catch(() => {});
+        }
+      } catch (err) {
+        if (err instanceof AbortError) {
+          if (err.reason === 'skip') {
+            results.skipped++;
+            results.details.push({ index: i, title: listing.title, status: 'skipped' });
+            chrome.runtime.sendMessage({
+              type: 'EDIT_PROGRESS',
+              index: i,
+              total: listings.length,
+              title: listing.title,
+              status: 'skipped'
+            }).catch(() => {});
+            continue;
+          } else if (err.reason === 'cancel') {
+            chrome.runtime.sendMessage({
+              type: 'EDIT_PROGRESS',
+              status: 'cancelled'
+            }).catch(() => {});
+            break;
+          }
+        }
+
+        results.failed++;
+        results.details.push({ index: i, title: listing.title, status: 'failed', error: err.message });
+        chrome.runtime.sendMessage({
+          type: 'EDIT_PROGRESS',
+          index: i,
+          total: listings.length,
+          title: listing.title,
+          status: 'error',
+          error: err.message
+        }).catch(() => {});
+      }
+
+      if (i < listings.length - 1 && !etsyAutomationService.isCancelled) {
+        const jitter = Math.random() * 2000;
+        try {
+          await etsyAutomationService.interruptibleDelay(4000 + jitter);
+        } catch (abortErr) {
+          if (abortErr instanceof AbortError && abortErr.reason === 'cancel') {
+            break;
           }
         }
       }

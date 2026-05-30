@@ -184,6 +184,134 @@ class EtsyAutomationService {
     }
   }
 
+  async editListing(listing) {
+    const editUrl = listing.edit_url ||
+      (listing.etsy_listing_id
+        ? `https://www.etsy.com/your/shops/me/listing-editor/edit/${listing.etsy_listing_id}`
+        : null);
+    if (!editUrl) {
+      return { success: false, error: 'Missing Etsy listing id/edit URL', errorCategory: 'unknown', title: listing.title };
+    }
+    console.log(`[edit-push] Editing listing: ${listing.title?.substring(0, 50)}... (${editUrl})`);
+
+    try {
+      await cdpService.navigate(editUrl);
+      await this.interruptibleDelay(1500);
+      await this.waitForEditPageReady();
+
+      const verifyCheck = await this.checkForVerification();
+      if (verifyCheck.found) {
+        if (this.onVerificationCallback) this.onVerificationCallback(verifyCheck.type);
+        const cleared = await this.waitForVerificationCleared();
+        if (!cleared) throw new Error('Verification not completed');
+        await this.delay(1000);
+      }
+
+      const needsLangs = Array.isArray(listing.translate_languages)
+        ? listing.translate_languages.map(l => String(l).toLowerCase()).filter(l => TRANSLATION_LANGUAGES.includes(l))
+        : [];
+
+      if (needsLangs.length === 0) {
+        throw new Error('No translation languages selected — nothing to push (Phase 1 edits only translations)');
+      }
+
+      const unverifiedNeeded = needsLangs.filter(l => !this.translationsVerifiedLangs.has(l));
+      if (unverifiedNeeded.length > 0) {
+        const status = await cdpService.evaluate(`
+          (() => {
+            const section = document.querySelector('#field-translations');
+            const sectionPresent = !!section;
+            const langs = ${JSON.stringify(unverifiedNeeded)};
+            const missing = langs.filter(l => !document.getElementById(l + '-translation-tab'));
+            return { sectionPresent, missing };
+          })()
+        `);
+
+        if (status.sectionPresent && status.missing.length === 0) {
+          unverifiedNeeded.forEach(l => this.translationsVerifiedLangs.add(l));
+        } else {
+          if (this.onProgressCallback) {
+            this.onProgressCallback({
+              status: 'enabling_languages',
+              message: 'Enabling translation languages on your shop...'
+            });
+          }
+          await this.enableShopLanguages();
+          TRANSLATION_LANGUAGES.forEach(l => this.translationsVerifiedLangs.add(l));
+          await cdpService.navigate(editUrl);
+          await this.interruptibleDelay(1500);
+          await this.waitForCategoryInput();
+        }
+      }
+
+      await this.fillTranslations(listing);
+      await this.saveEdit();
+
+      return { success: true, title: listing.title };
+    } catch (error) {
+      if (error instanceof AbortError) throw error;
+      console.error(`[edit-push] Failed to edit listing: ${error.message}`);
+      const errorCategory = this.categorizeError(error.message);
+      return { success: false, error: error.message, errorCategory, title: listing.title };
+    }
+  }
+
+  async waitForEditPageReady(maxWait = 8000) {
+    const startTime = Date.now();
+    while (Date.now() - startTime < maxWait) {
+      const ready = await cdpService.evaluate(`
+        (() => !!(document.querySelector('#listing-title-input') || document.querySelector('#field-translations')))()
+      `);
+      if (ready) return true;
+      await this.delay(300);
+    }
+    return false;
+  }
+
+  async saveEdit() {
+    await this.interruptibleDelay(DELAYS.medium);
+
+    // Verified 2026-05-30 from a live edit-page capture: the commit button is
+    // id="shop-manager--listing-publish-edit", data-test="publish", label "Publish changes"
+    // for an active listing (no separate listing-state-select / "Save as draft" present).
+    // Clicking it preserves the listing's current state (active stays active).
+    const clickResult = await cdpService.evaluate(`
+      (() => {
+        const btn = document.querySelector('[data-test="publish"]') ||
+          document.querySelector('#shop-manager--listing-publish-edit');
+        if (btn) {
+          btn.scrollIntoView({ block: 'center' });
+          btn.click();
+          return { clicked: true, label: btn.textContent.trim() };
+        }
+        const draftBtn = [...document.querySelectorAll('button')].find(b => /save as draft/i.test(b.textContent));
+        if (draftBtn) {
+          draftBtn.scrollIntoView({ block: 'center' });
+          draftBtn.click();
+          return { clicked: true, label: draftBtn.textContent.trim() };
+        }
+        return { clicked: false, buttons: [...document.querySelectorAll('button')].map(b => b.textContent.trim()).filter(Boolean).slice(0, 20) };
+      })()
+    `);
+    console.log('[edit-push] save click:', clickResult);
+
+    if (!clickResult?.clicked) {
+      const fallback = await this.clickByText('Publish changes') || await this.clickByText('Publish');
+      if (!fallback) {
+        throw new Error('Could not find save/publish button on edit page');
+      }
+    }
+
+    // A confirmation dialog can appear — click its primary action if one is present.
+    await this.interruptibleDelay(DELAYS.long);
+    await this.clickByText('Publish', '[role="dialog"]');
+
+    const confirmed = await this.waitForSuccessMessage(15000);
+    if (!confirmed) {
+      throw new Error('Save confirmation not detected');
+    }
+  }
+
   categorizeError(message) {
     const msg = message.toLowerCase();
     if (msg.includes('verification') || msg.includes('captcha')) {

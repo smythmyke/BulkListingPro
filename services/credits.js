@@ -66,6 +66,14 @@ class CreditsService {
 
     try {
       const headers = await getApiHeaders();
+
+      if (!headers['Authorization']) {
+        // Not signed in yet (e.g. token not written at startup) — expected,
+        // not an error. Fall back to the last stored balance without an API call.
+        const stored = await chrome.storage.local.get([CREDITS_STORAGE_KEY]);
+        return stored[CREDITS_STORAGE_KEY] || { available: 0, used: 0, purchased: 0, monthlyAllocation: 0 };
+      }
+
       const response = await fetch(`${API_BASE}/api/user/credits`, { headers });
 
       if (!response.ok) {
@@ -84,7 +92,11 @@ class CreditsService {
 
       return data;
     } catch (error) {
-      console.error('[Credits] Failed to fetch balance:', error);
+      if (error?.message === 'Not authenticated') {
+        console.debug('[Credits] Auth token rejected — using cached balance');
+      } else {
+        console.error('[Credits] Failed to fetch balance:', error);
+      }
       const stored = await chrome.storage.local.get([CREDITS_STORAGE_KEY]);
       return stored[CREDITS_STORAGE_KEY] || { available: 0, used: 0, purchased: 0, monthlyAllocation: 0 };
     }

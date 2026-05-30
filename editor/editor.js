@@ -8,6 +8,9 @@ import { processImageFiles, processImageURL, removeImage, removeAllImages, getFu
 import { generateForListing, bulkGenerate, evaluateListing, bulkEvaluate, translateListing, bulkTranslate } from './components/ai-generator.js';
 import { startEditorTour, shouldAutoStart, showTourIntro } from '../services/tourService.js';
 
+const EDITOR_MODE = new URLSearchParams(location.search).get('mode') === 'edit' ? 'edit' : 'upload';
+const LISTINGS_KEY = EDITOR_MODE === 'edit' ? STORAGE_KEYS.EDIT_LISTINGS : STORAGE_KEYS.EDITOR_LISTINGS;
+
 let listings = [];
 let expandedIds = new Set();
 let saveTimeout = null;
@@ -119,12 +122,14 @@ const els = {
 document.addEventListener('DOMContentLoaded', init);
 
 async function init() {
+  applyEditorModeChrome();
   try {
     await openImageDB();
   } catch (e) {
     console.warn('IndexedDB unavailable, falling back to inline images:', e);
     idbAvailable = false;
   }
+  await migrateEditModeListings();
   await loadSavedState();
   tagLibrary = await loadTagLibrary();
   populateCategoryFilter();
@@ -152,6 +157,15 @@ function writeEditorViewedTimestamp() {
 }
 
 function setupTabTracking() {
+  try {
+    chrome.tabs.getCurrent((tab) => {
+      if (tab && tab.id != null) {
+        chrome.storage.local.set({ [STORAGE_KEYS.EDITOR_TAB_ID]: tab.id });
+      }
+    });
+  } catch (err) {
+    console.warn('Failed to claim editor tab id:', err);
+  }
   window.addEventListener('beforeunload', () => {
     chrome.storage.local.remove(STORAGE_KEYS.EDITOR_TAB_ID);
   });
@@ -161,10 +175,42 @@ function closeEditor() {
   window.close();
 }
 
+function applyEditorModeChrome() {
+  if (EDITOR_MODE !== 'edit') return;
+  document.title = 'Edit Listings — BulkListingPro';
+  const titleEl = document.querySelector('.toolbar-title');
+  if (titleEl) titleEl.textContent = 'Edit Existing Listings';
+  document.body.classList.add('editor-mode-edit');
+}
+
+// One-time, idempotent: move any imported (edit-mode) listings out of the
+// shared Upload drawer into the dedicated Edit drawer so the two no longer mix.
+async function migrateEditModeListings() {
+  try {
+    const data = await chrome.storage.local.get([STORAGE_KEYS.EDITOR_LISTINGS, STORAGE_KEYS.EDIT_LISTINGS]);
+    const upload = Array.isArray(data[STORAGE_KEYS.EDITOR_LISTINGS]) ? data[STORAGE_KEYS.EDITOR_LISTINGS] : [];
+    const editModeItems = upload.filter(l => l && l._edit_mode);
+    if (editModeItems.length === 0) return;
+
+    const editDrawer = Array.isArray(data[STORAGE_KEYS.EDIT_LISTINGS]) ? data[STORAGE_KEYS.EDIT_LISTINGS] : [];
+    const existingEtsyIds = new Set(editDrawer.map(l => l.etsy_listing_id).filter(Boolean));
+    const toMove = editModeItems.filter(l => !l.etsy_listing_id || !existingEtsyIds.has(l.etsy_listing_id));
+    const remaining = upload.filter(l => !(l && l._edit_mode));
+
+    await chrome.storage.local.set({
+      [STORAGE_KEYS.EDITOR_LISTINGS]: remaining,
+      [STORAGE_KEYS.EDIT_LISTINGS]: editDrawer.concat(toMove)
+    });
+    console.log(`[edit-split] moved ${toMove.length} imported listing(s) into the Edit drawer`);
+  } catch (err) {
+    console.warn('[edit-split] migration failed:', err);
+  }
+}
+
 async function loadSavedState() {
   try {
-    const data = await chrome.storage.local.get(STORAGE_KEYS.EDITOR_LISTINGS);
-    const saved = data[STORAGE_KEYS.EDITOR_LISTINGS];
+    const data = await chrome.storage.local.get(LISTINGS_KEY);
+    const saved = data[LISTINGS_KEY];
     if (saved && Array.isArray(saved) && saved.length > 0) {
       listings = saved;
       lastSaveTime = Date.now();
@@ -317,10 +363,48 @@ function updateFooterVisibility() {
   els.editorFooter.style.display = show ? '' : 'none';
 }
 
+function getEditorMode() {
+  return EDITOR_MODE;
+}
+
+function primaryAction() {
+  if (getEditorMode() === 'edit') {
+    pushEdits();
+  } else {
+    sendToQueue();
+  }
+}
+
+function getPushableEdits() {
+  return listings.filter(l =>
+    l._edit_mode && !l._hidden &&
+    Array.isArray(l.translate_languages) && l.translate_languages.length > 0 &&
+    l.translations && Object.keys(l.translations).length > 0
+  );
+}
+
 function updateSendButtonState() {
-  const allValid = listings.length > 0 && listings.every(l => validateListing(l).valid);
-  els.sendToQueueBtn.disabled = !allValid;
-  els.sendToQueueBottomBtn.disabled = !allValid;
+  const btns = [els.sendToQueueBtn, els.sendToQueueBottomBtn].filter(Boolean);
+
+  if (getEditorMode() === 'edit') {
+    const n = getPushableEdits().length;
+    btns.forEach(b => {
+      b.disabled = n === 0;
+      b.textContent = n > 0
+        ? `Push ${n} Edit${n === 1 ? '' : 's'} · ${n} credit${n === 1 ? '' : 's'}`
+        : 'Push Edits';
+      b.title = n === 0
+        ? 'Add a translation to an imported listing to push edits'
+        : `Update ${n} existing Etsy listing(s) with new translations`;
+    });
+  } else {
+    const allValid = listings.length > 0 && listings.every(l => validateListing(l).valid);
+    btns.forEach(b => {
+      b.disabled = !allValid;
+      b.textContent = 'Send to Queue';
+      b.title = '';
+    });
+  }
 }
 
 function updateAutosaveStatus() {
@@ -348,7 +432,7 @@ function scheduleSave() {
   if (saveTimeout) clearTimeout(saveTimeout);
   saveTimeout = setTimeout(async () => {
     try {
-      await chrome.storage.local.set({ [STORAGE_KEYS.EDITOR_LISTINGS]: listings });
+      await chrome.storage.local.set({ [LISTINGS_KEY]: listings });
       lastSaveTime = Date.now();
       updateAutosaveStatus();
     } catch (err) {
@@ -399,8 +483,8 @@ function setupEventListeners() {
   els.addListingBottomBtn.addEventListener('click', addListing);
   els.importBtn.addEventListener('click', () => els.importFileInput.click());
   els.importFileInput.addEventListener('change', handleImportFile);
-  els.sendToQueueBtn.addEventListener('click', sendToQueue);
-  els.sendToQueueBottomBtn.addEventListener('click', sendToQueue);
+  els.sendToQueueBtn.addEventListener('click', primaryAction);
+  els.sendToQueueBottomBtn.addEventListener('click', primaryAction);
   els.closeEditorBtn.addEventListener('click', closeEditor);
   els.tourBtn.addEventListener('click', startEditorTour);
   els.undoBtn.addEventListener('click', undo);
@@ -1729,7 +1813,17 @@ async function sendToQueue() {
   }
 
   const selected = listings.filter(l => l._selected && !l._hidden);
-  const toSend = selected.length > 0 ? selected : listings.filter(l => !l._hidden);
+  let toSend = selected.length > 0 ? selected : listings.filter(l => !l._hidden);
+
+  const editModeInBatch = toSend.filter(l => l._edit_mode);
+  if (editModeInBatch.length > 0) {
+    toSend = toSend.filter(l => !l._edit_mode);
+    if (toSend.length === 0) {
+      showToast(`Use "Push Edits" to update ${editModeInBatch.length} imported listing(s) on Etsy`, 'error');
+      return;
+    }
+    showToast(`${editModeInBatch.length} imported listing(s) skipped — use "Push Edits" for those`, 'info');
+  }
 
   const invalid = toSend.filter(l => !validateListing(l).valid);
   if (invalid.length > 0) {
@@ -1785,6 +1879,139 @@ async function sendToQueue() {
   }
 }
 
+async function findEtsyTabForEdit() {
+  const etsyTabs = await chrome.tabs.query({ url: '*://*.etsy.com/*' });
+  if (etsyTabs.length > 0) return etsyTabs[0];
+
+  const newTab = await chrome.tabs.create({ url: 'https://www.etsy.com/your/shops/me/tools/listings/view:table' });
+  await new Promise(resolve => {
+    function listener(tabId, info) {
+      if (tabId === newTab.id && info.status === 'complete') {
+        chrome.tabs.onUpdated.removeListener(listener);
+        resolve();
+      }
+    }
+    chrome.tabs.onUpdated.addListener(listener);
+  });
+  return newTab;
+}
+
+function showPushProgress(total) {
+  const el = document.createElement('div');
+  el.className = 'toast success show';
+  el.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:9999;max-width:80vw;text-align:center;';
+  el.textContent = `Starting push of ${total} listing(s)…`;
+  document.body.appendChild(el);
+  return {
+    update: (text) => { el.textContent = text; },
+    close: () => { el.remove(); }
+  };
+}
+
+async function pushEdits() {
+  if (currentView === 'grid') {
+    const updated = getGridListings(listings);
+    if (updated.length > 0) listings = updated;
+  }
+
+  const toPush = getPushableEdits();
+  if (toPush.length === 0) {
+    showToast('No edits to push — add translation languages to imported listings first', 'error');
+    return;
+  }
+
+  const ok = confirm(
+    `Push ${toPush.length} listing(s) to Etsy?\n\n` +
+    `This updates the existing listings in place with their new translations ` +
+    `(${toPush.length} credit${toPush.length === 1 ? '' : 's'}). All other fields are left unchanged.`
+  );
+  if (!ok) return;
+
+  const tab = await findEtsyTabForEdit();
+  if (!tab) {
+    showToast('Could not find or open an Etsy tab', 'error');
+    return;
+  }
+
+  const payload = toPush.map(l => ({
+    id: l.id,
+    _edit_mode: true,
+    etsy_listing_id: l.etsy_listing_id,
+    edit_url: l.edit_url,
+    title: l.title || '',
+    translate_languages: l.translate_languages,
+    translations: l.translations
+  }));
+
+  const truncate = (s) => { s = s || ''; return s.length > 40 ? s.slice(0, 40) + '…' : s; };
+  const progress = showPushProgress(toPush.length);
+  const onMsg = (msg) => {
+    if (!msg || msg.type !== 'EDIT_PROGRESS') return;
+    switch (msg.status) {
+      case 'started':
+        progress.update(`Pushing ${msg.index + 1} of ${msg.total}: ${truncate(msg.title)}…`);
+        break;
+      case 'complete':
+        progress.update(`Pushed ${msg.index + 1} of ${msg.total} ✓`);
+        break;
+      case 'error':
+        progress.update(`Error on "${truncate(msg.title)}": ${msg.error}`);
+        break;
+      case 'enabling_languages':
+        progress.update('Enabling translation languages on your shop…');
+        break;
+      case 'verification_required':
+        progress.update('Etsy needs verification — complete it in the Etsy tab.');
+        break;
+      case 'out_of_credits':
+        progress.update('Out of credits — stopping.');
+        break;
+    }
+  };
+  chrome.runtime.onMessage.addListener(onMsg);
+
+  try {
+    const response = await chrome.runtime.sendMessage({
+      type: 'DIRECT_EDIT',
+      payload: { listings: payload, tabId: tab.id }
+    });
+
+    chrome.runtime.onMessage.removeListener(onMsg);
+    progress.close();
+
+    if (!response || !response.success) {
+      showToast('Push failed: ' + (response?.error || 'unknown error'), 'error');
+      return;
+    }
+
+    const r = response.results;
+    const pushedIds = new Set(
+      r.details.filter(d => d.status === 'success').map(d => payload[d.index]?.id).filter(Boolean)
+    );
+
+    if (pushedIds.size > 0) {
+      pushUndo('push edits');
+      for (const id of pushedIds) {
+        expandedIds.delete(id);
+        await removeAllImages(id);
+      }
+      listings = listings.filter(l => !pushedIds.has(l.id));
+      if (currentView === 'grid') destroyGrid();
+      render();
+      scheduleSave();
+    }
+
+    showToast(
+      `Pushed ${r.success} edit${r.success === 1 ? '' : 's'}${r.failed ? `, ${r.failed} failed` : ''}.`,
+      r.failed ? 'error' : 'success'
+    );
+  } catch (err) {
+    chrome.runtime.onMessage.removeListener(onMsg);
+    progress.close();
+    showToast('Push failed: ' + err.message, 'error');
+  }
+}
+
 function showClearPrompt() {
   const toast = els.toast;
   toast.innerHTML = `
@@ -1800,7 +2027,7 @@ function showClearPrompt() {
       await clearAllImages();
     }
     listings = [];
-    await chrome.storage.local.remove(STORAGE_KEYS.EDITOR_LISTINGS);
+    await chrome.storage.local.remove(LISTINGS_KEY);
     lastSaveTime = null;
     if (currentView === 'grid') destroyGrid();
     render();
@@ -2474,8 +2701,8 @@ function setupStorageListener() {
       tagLibrary = changes[STORAGE_KEYS.TAG_LIBRARY].newValue || {};
       if (currentView === 'form') updateTagSuggestions();
     }
-    if (area === 'local' && changes[STORAGE_KEYS.EDITOR_LISTINGS]) {
-      mergeExternalListings(changes[STORAGE_KEYS.EDITOR_LISTINGS].newValue);
+    if (area === 'local' && changes[LISTINGS_KEY]) {
+      mergeExternalListings(changes[LISTINGS_KEY].newValue);
     }
   });
 }
@@ -2910,6 +3137,7 @@ function handleTranslationFieldChange(input) {
     listing.translations[lang][fieldName] = input.value;
   }
 
+  updateSendButtonState();
   scheduleSave();
 }
 

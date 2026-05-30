@@ -3,6 +3,8 @@ import { applyCode, getReferralCode, getReferralStats, getAffiliateStatus, apply
 import { startSidepanelTour, shouldAutoStart, showTourIntro } from '../services/tourService.js';
 
 const CREDITS_PER_LISTING = 2;
+const CHECKOUT_LOCKOUT_MS = 60000;
+let lastCheckoutOpenedAt = 0;
 
 let user = null;
 let credits = { available: 0, used: 0 };
@@ -393,7 +395,7 @@ function setupEventListeners() {
   elements.hideSuggestionsBtn.addEventListener('click', hideSuggestions);
   elements.tagsInput.addEventListener('focus', () => showSuggestionsForCategory(elements.categorySelect.value));
   elements.tagsInput.addEventListener('input', updateSuggestionStates);
-  elements.openEditorBtn.addEventListener('click', openEditor);
+  elements.openEditorBtn.addEventListener('click', () => openEditor('upload'));
   elements.generateFullBtn.addEventListener('click', handleGenerateFullListing);
   elements.titleInput.addEventListener('input', updateGenerateButton);
   elements.descriptionInput.addEventListener('input', updateGenerateButton);
@@ -637,6 +639,8 @@ function showMainSection() {
     elements.accountEmail.textContent = user.email;
     elements.accountAvatar.src = user.picture || 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23999"><circle cx="12" cy="8" r="4"/><path d="M12 14c-6 0-8 3-8 6v2h16v-2c0-3-2-6-8-6z"/></svg>';
     elements.accountMemberSince.textContent = 'BulkListingPro User';
+
+    revealAdminTabIfAuthorized(user);
   }
 }
 
@@ -1001,6 +1005,14 @@ function renderSubscriptionPlans() {
       const action = btn.dataset.action;
       const planId = btn.dataset.planId;
 
+      if (action === 'subscribe') {
+        const remaining = CHECKOUT_LOCKOUT_MS - (Date.now() - lastCheckoutOpenedAt);
+        if (remaining > 0) {
+          showToast(`Checkout already opened. Complete it in the open tab, or wait ${Math.ceil(remaining / 1000)}s to start another.`, 'error');
+          return;
+        }
+      }
+
       btn.textContent = 'Opening...';
       btn.disabled = true;
 
@@ -1015,6 +1027,7 @@ function renderSubscriptionPlans() {
         } else {
           const response = await chrome.runtime.sendMessage({ type: 'CREATE_SUBSCRIPTION_CHECKOUT', payload: { planId } });
           if (response.success && response.checkoutUrl) {
+            lastCheckoutOpenedAt = Date.now();
             window.open(response.checkoutUrl, '_blank');
             hideCreditsModal();
             showToast('Redirecting to checkout...', 'success');
@@ -1065,6 +1078,12 @@ function renderCreditPacks() {
 
   elements.creditPacksContainer.querySelectorAll('.credit-pack-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
+      const remaining = CHECKOUT_LOCKOUT_MS - (Date.now() - lastCheckoutOpenedAt);
+      if (remaining > 0) {
+        showToast(`Checkout already opened. Complete it in the open tab, or wait ${Math.ceil(remaining / 1000)}s to start another.`, 'error');
+        return;
+      }
+
       const packId = btn.dataset.packId;
       const priceEl = btn.querySelector('.credit-pack-price');
       const origText = priceEl.textContent;
@@ -1078,6 +1097,7 @@ function renderCreditPacks() {
         });
 
         if (response.success && response.checkoutUrl) {
+          lastCheckoutOpenedAt = Date.now();
           window.open(response.checkoutUrl, '_blank');
           hideCreditsModal();
           showToast('Redirecting to checkout...', 'success');
@@ -2168,7 +2188,7 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
       showToast(`${added} listing(s) received from editor`, 'success');
     }
   }
-  if (areaName === 'local' && (changes[STORAGE_KEYS.EDITOR_LISTINGS] || changes[STORAGE_KEYS.EDITOR_LAST_VIEWED_AT])) {
+  if (areaName === 'local' && (changes[STORAGE_KEYS.EDIT_LISTINGS] || changes[STORAGE_KEYS.EDITOR_LAST_VIEWED_AT])) {
     refreshEditTabState();
   }
 });
@@ -2666,6 +2686,8 @@ function switchTab(tabName) {
     updateAccountTab();
   } else if (tabName === 'edit') {
     refreshEditTabState();
+  } else if (tabName === 'admin') {
+    onAdminTabOpened();
   }
 }
 
@@ -3654,7 +3676,7 @@ let editPickerTabId = null;
 function setupEditTab() {
   if (elements.editImportBtn) elements.editImportBtn.addEventListener('click', startEditImport);
   if (elements.editImportMoreBtn) elements.editImportMoreBtn.addEventListener('click', startEditImport);
-  if (elements.editResumeContinueBtn) elements.editResumeContinueBtn.addEventListener('click', openEditor);
+  if (elements.editResumeContinueBtn) elements.editResumeContinueBtn.addEventListener('click', () => openEditor('edit'));
   if (elements.editPickerCancelBtn) elements.editPickerCancelBtn.addEventListener('click', cancelEditPicker);
   if (elements.editPickerRescanBtn) elements.editPickerRescanBtn.addEventListener('click', startEditImport);
   if (elements.editPickerSelectAll) elements.editPickerSelectAll.addEventListener('click', () => setAllPickerChecks(true));
@@ -3671,19 +3693,29 @@ function showEditState(name) {
 async function refreshEditTabState() {
   try {
     const data = await chrome.storage.local.get([
-      STORAGE_KEYS.EDITOR_LISTINGS,
+      STORAGE_KEYS.EDIT_LISTINGS,
       STORAGE_KEYS.EDITOR_LAST_VIEWED_AT
     ]);
-    const stored = Array.isArray(data[STORAGE_KEYS.EDITOR_LISTINGS]) ? data[STORAGE_KEYS.EDITOR_LISTINGS] : [];
+    const stored = Array.isArray(data[STORAGE_KEYS.EDIT_LISTINGS]) ? data[STORAGE_KEYS.EDIT_LISTINGS] : [];
     const lastViewedAt = data[STORAGE_KEYS.EDITOR_LAST_VIEWED_AT] || 0;
-    const unseen = stored.filter(l => {
-      if (!l || !l._edit_mode || l._hidden) return false;
-      const importedAt = l._imported_at ? new Date(l._imported_at).getTime() : 0;
-      return importedAt > lastViewedAt;
-    });
-    if (unseen.length > 0) {
-      if (elements.editResumeCount) elements.editResumeCount.textContent = String(unseen.length);
-      if (elements.editResumeSub) elements.editResumeSub.textContent = 'new — open editor to review';
+    const imported = stored.filter(l => l && l._edit_mode && !l._hidden);
+
+    if (imported.length > 0) {
+      const unseen = imported.filter(l => {
+        const importedAt = l._imported_at ? new Date(l._imported_at).getTime() : 0;
+        return importedAt > lastViewedAt;
+      });
+      const titleEl = elements.editStateResume && elements.editStateResume.querySelector('.edit-resume-title');
+      if (titleEl) {
+        titleEl.textContent = `${imported.length} imported listing${imported.length === 1 ? '' : 's'} in editor`;
+      } else if (elements.editResumeCount) {
+        elements.editResumeCount.textContent = String(imported.length);
+      }
+      if (elements.editResumeSub) {
+        elements.editResumeSub.textContent = unseen.length > 0
+          ? `${unseen.length} new — open to review`
+          : 'ready to edit — pick up where you left off';
+      }
       showEditState('resume');
     } else {
       showEditState('empty');
@@ -3968,8 +4000,8 @@ async function importSelectedListings() {
   console.log('[edit-import] picked from scrape buffer:', { count: picked.length, sample: picked[0] });
 
   try {
-    const data = await chrome.storage.local.get(STORAGE_KEYS.EDITOR_LISTINGS);
-    const existing = Array.isArray(data[STORAGE_KEYS.EDITOR_LISTINGS]) ? data[STORAGE_KEYS.EDITOR_LISTINGS] : [];
+    const data = await chrome.storage.local.get(STORAGE_KEYS.EDIT_LISTINGS);
+    const existing = Array.isArray(data[STORAGE_KEYS.EDIT_LISTINGS]) ? data[STORAGE_KEYS.EDIT_LISTINGS] : [];
     const existingIds = new Set(existing.map(l => l.id));
     const existingEtsyIds = new Set(existing.map(l => l.etsy_listing_id).filter(Boolean));
     console.log('[edit-import] existing storage:', { totalCount: existing.length, etsyIdsCount: existingEtsyIds.size });
@@ -4026,7 +4058,7 @@ async function importSelectedListings() {
 
     const merged = additions.concat(existing);
     console.log('[edit-import] writing to storage:', { newTotal: merged.length, sampleImage1: merged[0]?.image_1 });
-    await chrome.storage.local.set({ [STORAGE_KEYS.EDITOR_LISTINGS]: merged });
+    await chrome.storage.local.set({ [STORAGE_KEYS.EDIT_LISTINGS]: merged });
     console.log('[edit-import] storage write complete');
 
     const backfillEtsyIds = [
@@ -4052,7 +4084,7 @@ async function importSelectedListings() {
     if (skipped > 0) msg += ` (skipped ${skipped})`;
     showToast(msg, 'success');
 
-    await openEditor();
+    await openEditor('edit');
     await refreshEditTabState();
   } catch (err) {
     console.error('[edit-import] importSelectedListings failed:', err);
@@ -4081,7 +4113,8 @@ function cancelEditPicker() {
   refreshEditTabState();
 }
 
-async function openEditor() {
+async function openEditor(mode = 'upload') {
+  const targetUrl = chrome.runtime.getURL(`editor/editor.html?mode=${mode}`);
   try {
     const data = await chrome.storage.local.get(STORAGE_KEYS.EDITOR_TAB_ID);
     const savedTabId = data[STORAGE_KEYS.EDITOR_TAB_ID];
@@ -4090,16 +4123,19 @@ async function openEditor() {
       try {
         const tab = await chrome.tabs.get(savedTabId);
         if (tab) {
-          await chrome.tabs.update(savedTabId, { active: true });
+          const sameMode = (tab.url || '').includes(`mode=${mode}`);
+          if (sameMode) {
+            await chrome.tabs.update(savedTabId, { active: true });
+          } else {
+            await chrome.tabs.update(savedTabId, { url: targetUrl, active: true });
+          }
           await chrome.windows.update(tab.windowId, { focused: true });
           return;
         }
       } catch (e) {}
     }
 
-    const tab = await chrome.tabs.create({
-      url: chrome.runtime.getURL('editor/editor.html')
-    });
+    const tab = await chrome.tabs.create({ url: targetUrl });
     await chrome.storage.local.set({ [STORAGE_KEYS.EDITOR_TAB_ID]: tab.id });
   } catch (err) {
     showToast('Failed to open editor', 'error');
@@ -4110,4 +4146,453 @@ function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
+}
+
+// ============================================================================
+// Admin tab — visible only to the BLP admin (smythmyke@gmail.com).
+// Calls /api/admin/blp/* endpoints on the BLP backend with the existing
+// extension auth token (server-side requireAdmin checks the email allowlist).
+// ============================================================================
+
+const ADMIN_API_BASE = 'https://business-search-api-815700675676.us-central1.run.app';
+const ADMIN_EMAILS = ['smythmyke@gmail.com'];
+
+const adminState = {
+  initialized: false,
+  authorized: false,
+  loading: false,
+  filters: { status: 'all', search: '' },
+  nextCursor: null,
+  rows: [],
+  currentDetailEmail: null,
+};
+
+function isAdminUser(u) {
+  return !!(u && u.email && ADMIN_EMAILS.includes(u.email.toLowerCase()));
+}
+
+function revealAdminTabIfAuthorized(u) {
+  const authorized = isAdminUser(u);
+  adminState.authorized = authorized;
+
+  const tabBtn = document.getElementById('admin-tab-btn');
+  const tabContent = document.getElementById('tab-admin');
+  if (tabBtn) tabBtn.hidden = !authorized;
+  if (tabContent) tabContent.hidden = !authorized;
+
+  if (authorized && !adminState.initialized) {
+    initAdminTab();
+    adminState.initialized = true;
+  }
+}
+
+async function getAdminAuthToken() {
+  const result = await chrome.storage.local.get(['bulklistingpro_token', 'authToken', 'sessionToken']);
+  return result.bulklistingpro_token || result.authToken || result.sessionToken || null;
+}
+
+async function adminApi(path, opts = {}) {
+  const token = await getAdminAuthToken();
+  if (!token) throw new Error('not_authenticated');
+
+  const url = `${ADMIN_API_BASE}${path}`;
+  const init = {
+    method: opts.method || 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+      'X-Extension-Id': chrome.runtime.id || 'bulklistingpro',
+      'X-Extension-Version': chrome.runtime.getManifest?.()?.version || '1.0.0',
+    },
+  };
+  if (opts.body) init.body = JSON.stringify(opts.body);
+
+  const resp = await fetch(url, init);
+  let data = {};
+  try { data = await resp.json(); } catch (e) {}
+
+  if (!resp.ok) {
+    const err = new Error(data.error || `HTTP ${resp.status}`);
+    err.status = resp.status;
+    throw err;
+  }
+  return data;
+}
+
+function initAdminTab() {
+  const statusFilter = document.getElementById('admin-status-filter');
+  const searchInput = document.getElementById('admin-search-input');
+  const refreshBtn = document.getElementById('admin-refresh-btn');
+  const loadMoreBtn = document.getElementById('admin-load-more');
+  const detailBackBtn = document.getElementById('admin-detail-back');
+  const grantBtn = document.getElementById('admin-grant-btn');
+  const cancelBtn = document.getElementById('admin-cancel-btn');
+
+  if (statusFilter) statusFilter.addEventListener('change', () => {
+    adminState.filters.status = statusFilter.value;
+    loadAdminCustomers(true);
+  });
+
+  if (searchInput) {
+    let searchTimer = null;
+    searchInput.addEventListener('input', () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => {
+        adminState.filters.search = searchInput.value.trim();
+        loadAdminCustomers(true);
+      }, 300);
+    });
+  }
+
+  if (refreshBtn) refreshBtn.addEventListener('click', () => loadAdminCustomers(true));
+
+  if (loadMoreBtn) loadMoreBtn.addEventListener('click', () => loadAdminCustomers(false));
+
+  if (detailBackBtn) detailBackBtn.addEventListener('click', closeAdminDetail);
+
+  if (grantBtn) grantBtn.addEventListener('click', openGrantModal);
+  if (cancelBtn) cancelBtn.addEventListener('click', openCancelModal);
+
+  // Grant modal wiring
+  const grantCancelBtn = document.getElementById('admin-grant-cancel');
+  const grantConfirmBtn = document.getElementById('admin-grant-confirm');
+  if (grantCancelBtn) grantCancelBtn.addEventListener('click', () => closeModal('admin-grant-modal'));
+  if (grantConfirmBtn) grantConfirmBtn.addEventListener('click', submitGrantCredits);
+
+  // Cancel modal wiring
+  const cancelCancelBtn = document.getElementById('admin-cancel-cancel');
+  const cancelConfirmBtn = document.getElementById('admin-cancel-confirm');
+  if (cancelCancelBtn) cancelCancelBtn.addEventListener('click', () => closeModal('admin-cancel-modal'));
+  if (cancelConfirmBtn) cancelConfirmBtn.addEventListener('click', submitCancelSub);
+}
+
+function onAdminTabOpened() {
+  if (!adminState.authorized) return;
+  if (adminState.rows.length === 0 && !adminState.loading) {
+    loadAdminCustomers(true);
+  }
+}
+
+async function loadAdminCustomers(reset) {
+  if (!adminState.authorized) return;
+  if (adminState.loading) return;
+  adminState.loading = true;
+  setAdminStatus(reset ? 'Loading…' : 'Loading more…');
+
+  try {
+    const params = new URLSearchParams();
+    params.set('status', adminState.filters.status);
+    if (adminState.filters.search) params.set('search', adminState.filters.search);
+    params.set('limit', '50');
+    if (!reset && adminState.nextCursor) params.set('cursor', adminState.nextCursor);
+
+    const data = await adminApi(`/api/admin/blp/customers?${params.toString()}`);
+
+    if (reset) adminState.rows = [];
+    adminState.rows.push(...(data.rows || []));
+    adminState.nextCursor = data.nextCursor || null;
+
+    renderAdminTable();
+    setAdminStatus(`${adminState.rows.length} customer${adminState.rows.length === 1 ? '' : 's'}` + (adminState.nextCursor ? ' (more available)' : ''));
+
+    const loadMoreBtn = document.getElementById('admin-load-more');
+    if (loadMoreBtn) loadMoreBtn.hidden = !adminState.nextCursor;
+  } catch (err) {
+    console.error('[admin] loadCustomers failed:', err);
+    setAdminStatus(`Error: ${err.message}`);
+  } finally {
+    adminState.loading = false;
+  }
+}
+
+function renderAdminTable() {
+  const tbody = document.getElementById('admin-customer-rows');
+  if (!tbody) return;
+
+  if (adminState.rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" class="admin-empty">No customers match these filters.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = adminState.rows.map(row => {
+    const statusKey = (row.subscriptionStatus || 'none').replace(/[^a-z_]/gi, '');
+    const statusLabel = row.subscriptionStatus || 'no sub';
+    const plan = row.planId ? `<span class="admin-plan-label">${escapeHtml(row.planId)}</span>` : '';
+    const created = row.createdAt ? formatAdminDate(row.createdAt) : null;
+    const lifetime = '$' + ((row.lifetimeRevenueCents || 0) / 100).toFixed(2);
+    const rowTitle = `${row.email}${created ? ` · Created ${created}` : ''}`;
+    return `
+      <tr data-email="${escapeHtml(row.email)}" title="${escapeHtml(rowTitle)}">
+        <td class="admin-email-cell">${escapeHtml(row.email)}</td>
+        <td><span class="admin-status-pill ${statusKey}">${escapeHtml(statusLabel)}</span>${plan}</td>
+        <td class="num">${row.available}</td>
+        <td class="num">${lifetime}</td>
+      </tr>
+    `;
+  }).join('');
+
+  tbody.querySelectorAll('tr[data-email]').forEach(tr => {
+    tr.addEventListener('click', () => openAdminCustomerDetail(tr.dataset.email));
+  });
+}
+
+function setAdminStatus(text) {
+  const el = document.getElementById('admin-list-status');
+  if (el) el.textContent = text;
+}
+
+function formatAdminDate(iso) {
+  if (!iso) return '—';
+  try {
+    const d = new Date(iso);
+    if (isNaN(d)) return iso;
+    return d.toISOString().slice(0, 10);
+  } catch (e) { return iso; }
+}
+
+async function openAdminCustomerDetail(email) {
+  if (!email) return;
+  adminState.currentDetailEmail = email;
+
+  const tableWrap = document.querySelector('.admin-table-wrap');
+  const filterRow = document.querySelector('.admin-filters');
+  const pagination = document.querySelector('.admin-pagination');
+  const statusLine = document.getElementById('admin-list-status');
+  const detail = document.getElementById('admin-detail');
+  const detailEmail = document.getElementById('admin-detail-email');
+
+  if (tableWrap) tableWrap.style.display = 'none';
+  if (filterRow) filterRow.style.display = 'none';
+  if (pagination) pagination.style.display = 'none';
+  if (statusLine) statusLine.style.display = 'none';
+  if (detail) detail.classList.remove('hidden');
+  if (detailEmail) detailEmail.textContent = email;
+
+  setDetailLoading();
+
+  try {
+    const data = await adminApi(`/api/admin/blp/customer?email=${encodeURIComponent(email)}`);
+    renderAdminDetail(data);
+  } catch (err) {
+    console.error('[admin] customer detail failed:', err);
+    if (detailEmail) detailEmail.textContent = `${email} — error: ${err.message}`;
+  }
+}
+
+function setDetailLoading() {
+  ['admin-detail-available', 'admin-detail-sub-status', 'admin-detail-lifetime'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = '…';
+  });
+  ['admin-detail-subs', 'admin-detail-purchases', 'admin-detail-actions'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = 'Loading…';
+  });
+}
+
+function renderAdminDetail(data) {
+  const credits = data.credits || {};
+  const subs = data.stripeSubs || [];
+  const purchases = data.purchases || [];
+  const actions = data.adminActions || [];
+
+  document.getElementById('admin-detail-available').textContent = String(credits.available || 0);
+  document.getElementById('admin-detail-credit-breakdown').textContent =
+    `sub: ${credits.subscriptionCredits || 0}  ·  topup: ${credits.topupCredits || 0}`;
+
+  // Status is derived from live Stripe state, NOT from credits.subscription.status
+  // — the doc can drift if it last got an event from a sub that was later
+  // canceled while another active sub still exists. Surface drift as a warning.
+  const activeSub = subs.find(s => s.status === 'active');
+  const docStatus = (credits.subscription && credits.subscription.status) || null;
+  const liveStatus = activeSub ? 'active' : (subs.length > 0 ? subs[0].status : 'none');
+  const drift = docStatus && docStatus !== liveStatus
+    ? `<div class="admin-doc-drift">⚠ Doc thinks: "${escapeHtml(docStatus)}"</div>`
+    : '';
+
+  if (activeSub) {
+    document.getElementById('admin-detail-sub-status').innerHTML =
+      `<span class="admin-status-pill active">${escapeHtml(activeSub.status)}</span>`;
+    document.getElementById('admin-detail-sub-plan').innerHTML =
+      `${escapeHtml(activeSub.id)} · $${(activeSub.unitAmount / 100).toFixed(2)}/mo${drift}`;
+  } else if (subs.length > 0) {
+    const last = subs[0];
+    document.getElementById('admin-detail-sub-status').innerHTML =
+      `<span class="admin-status-pill ${last.status}">${escapeHtml(last.status)}</span>`;
+    document.getElementById('admin-detail-sub-plan').innerHTML = `${escapeHtml(last.id)}${drift}`;
+  } else {
+    document.getElementById('admin-detail-sub-status').textContent = 'No subs';
+    document.getElementById('admin-detail-sub-plan').innerHTML = `—${drift}`;
+  }
+
+  const lifetimeCents = purchases.reduce((sum, p) => sum + (p.amount || 0), 0);
+  document.getElementById('admin-detail-lifetime').textContent = `$${(lifetimeCents / 100).toFixed(2)}`;
+  document.getElementById('admin-detail-purchase-count').textContent =
+    `${purchases.length} purchase${purchases.length === 1 ? '' : 's'}`;
+
+  // Subs list
+  const subsList = document.getElementById('admin-detail-subs');
+  if (subs.length === 0) {
+    subsList.innerHTML = '<div class="admin-empty">No Stripe subscriptions on file</div>';
+  } else {
+    subsList.innerHTML = subs.map(s => `
+      <div class="admin-sub-row ${s.status}">
+        <span>${escapeHtml(s.id)} · $${(s.unitAmount / 100).toFixed(2)}/mo</span>
+        <span class="admin-action-meta">${escapeHtml(s.status)} · ${formatAdminDate(s.created)}</span>
+      </div>
+    `).join('');
+  }
+
+  // Purchases
+  const purchasesList = document.getElementById('admin-detail-purchases');
+  if (purchases.length === 0) {
+    purchasesList.innerHTML = '<div class="admin-empty">No credit-pack purchases</div>';
+  } else {
+    purchasesList.innerHTML = purchases.map(p => `
+      <div class="admin-purchase-row">
+        <span>${escapeHtml(p.packId || 'pack')} · ${p.credits || 0} credits</span>
+        <span class="admin-action-meta">$${((p.amount || 0) / 100).toFixed(2)} · ${formatAdminDate(p.createdAt)}</span>
+      </div>
+    `).join('');
+  }
+
+  // Admin actions audit
+  const actionsList = document.getElementById('admin-detail-actions');
+  if (actions.length === 0) {
+    actionsList.innerHTML = '<div class="admin-empty">No prior admin actions on this customer</div>';
+  } else {
+    actionsList.innerHTML = actions.map(a => `
+      <div class="admin-action-row">
+        <span><strong>${escapeHtml(a.action || '?')}</strong> — ${escapeHtml(a.reason || '')}</span>
+        <span class="admin-action-meta">${escapeHtml(a.adminEmail || '')} · ${formatAdminDate(a.timestamp)}</span>
+      </div>
+    `).join('');
+  }
+
+  // Stash subs on the modal-cancel select for the cancel-sub flow
+  const cancelSelect = document.getElementById('admin-cancel-sub-select');
+  if (cancelSelect) {
+    cancelSelect.innerHTML = subs
+      .filter(s => s.status === 'active')
+      .map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.id)} · $${(s.unitAmount / 100).toFixed(2)}/mo</option>`)
+      .join('');
+  }
+}
+
+function closeAdminDetail() {
+  adminState.currentDetailEmail = null;
+  const tableWrap = document.querySelector('.admin-table-wrap');
+  const filterRow = document.querySelector('.admin-filters');
+  const pagination = document.querySelector('.admin-pagination');
+  const statusLine = document.getElementById('admin-list-status');
+  const detail = document.getElementById('admin-detail');
+
+  if (tableWrap) tableWrap.style.display = '';
+  if (filterRow) filterRow.style.display = '';
+  if (pagination) pagination.style.display = '';
+  if (statusLine) statusLine.style.display = '';
+  if (detail) detail.classList.add('hidden');
+}
+
+function openGrantModal() {
+  const email = adminState.currentDetailEmail;
+  if (!email) return;
+  document.getElementById('admin-grant-email').textContent = email;
+  document.getElementById('admin-grant-amount').value = '160';
+  document.getElementById('admin-grant-reason').value = '';
+  showModal('admin-grant-modal');
+}
+
+function openCancelModal() {
+  const email = adminState.currentDetailEmail;
+  if (!email) return;
+  const select = document.getElementById('admin-cancel-sub-select');
+  if (!select || select.options.length === 0) {
+    showToast('No active subscriptions to cancel', 'info');
+    return;
+  }
+  document.getElementById('admin-cancel-email').textContent = email;
+  document.getElementById('admin-cancel-reason').value = '';
+  showModal('admin-cancel-modal');
+}
+
+async function submitGrantCredits() {
+  const email = adminState.currentDetailEmail;
+  const amount = parseInt(document.getElementById('admin-grant-amount').value, 10);
+  const reason = document.getElementById('admin-grant-reason').value.trim();
+
+  if (!email) return;
+  if (!Number.isFinite(amount) || amount <= 0) {
+    showToast('Amount must be a positive integer', 'error');
+    return;
+  }
+  if (!reason) {
+    showToast('Reason is required', 'error');
+    return;
+  }
+
+  const confirmBtn = document.getElementById('admin-grant-confirm');
+  confirmBtn.disabled = true;
+  confirmBtn.textContent = 'Granting…';
+
+  try {
+    const result = await adminApi('/api/admin/blp/grant-credits', {
+      method: 'POST',
+      body: { email, amount, note: reason },
+    });
+    closeModal('admin-grant-modal');
+    showToast(`Granted ${amount} credits (now ${result.after.available})`, 'success');
+    await openAdminCustomerDetail(email);
+  } catch (err) {
+    console.error('[admin] grant failed:', err);
+    showToast(`Grant failed: ${err.message}`, 'error');
+  } finally {
+    confirmBtn.disabled = false;
+    confirmBtn.textContent = 'Grant';
+  }
+}
+
+async function submitCancelSub() {
+  const email = adminState.currentDetailEmail;
+  const subId = document.getElementById('admin-cancel-sub-select').value;
+  const reason = document.getElementById('admin-cancel-reason').value.trim();
+
+  if (!subId) {
+    showToast('Pick a subscription', 'error');
+    return;
+  }
+  if (!reason) {
+    showToast('Reason is required', 'error');
+    return;
+  }
+
+  const confirmBtn = document.getElementById('admin-cancel-confirm');
+  confirmBtn.disabled = true;
+  confirmBtn.textContent = 'Canceling…';
+
+  try {
+    await adminApi('/api/admin/blp/cancel-sub', {
+      method: 'POST',
+      body: { subscriptionId: subId, reason },
+    });
+    closeModal('admin-cancel-modal');
+    showToast(`Canceled ${subId}`, 'success');
+    await openAdminCustomerDetail(email);
+  } catch (err) {
+    console.error('[admin] cancel failed:', err);
+    showToast(`Cancel failed: ${err.message}`, 'error');
+  } finally {
+    confirmBtn.disabled = false;
+    confirmBtn.textContent = 'Cancel subscription';
+  }
+}
+
+function showModal(id) {
+  const m = document.getElementById(id);
+  if (m) m.classList.remove('hidden');
+}
+
+function closeModal(id) {
+  const m = document.getElementById(id);
+  if (m) m.classList.add('hidden');
 }

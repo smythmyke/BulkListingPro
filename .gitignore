@@ -25,3 +25,8 @@ Thumbs.db
 __pycache__/
 *.pyc
 *.pyo
+
+# Captured Etsy HTML (contains user PII — UAID, region, currency)
+html.txt
+html1.txt
+html*.txt

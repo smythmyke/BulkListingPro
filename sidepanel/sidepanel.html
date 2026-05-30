@@ -123,6 +123,7 @@
         <button class="tab-btn" data-tab="edit">Edit</button>
         <button class="tab-btn" data-tab="research">Research</button>
         <button class="tab-btn" data-tab="account">Account</button>
+        <button class="tab-btn admin-only" data-tab="admin" id="admin-tab-btn" hidden>Admin</button>
       </div>
 
       <!-- Tab: Upload -->
@@ -1028,6 +1029,126 @@
           </div>
         </div>
       </div><!-- End tab-account -->
+
+      <!-- Tab: Admin (visible only to smythmyke@gmail.com) -->
+      <div id="tab-admin" class="tab-content admin-only" hidden>
+        <h2 class="admin-title">BLP Admin</h2>
+
+        <div class="admin-filters">
+          <select id="admin-status-filter" class="admin-filter-select">
+            <option value="all">All statuses</option>
+            <option value="active">Active only</option>
+            <option value="canceled">Canceled only</option>
+          </select>
+          <input type="search" id="admin-search-input" class="admin-filter-input" placeholder="Search by email…" autocomplete="off" />
+          <button id="admin-refresh-btn" class="btn btn-small" title="Refresh">↻</button>
+        </div>
+
+        <div id="admin-list-status" class="admin-status-line">Loading…</div>
+
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Email</th>
+                <th>Status</th>
+                <th class="num">Credits</th>
+                <th class="num">$</th>
+              </tr>
+            </thead>
+            <tbody id="admin-customer-rows">
+              <!-- Rendered by JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <div class="admin-pagination">
+          <button id="admin-load-more" class="btn btn-small" hidden>Load more</button>
+        </div>
+
+        <!-- Customer detail panel (slides in / replaces table when a row is clicked) -->
+        <div id="admin-detail" class="admin-detail hidden">
+          <div class="admin-detail-header">
+            <button id="admin-detail-back" class="btn btn-small">← Back to list</button>
+            <span id="admin-detail-email" class="admin-detail-email"></span>
+          </div>
+
+          <div class="admin-detail-grid">
+            <div class="admin-detail-card">
+              <div class="admin-card-label">Available credits</div>
+              <div class="admin-card-value" id="admin-detail-available">—</div>
+              <div class="admin-card-sub" id="admin-detail-credit-breakdown">—</div>
+            </div>
+            <div class="admin-detail-card">
+              <div class="admin-card-label">Subscription</div>
+              <div class="admin-card-value" id="admin-detail-sub-status">—</div>
+              <div class="admin-card-sub" id="admin-detail-sub-plan">—</div>
+            </div>
+            <div class="admin-detail-card">
+              <div class="admin-card-label">Lifetime revenue</div>
+              <div class="admin-card-value" id="admin-detail-lifetime">—</div>
+              <div class="admin-card-sub" id="admin-detail-purchase-count">—</div>
+            </div>
+          </div>
+
+          <div class="admin-detail-section">
+            <div class="admin-section-title">Stripe subscriptions</div>
+            <div id="admin-detail-subs" class="admin-sub-list">—</div>
+          </div>
+
+          <div class="admin-detail-section">
+            <div class="admin-section-title">Recent purchases</div>
+            <div id="admin-detail-purchases" class="admin-purchase-list">—</div>
+          </div>
+
+          <div class="admin-detail-section">
+            <div class="admin-section-title">Admin action history</div>
+            <div id="admin-detail-actions" class="admin-action-list">—</div>
+          </div>
+
+          <div class="admin-detail-actions">
+            <button id="admin-grant-btn" class="btn btn-primary">Grant credits…</button>
+            <button id="admin-cancel-btn" class="btn btn-danger">Cancel subscription…</button>
+          </div>
+        </div>
+      </div><!-- End tab-admin -->
+
+      <!-- Admin: Grant credits confirm dialog -->
+      <div id="admin-grant-modal" class="modal hidden">
+        <div class="modal-content admin-modal-content">
+          <h3>Grant credits</h3>
+          <p>Customer: <strong id="admin-grant-email">—</strong></p>
+          <label class="admin-modal-label">Amount
+            <input type="number" id="admin-grant-amount" min="1" step="1" value="160" />
+          </label>
+          <label class="admin-modal-label">Reason (recorded in audit log)
+            <textarea id="admin-grant-reason" rows="3" placeholder="e.g. Goodwill for failed upload on 2026-05-18"></textarea>
+          </label>
+          <div class="admin-modal-actions">
+            <button id="admin-grant-cancel" class="btn">Cancel</button>
+            <button id="admin-grant-confirm" class="btn btn-primary">Grant</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin: Cancel subscription confirm dialog -->
+      <div id="admin-cancel-modal" class="modal hidden">
+        <div class="modal-content admin-modal-content">
+          <h3>Cancel subscription</h3>
+          <p>Customer: <strong id="admin-cancel-email">—</strong></p>
+          <label class="admin-modal-label">Subscription to cancel
+            <select id="admin-cancel-sub-select"></select>
+          </label>
+          <label class="admin-modal-label">Reason (recorded in audit log)
+            <textarea id="admin-cancel-reason" rows="3" placeholder="e.g. Duplicate sub from checkout double-submit"></textarea>
+          </label>
+          <p class="admin-modal-warn">This is immediate. No prorated refund will be issued.</p>
+          <div class="admin-modal-actions">
+            <button id="admin-cancel-cancel" class="btn">Back</button>
+            <button id="admin-cancel-confirm" class="btn btn-danger">Cancel subscription</button>
+          </div>
+        </div>
+      </div>
 
     </div>
 

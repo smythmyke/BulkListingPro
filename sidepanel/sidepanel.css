@@ -3753,3 +3753,364 @@ body {
   font-weight: 500;
   text-align: right;
 }
+
+/* ============================================================================
+ * Admin tab — visible only to smythmyke@gmail.com (gated in sidepanel.js via
+ * the [hidden] attribute on .admin-only elements). When the admin flag is set,
+ * JS removes [hidden]; otherwise these elements stay hidden.
+ * ============================================================================ */
+
+.admin-only[hidden] {
+  display: none !important;
+}
+
+.admin-title {
+  font-size: 16px;
+  color: #333;
+  margin: 0 0 12px;
+}
+
+.admin-filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  align-items: center;
+}
+
+.admin-filter-select,
+.admin-filter-input {
+  padding: 5px 8px;
+  font-size: 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: white;
+  min-width: 0;
+}
+
+.admin-filter-select {
+  max-width: 110px;
+}
+
+.admin-filter-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-filter-select:focus,
+.admin-filter-input:focus {
+  outline: none;
+  border-color: #F56400;
+}
+
+.admin-status-line {
+  font-size: 11px;
+  color: #999;
+  margin-bottom: 8px;
+  min-height: 14px;
+}
+
+.admin-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background: white;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.admin-table thead th {
+  background: #f7f7f7;
+  text-align: left;
+  padding: 6px 6px;
+  font-weight: 600;
+  color: #555;
+  border-bottom: 1px solid #e0e0e0;
+  white-space: nowrap;
+  font-size: 11px;
+}
+
+.admin-table thead th.num {
+  text-align: right;
+}
+
+.admin-table tbody td {
+  padding: 6px 6px;
+  border-bottom: 1px solid #f0f0f0;
+  vertical-align: middle;
+}
+
+.admin-table tbody td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-table tbody tr {
+  cursor: pointer;
+}
+
+.admin-table tbody tr:hover {
+  background: #fff8f3;
+}
+
+.admin-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-email-cell {
+  font-weight: 500;
+  color: #333;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-status-pill {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+
+.admin-status-pill.active {
+  background: #d4edda;
+  color: #155724;
+}
+
+.admin-status-pill.canceled {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.admin-status-pill.past_due {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.admin-status-pill.none {
+  background: #e0e0e0;
+  color: #666;
+}
+
+.admin-plan-label {
+  font-size: 10px;
+  color: #888;
+  margin-left: 4px;
+}
+
+.admin-empty {
+  padding: 24px;
+  text-align: center;
+  color: #999;
+  font-size: 13px;
+}
+
+.admin-pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+/* --- Detail panel --- */
+
+.admin-detail {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 16px;
+}
+
+.admin-detail.hidden {
+  display: none;
+}
+
+.admin-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.admin-detail-email {
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+}
+
+.admin-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.admin-detail-card {
+  background: #f9f9f9;
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.admin-card-label {
+  font-size: 10px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 4px;
+}
+
+.admin-card-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-card-sub {
+  font-size: 11px;
+  color: #777;
+  margin-top: 2px;
+}
+
+.admin-detail-section {
+  margin-bottom: 16px;
+}
+
+.admin-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 6px;
+}
+
+.admin-sub-list,
+.admin-purchase-list,
+.admin-action-list {
+  background: #fafafa;
+  border-radius: 4px;
+  padding: 8px;
+  font-size: 11px;
+  color: #555;
+  max-height: 140px;
+  overflow-y: auto;
+}
+
+.admin-sub-row,
+.admin-purchase-row,
+.admin-action-row {
+  padding: 6px 8px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.admin-sub-row:last-child,
+.admin-purchase-row:last-child,
+.admin-action-row:last-child {
+  border-bottom: none;
+}
+
+.admin-sub-row.canceled {
+  opacity: 0.65;
+}
+
+.admin-action-meta {
+  color: #888;
+  font-size: 10px;
+}
+
+.admin-detail-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+}
+
+/* --- Admin modals --- */
+
+.admin-modal-content {
+  max-width: 380px;
+}
+
+.admin-modal-label {
+  display: block;
+  margin: 10px 0;
+  font-size: 12px;
+  color: #555;
+  font-weight: 500;
+}
+
+.admin-modal-label input,
+.admin-modal-label textarea,
+.admin-modal-label select {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 8px;
+  font-size: 13px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.admin-modal-label textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.admin-modal-warn {
+  background: #fff3cd;
+  color: #856404;
+  padding: 8px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  margin: 10px 0;
+}
+
+.admin-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.admin-tab-btn-marker {
+  /* visual marker on the [Admin] tab so it's clearly distinct */
+  position: relative;
+}
+
+.admin-doc-drift {
+  margin-top: 4px;
+  padding: 4px 6px;
+  background: #fff3cd;
+  color: #856404;
+  border-radius: 3px;
+  font-size: 10px;
+  display: inline-block;
+}
+
+.admin-table tbody td.num {
+  font-size: 11px;
+}
+
+.admin-plan-label {
+  display: block;
+  font-size: 9px;
+  color: #888;
+  margin-top: 2px;
+  margin-left: 0;
+}
