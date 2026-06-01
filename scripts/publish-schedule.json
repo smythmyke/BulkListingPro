@@ -185,7 +185,9 @@
     "title": "How to list the same product across multiple Etsy shops",
     "description": "Running multiple Etsy shops and tired of re-entering every listing? Efficient syndication without cannibalization.",
     "archetype": "How-to",
-    "read_time": "7 min read"
+    "read_time": "7 min read",
+    "published": true,
+    "published_at": "2026-06-01"
   },
   {
     "slug": "2026-etsy-best-sellers-whats-ranking",
