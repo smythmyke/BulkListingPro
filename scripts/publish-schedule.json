@@ -195,7 +195,9 @@
     "title": "2026 Etsy best-sellers: what's actually ranking",
     "description": "Which digital product categories consistently top Etsy search in 2026, and the patterns that separate winners from average.",
     "archetype": "Data",
-    "read_time": "8 min read"
+    "read_time": "8 min read",
+    "published": true,
+    "published_at": "2026-06-03"
   },
   {
     "slug": "how-to-relist-sold-out-etsy-digital-products",
