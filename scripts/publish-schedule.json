@@ -205,7 +205,9 @@
     "title": "How to re-list sold-out Etsy digital products in bulk",
     "description": "Expiry happens. Sold-out happens. Here's how to get listings back to active without losing SEO equity.",
     "archetype": "How-to",
-    "read_time": "6 min read"
+    "read_time": "6 min read",
+    "published": true,
+    "published_at": "2026-06-05"
   },
   {
     "slug": "etsy-shipping-costs-digital-products",
