@@ -215,7 +215,9 @@
     "title": "Etsy shipping costs on digital products: the gotcha nobody mentions",
     "description": "Digital products don't ship, but Etsy's shipping settings still affect you in specific ways first-time sellers miss.",
     "archetype": "Data",
-    "read_time": "6 min read"
+    "read_time": "6 min read",
+    "published": true,
+    "published_at": "2026-06-08"
   },
   {
     "slug": "from-20-to-200-etsy-listings-in-a-weekend",
