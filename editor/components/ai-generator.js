@@ -5,6 +5,16 @@ async function getAuthToken() {
   return result.bulklistingpro_token || result.authToken || result.sessionToken || null;
 }
 
+function aiHeaders(token) {
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`,
+    'X-Extension-Id': chrome.runtime.id || 'bulklistingpro',
+    'X-Extension-Version': chrome.runtime.getManifest?.()?.version || '1.0.0',
+    'X-Extension-Name': 'BulkListingPro'
+  };
+}
+
 export async function generateListingContent({ fields, category, title, description, tags, keywords, style }) {
   const token = await getAuthToken();
   if (!token) {
@@ -17,12 +27,7 @@ export async function generateListingContent({ fields, category, title, descript
 
   const response = await fetch(`${API_BASE}/api/v1/generate-listing-content`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-      'X-Extension-Id': chrome.runtime.id || 'bulklistingpro',
-      'X-Extension-Version': chrome.runtime.getManifest?.()?.version || '1.0.0'
-    },
+    headers: aiHeaders(token),
     body: JSON.stringify({ fields, category, title, description, tags, keywords, style: style || 'descriptive' })
   });
 
@@ -98,12 +103,7 @@ export async function evaluateListing(listing) {
 
   const response = await fetch(`${API_BASE}/api/v1/evaluate-listing`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-      'X-Extension-Id': chrome.runtime.id || 'bulklistingpro',
-      'X-Extension-Version': chrome.runtime.getManifest?.()?.version || '1.0.0'
-    },
+    headers: aiHeaders(token),
     body: JSON.stringify({
       title: listing.title || '',
       description: listing.description || '',
@@ -177,12 +177,7 @@ export async function translateListing(listing, targetLanguages, primaryLanguage
 
   const response = await fetch(`${API_BASE}/api/v1/translate-listing`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-      'X-Extension-Id': chrome.runtime.id || 'bulklistingpro',
-      'X-Extension-Version': chrome.runtime.getManifest?.()?.version || '1.0.0'
-    },
+    headers: aiHeaders(token),
     body: JSON.stringify({
       primary_language: primaryLanguage || 'en',
       target_languages: targetLanguages.map(l => String(l).toLowerCase()),

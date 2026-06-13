@@ -1652,7 +1652,8 @@ async function generateFullListing(payload) {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
       'X-Extension-Id': chrome.runtime.id || 'bulklistingpro',
-      'X-Extension-Version': chrome.runtime.getManifest?.()?.version || '1.0.0'
+      'X-Extension-Version': chrome.runtime.getManifest?.()?.version || '1.0.0',
+      'X-Extension-Name': 'BulkListingPro'
     },
     body: JSON.stringify(payload)
   });
