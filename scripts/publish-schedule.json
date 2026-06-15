@@ -245,7 +245,9 @@
     "title": "How one Etsy seller added 500 listings without hiring help",
     "description": "A composite walkthrough of scaling to 500 active listings solo. Where the hours go and what automation unlocks.",
     "archetype": "Case study",
-    "read_time": "8 min read"
+    "read_time": "8 min read",
+    "published": true,
+    "published_at": "2026-06-15"
   },
   {
     "slug": "etsy-listing-photo-sizes-2026",
