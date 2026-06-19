@@ -265,7 +265,9 @@
     "title": "BulkListingPro vs Alura: research tool vs bulk creator",
     "description": "Two Etsy tools that get compared but don't actually compete. When to use each \u2014 and when to use both.",
     "archetype": "Comparison",
-    "read_time": "8 min read"
+    "read_time": "8 min read",
+    "published": true,
+    "published_at": "2026-06-19"
   },
   {
     "slug": "how-much-does-etsy-take-2026",
