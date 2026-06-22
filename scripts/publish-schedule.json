@@ -275,7 +275,9 @@
     "title": "How much does Etsy take in 2026? The complete answer",
     "description": "Every fee Etsy charges, the exact math, and what you actually take home on typical sale prices.",
     "archetype": "Data",
-    "read_time": "8 min read"
+    "read_time": "8 min read",
+    "published": true,
+    "published_at": "2026-06-22"
   },
   {
     "slug": "bulklistingpro-vs-vela",
