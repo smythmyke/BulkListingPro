@@ -315,7 +315,9 @@
     "title": "Etsy rules for selling in 2026: the complete requirements guide",
     "description": "Every rule that affects what you can sell, how you sell it, and what gets your shop banned. 2026 edition.",
     "archetype": "Rules",
-    "read_time": "9 min read"
+    "read_time": "9 min read",
+    "published": true,
+    "published_at": "2026-07-01"
   },
   {
     "slug": "how-to-write-etsy-descriptions-that-sell",
