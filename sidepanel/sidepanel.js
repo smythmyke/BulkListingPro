@@ -1,6 +1,7 @@
 import { STORAGE_KEYS, CATEGORIES, CATEGORY_ATTRIBUTES, sanitizeListing, readSpreadsheetFile, isLocalFilePath, collectLocalFilePaths } from '../services/listingUtils.js';
 import { applyCode, getReferralCode, getReferralStats, getAffiliateStatus, applyAffiliate, getStripeConnectUrl, getAffiliateDashboard } from '../services/affiliateService.js';
 import { startSidepanelTour, shouldAutoStart, showTourIntro } from '../services/tourService.js';
+import { authFetch } from '../services/auth.js';
 
 const CREDITS_PER_LISTING = 2;
 const CHECKOUT_LOCKOUT_MS = 60000;
@@ -1646,15 +1647,9 @@ async function generateFullListing(payload) {
   }
 
   const API_BASE = 'https://business-search-api-815700675676.us-central1.run.app';
-  const response = await fetch(`${API_BASE}/api/v1/generate-full-listing`, {
+  const response = await authFetch(`${API_BASE}/api/v1/generate-full-listing`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-      'X-Extension-Id': chrome.runtime.id || 'bulklistingpro',
-      'X-Extension-Version': chrome.runtime.getManifest?.()?.version || '1.0.0',
-      'X-Extension-Name': 'BulkListingPro'
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   });
 

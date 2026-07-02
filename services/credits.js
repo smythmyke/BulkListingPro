@@ -1,3 +1,5 @@
+import { authFetch } from './auth.js';
+
 const CREDITS_STORAGE_KEY = 'bulklistingpro_credits';
 const API_BASE = 'https://business-search-api-815700675676.us-central1.run.app';
 
@@ -74,7 +76,7 @@ class CreditsService {
         return stored[CREDITS_STORAGE_KEY] || { available: 0, used: 0, purchased: 0, monthlyAllocation: 0 };
       }
 
-      const response = await fetch(`${API_BASE}/api/user/credits`, { headers });
+      const response = await authFetch(`${API_BASE}/api/user/credits`);
 
       if (!response.ok) {
         if (response.status === 401) {
@@ -134,10 +136,9 @@ class CreditsService {
   }
 
   async createSubscriptionCheckout(planId) {
-    const headers = await getApiHeaders();
-    const response = await fetch(`${API_BASE}/api/stripe/create-subscription-checkout`, {
+    const response = await authFetch(`${API_BASE}/api/stripe/create-subscription-checkout`, {
       method: 'POST',
-      headers,
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         planId,
         successUrl: chrome.runtime.getURL('sidepanel/sidepanel.html?subscription=success'),
@@ -153,10 +154,9 @@ class CreditsService {
   }
 
   async openCustomerPortal() {
-    const headers = await getApiHeaders();
-    const response = await fetch(`${API_BASE}/api/stripe/subscription-portal`, {
+    const response = await authFetch(`${API_BASE}/api/stripe/subscription-portal`, {
       method: 'POST',
-      headers,
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({})
     });
 
@@ -168,10 +168,9 @@ class CreditsService {
   }
 
   async createCheckoutSession(packId) {
-    const headers = await getApiHeaders();
-    const response = await fetch(`${API_BASE}/api/stripe/create-credit-checkout`, {
+    const response = await authFetch(`${API_BASE}/api/stripe/create-credit-checkout`, {
       method: 'POST',
-      headers,
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         packId,
         successUrl: chrome.runtime.getURL('sidepanel/sidepanel.html?purchase=success'),
@@ -189,10 +188,9 @@ class CreditsService {
 
   async useCredits(amount, feature) {
     try {
-      const headers = await getApiHeaders();
-      const response = await fetch(`${API_BASE}/api/user/credits/use`, {
+      const response = await authFetch(`${API_BASE}/api/user/credits/use`, {
         method: 'POST',
-        headers,
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount, feature })
       });
 

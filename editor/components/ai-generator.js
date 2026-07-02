@@ -1,18 +1,10 @@
+import { authFetch } from '../../services/auth.js';
+
 const API_BASE = 'https://business-search-api-815700675676.us-central1.run.app';
 
 async function getAuthToken() {
   const result = await chrome.storage.local.get(['bulklistingpro_token', 'authToken', 'sessionToken']);
   return result.bulklistingpro_token || result.authToken || result.sessionToken || null;
-}
-
-function aiHeaders(token) {
-  return {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`,
-    'X-Extension-Id': chrome.runtime.id || 'bulklistingpro',
-    'X-Extension-Version': chrome.runtime.getManifest?.()?.version || '1.0.0',
-    'X-Extension-Name': 'BulkListingPro'
-  };
 }
 
 export async function generateListingContent({ fields, category, title, description, tags, keywords, style }) {
@@ -25,9 +17,9 @@ export async function generateListingContent({ fields, category, title, descript
     throw { error: 'validation', message: 'Select at least one field to generate' };
   }
 
-  const response = await fetch(`${API_BASE}/api/v1/generate-listing-content`, {
+  const response = await authFetch(`${API_BASE}/api/v1/generate-listing-content`, {
     method: 'POST',
-    headers: aiHeaders(token),
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ fields, category, title, description, tags, keywords, style: style || 'descriptive' })
   });
 
@@ -101,9 +93,9 @@ export async function evaluateListing(listing) {
     if (listing[`image_${i}`]) imageCount++;
   }
 
-  const response = await fetch(`${API_BASE}/api/v1/evaluate-listing`, {
+  const response = await authFetch(`${API_BASE}/api/v1/evaluate-listing`, {
     method: 'POST',
-    headers: aiHeaders(token),
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       title: listing.title || '',
       description: listing.description || '',
@@ -175,9 +167,9 @@ export async function translateListing(listing, targetLanguages, primaryLanguage
     throw { error: 'validation', message: 'Add primary content first — title is required to translate' };
   }
 
-  const response = await fetch(`${API_BASE}/api/v1/translate-listing`, {
+  const response = await authFetch(`${API_BASE}/api/v1/translate-listing`, {
     method: 'POST',
-    headers: aiHeaders(token),
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       primary_language: primaryLanguage || 'en',
       target_languages: targetLanguages.map(l => String(l).toLowerCase()),
